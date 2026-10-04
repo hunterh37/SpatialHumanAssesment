@@ -2,7 +2,8 @@
 
 Every refit starts again from the literature priors (`kdm_params.json`) and adds every eligible person, so
 no session is counted twice. Per biomarker, the baseline (`mean25`) and yearly `slope` get a Bayesian linear
-regression whose prior is the literature value, and `sd` is pooled with the literature `sd`. The knee and
+regression whose prior is the literature value, made robust with Huber weights so people far off the
+curve count less, and `sd` is pooled with the literature `sd`. The knee and
 curvature stay from the literature. With few people the prior dominates; each new person moves the fit
 toward what the headset measures.
 
@@ -30,6 +31,9 @@ from .kdm import DEFAULT_PARAMS, KDM, _missing
 
 #: Pseudo-observations behind the literature `sd` when pooling it with the residual SD.
 SD_PRIOR_N = 10
+#: Huber threshold in residual SDs. A person further off the curve than this counts with weight k sd / |r|,
+#: so a mistyped age or a distracted run bends the population curve far less than under least squares.
+HUBER_K = 1.5
 #: Fewer fitting people than this leaves a biomarker at its prior.
 MIN_FIT_N = 3
 #: Fewer validation people than this cannot adopt a candidate.
@@ -78,29 +82,37 @@ def update_biomarker(p: dict, pts: list[tuple[float, float]]) -> tuple[dict, dic
     accel = p.get("accel", 0.0)
 
     def solve(m0, v_k, accel):
+        # Iteratively reweighted least squares with Huber weights, starting from the prior curve.
         sigma2 = sd0 ** 2
-        for _ in range(5):
-            # Precision P = P0 + Z'Z / sigma^2 with Z = [1, age - 25]; y has the fixed curvature removed.
+        mean25, slope = m0
+        for _ in range(20):
+            sigma = math.sqrt(sigma2)
+            resid = [x - accel * _late(p, a) - mean25 - slope * (a - 25) for a, x in pts]
+            w = [1.0 if abs(r) <= HUBER_K * sigma else HUBER_K * sigma / abs(r) for r in resid]
+            # Precision P = P0 + Z'WZ / sigma^2 with Z = [1, age - 25]; y has the fixed curvature removed.
             a11, a12, a22 = 1 / v_m, 0.0, 1 / v_k
             b1, b2 = m0[0] / v_m, m0[1] / v_k
-            for a, x in pts:
+            for (a, x), wi in zip(pts, w):
                 z, y = a - 25, x - accel * _late(p, a)
-                a11 += 1 / sigma2; a12 += z / sigma2; a22 += z * z / sigma2
-                b1 += y / sigma2; b2 += z * y / sigma2
+                a11 += wi / sigma2; a12 += wi * z / sigma2; a22 += wi * z * z / sigma2
+                b1 += wi * y / sigma2; b2 += wi * z * y / sigma2
             det = a11 * a22 - a12 * a12
             mean25 = (a22 * b1 - a12 * b2) / det
             slope = (a11 * b2 - a12 * b1) / det
-            ssr = sum((x - accel * _late(p, a) - mean25 - slope * (a - 25)) ** 2 for a, x in pts)
+            # Clipped residuals keep one wild value from inflating the spread.
+            ssr = sum(min(abs(x - accel * _late(p, a) - mean25 - slope * (a - 25)), HUBER_K * sigma) ** 2
+                      for a, x in pts)
             sigma2 = (SD_PRIOR_N * sd0 ** 2 + ssr) / (SD_PRIOR_N + len(pts))
-        return mean25, slope, math.sqrt(sigma2), a22 / det, a11 / det
+        outliers = sum(1 for wi in w if wi < 0.5)
+        return mean25, slope, math.sqrt(sigma2), a22 / det, a11 / det, outliers
 
-    mean25, slope, sd, var_m, var_k = solve(m0, v_k, accel)
+    mean25, slope, sd, var_m, var_k, outliers = solve(m0, v_k, accel)
     if p.get("unit") == "s" and mean25 > 0 and p["mean25"] > 0:
         # Proportional slowing: a slower device baseline scales the whole age curve (Brinley plot), so the
         # slope and curvature priors scale with the baseline before the final pass.
         r = mean25 / p["mean25"]
         m0[1] *= r; accel *= r; v_k *= r * r
-        mean25, slope, sd, var_m, var_k = solve(m0, v_k, accel)
+        mean25, slope, sd, var_m, var_k, outliers = solve(m0, v_k, accel)
         info["baseline_ratio"] = round(r, 3)
     if slope * accel < 0:
         accel = 0.0  # data reversed the literature direction; drop curvature so the curve stays monotone
@@ -112,6 +124,7 @@ def update_biomarker(p: dict, pts: list[tuple[float, float]]) -> tuple[dict, dic
         data_weight_mean25=round(1 - var_m / v_m, 3),
         data_weight_slope=round(1 - var_k / v_k, 3),
         age_min=min(ages), age_max=max(ages),
+        outliers=outliers,
     )
     out["fit"] = info
     return out, info

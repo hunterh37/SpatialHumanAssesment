@@ -49,6 +49,20 @@ enum SessionStore {
         try Session.encoder.encode(session).write(to: directory.appending(path: "\(session.sessionId).json"))
     }
 
+    private static let uploadedKey = "sa.uploaded"
+
+    /// Saved sessions ingest has not acknowledged, oldest first. Files stay on the device until then.
+    static func pending() -> [Session] {
+        let done = Set(UserDefaults.standard.stringArray(forKey: uploadedKey) ?? [])
+        return all().filter { !done.contains($0.sessionId) }.sorted { $0.startedAt < $1.startedAt }
+    }
+
+    static func markUploaded(_ id: String) {
+        var done = UserDefaults.standard.stringArray(forKey: uploadedKey) ?? []
+        if !done.contains(id) { done.append(id) }
+        UserDefaults.standard.set(done, forKey: uploadedKey)
+    }
+
     /// Past sessions on this device, for pace of aging.
     static func all() -> [Session] {
         let urls = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []

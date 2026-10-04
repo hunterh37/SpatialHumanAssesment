@@ -47,7 +47,7 @@ A row needs one biomarker. Missing games are skipped and widen the standard erro
 `make kdm-fit` (`ml/sha_biomarkers/kdm_fit.py`) refits the parameters on every collected session.
 
 - Every refit starts from the literature priors in `kdm_params.json` and adds all eligible people, so no session is counted twice.
-- Per biomarker, `mean25` and `slope` get a Bayesian linear regression with the literature value as prior: baseline prior SD is one between-person SD, slope prior SD half the literature slope. `sd` is pooled with the literature `sd` as 10 pseudo-observations. Knee and curvature stay from the literature. Under 3 people a biomarker keeps its prior.
+- Per biomarker, `mean25` and `slope` get a robust Bayesian linear regression with the literature value as prior. Huber weights (threshold 1.5 residual SD) let a person far off the curve, such as a mistyped age or a distracted run, count less; the report counts them as `outliers`. Prior widths: baseline prior SD is one between-person SD, slope prior SD half the literature slope. `sd` is pooled with the literature `sd` as 10 pseudo-observations. Knee and curvature stay from the literature. Under 3 people a biomarker keeps its prior.
 - Time metrics (`unit` s) scale their slope and curvature priors with the fitted baseline, after proportional slowing (Brinley).
 - Fitting uses the first session per participant code that produced the biomarker, so single-game and duel sessions count. Validation uses calibration rows only.
 - Leave-one-out: each validation person is predicted from parameters fitted without their sessions. The report gives MAE for the candidate, the current parameters and predict-the-mean, Pearson r, and the linear bias correction of the age gap fitted on the held-out predictions.
@@ -55,7 +55,7 @@ A row needs one biomarker. Missing games are skipped and widen the standard erro
 - The report also lists validation people per age decade and the mean standardized residual per `device_id`. Do not pool headsets whose offsets differ.
 - `make kdm` uses `data/kdm/params.json` when it exists and adds `kdm_gap_corrected`.
 
-Fitted parameters stay under `data/` with the sessions. The app's Spatial Age still uses `NormTable.provisional`; it does not read fitted parameters yet.
+Fitted parameters stay under `data/` with the sessions. The app's Spatial Age still uses `NormTable.provisional` (`prior-0.4`, same shapes as `kdm_params.json` for the shared metrics); it does not read fitted parameters yet.
 
 ### Data the model depends on
 
