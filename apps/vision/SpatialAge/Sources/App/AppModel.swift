@@ -58,12 +58,16 @@ final class AppModel {
     var passthrough = false
     /// Shown on the catalog after a session was ended before the last game.
     var notice: String?
+    /// Menu music (Dusk spec section 8). Silent while a game block runs or Sky Plank is shown.
+    let music = MusicBed()
 
     init() {
         let saved = PlayerProfile.load()
         profile = saved
         participant = saved?.participant ?? Participant(code: Participant.randomCode(), ageYears: 30)
         phase = saved == nil ? .onboarding : .catalog
+        // `.running` spans every practice and scored block, so the bed can never cue timing.
+        music.follow { [unowned self] in self.phase == .running || self.skyPlank }
     }
 
     /// The eight Dusk games, minus the standing-only ones for seated players.

@@ -134,6 +134,7 @@ struct HomeView: View {
 
             VStack(alignment: .leading, spacing: Dusk.Layout.spacing) {
                 lastAgeCard
+                MusicMiniPlayer()
                 viewersCard
                 HStack {
                     Button("Edit setup") { model.editSetup() }.buttonStyle(.duskTertiary)
