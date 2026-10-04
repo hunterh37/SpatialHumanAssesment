@@ -16,7 +16,10 @@ targets:
   SpatialAge:
     type: application
     platform: visionOS
-    sources: [SpatialAge/Sources]
+    sources:
+      - SpatialAge/Sources
+      - path: ../../packages/DuskEnvironment/DuskMeadow
+        type: folder
     dependencies:
       - package: ScoreKit
         product: ScoreKit
