@@ -14,6 +14,10 @@ final class OrbitGame: Minigame {
     static let sampleHz = 30.0
     static let trailSteps = 6
     static let trailLead = 0.3
+    /// Fingertip light trail, drawn while the tip is inside the orb. Brightness tracks steadiness.
+    static let tipTrailSteps = 14
+    /// Mean per-frame change of the tip-to-orb offset at which the trail is fully dimmed (meters).
+    static let jitterFloorM: Float = 0.004
 
     let ctx: GameContext
     init(_ ctx: GameContext) { self.ctx = ctx }
@@ -55,6 +59,8 @@ final class OrbitGame: Minigame {
             return e
         }
 
+        let tipTrail = TipTrail(steps: Self.tipTrailSteps, parent: ctx.layer)
+
         // Acquisition: the orb waits, breathing, until a fingertip rests inside it for 0.5 s (or 10 s pass).
         var inside = 0.0, waited = 0.0
         while inside < 0.5 && waited < 10, !Task.isCancelled {
@@ -81,6 +87,12 @@ final class OrbitGame: Minigame {
             }
             let near = ctx.nearestTip(to: orb.position)
             ctx.micro.glow(orb, color: Theme.teal, distance: near?.distance ?? .infinity)
+            if let near, near.distance <= OrbitMetrics.onTargetM.float {
+                tipTrail.push(tip: near.tip, offset: near.tip - orb.position)
+            } else {
+                tipTrail.retract()
+            }
+            tipTrail.draw()
             if tau >= nextSample {
                 ts.append(ctx.now); targets.append(target)
                 fingers.append(near.map { local($0.tip) })
@@ -90,10 +102,61 @@ final class OrbitGame: Minigame {
         }
         ctx.micro.pop(orb, color: Theme.teal, speedStep: 3)
         trail.forEach { ctx.micro.dissolve($0) }
+        tipTrail.entities.forEach { ctx.micro.dissolve($0) }
         let hand = used.max { $0.value < $1.value }?.key
         return PursuitTrial(index: index, startT: start, durationS: duration, path: path, t: ts, target: targets,
                             finger: fingers, hand: hand,
                             trackingGapMs: ctx.tracker.buffer.maxGapMs(hand, start, ctx.now))
+    }
+}
+
+/// Hover trail behind the fingertip. Each frame the tip is inside the orb a point is added; outside,
+/// the tail retracts. Opacity scales with steadiness: the mean frame-to-frame change of the tip's
+/// offset from the orb, so following the orb smoothly reads bright and tremor reads dim.
+@MainActor
+private final class TipTrail {
+    let entities: [ModelEntity]
+    private var tips: [SIMD3<Float>] = []
+    private var offsets: [SIMD3<Float>] = []
+    private var steadiness: Float = 1
+
+    init(steps: Int, parent: Entity) {
+        entities = (0..<steps).map { k in
+            let r = Theme.Size.orb * 0.22 * (1 - 0.75 * Float(k) / Float(max(steps - 1, 1)))
+            let e = Micro.orb(Theme.paper, radius: r)
+            e.model?.materials = [Look.glow(Theme.teal, intensity: 2.4)]
+            e.components[OpacityComponent.self]?.opacity = 0
+            parent.addChild(e)
+            return e
+        }
+    }
+
+    func push(tip: SIMD3<Float>, offset: SIMD3<Float>) {
+        tips.append(tip)
+        offsets.append(offset)
+        if tips.count > entities.count { tips.removeFirst(); offsets.removeFirst() }
+        guard offsets.count > 1 else { return }
+        var jitter: Float = 0
+        for i in 1..<offsets.count { jitter += simd_distance(offsets[i], offsets[i - 1]) }
+        jitter /= Float(offsets.count - 1)
+        let target = max(0, 1 - jitter / OrbitGame.jitterFloorM)
+        steadiness += (target - steadiness) * 0.2
+    }
+
+    func retract() {
+        let n = min(2, tips.count)
+        tips.removeFirst(n)
+        offsets.removeFirst(n)
+    }
+
+    func draw() {
+        for (k, e) in entities.enumerated() {
+            let i = tips.count - 1 - k
+            guard i >= 0 else { e.components[OpacityComponent.self]?.opacity = 0; continue }
+            e.position = tips[i]
+            let age = Float(k) / Float(entities.count)
+            e.components[OpacityComponent.self]?.opacity = (1 - age) * (0.25 + 0.6 * steadiness)
+        }
     }
 }
 
