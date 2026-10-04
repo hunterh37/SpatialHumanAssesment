@@ -33,7 +33,7 @@ Appearance is 60 ms, so spawn time stays exact to a frame. Spawn time is the fir
 
 ## Sound
 
-Procedural sine partials with exponential decay, rendered to WAV once (`Tone.swift`) and played spatially from the entity. Contact pitch steps 0 to 6 over reach time 0.9 to 0.3 s. Constellation stars sit on a pentatonic scale.
+Procedural sine partials with exponential decay, rendered to WAV once (`Tone.swift`) and played spatially from the entity. Contact pitch steps 0 to 6 over reach time 0.9 to 0.3 s. Constellation stars sit on a pentatonic scale. Spark, Gate and Reach and Grab targets play a spawn cue from where they appear: a 30 ms noise click over a short tone, because broadband onsets are what the ear localizes, so the participant hears which way to turn. Gate plays it from both orbs, so the sound never tells blue from orange.
 
 ## No score in play
 
