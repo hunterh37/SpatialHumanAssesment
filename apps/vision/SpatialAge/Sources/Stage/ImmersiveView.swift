@@ -20,6 +20,9 @@ struct ImmersiveView: View {
     @State private var updates: EventSubscription?
     @State private var game: Task<Void, Never>?
     @State private var closing = false
+    @State private var introCard = IntroCard()
+    /// True once this space started the intro sequence, so only its own close ends the intro.
+    @State private var introActive = false
 
     var body: some View {
         RealityView { content, attachments in
@@ -43,6 +46,12 @@ struct ImmersiveView: View {
                 panel.components.set(BillboardComponent())
                 content.add(panel)
             }
+            if let card = attachments.entity(for: "intro") {
+                card.position = [0, 1.4, -1.3]
+                card.components.set(BillboardComponent())
+                content.add(card)
+            }
+            let introEntity = attachments.entity(for: "intro")
             let exit = attachments.entity(for: "exit")
             if let exit {
                 exit.position = [0, 0.4, -Theme.Layout.distance]
@@ -52,6 +61,7 @@ struct ImmersiveView: View {
             updates = content.subscribe(to: SceneEvents.Update.self) { event in
                 if let a = hud.anchor, panel?.position != a { panel?.position = a }
                 if let a = hud.exitAnchor, exit?.position != a { exit?.position = a }
+                if let a = introCard.anchor, introEntity?.position != a { introEntity?.position = a }
                 clock.tick(event.deltaTime)
                 Stage.tick(stage, dt: event.deltaTime, ambient: hud.ambient)
                 if stage.isEnabled { bird.update(dt: event.deltaTime, tracker: tracker, ambient: hud.ambient) }
@@ -59,6 +69,7 @@ struct ImmersiveView: View {
             }
         } attachments: {
             Attachment(id: "hud") { HUDView(hud: hud) }
+            Attachment(id: "intro") { IntroCardView(card: introCard) }
             Attachment(id: "exit") {
                 if model.phase == .running { ExitControl { model.abortSession() } }
                 else if model.skyPlank { ExitControl(title: "Leave the roof") { model.skyPlank = false } }
@@ -74,6 +85,7 @@ struct ImmersiveView: View {
             halt()
             // Closed by the Digital Crown or the system mid-session: end it and bring the window back.
             if model.phase == .running { model.abortSession() }
+            if introActive, model.phase == .intro { model.finishIntro() }
             showWindow()
             updates?.cancel()
             updates = nil
@@ -82,7 +94,8 @@ struct ImmersiveView: View {
         .onChange(of: model.phase) { _, phase in
             // Session ended (finished, aborted or reset): stop the games and clear the scene.
             // With the anatomy overlay on, stay open in passthrough; otherwise close the space.
-            guard phase != .running else { return }
+            // Replaying the intro: ContentView closes this space and opens a fresh one for the sequence.
+            guard phase != .running, phase != .intro else { return }
             halt()
             showWindow()
             if model.skyPlank { return }
@@ -106,6 +119,15 @@ struct ImmersiveView: View {
             let g = Task { await play(recorder, t) }
             game = g
             await g.value
+        } else if model.phase == .intro, let bird {
+            introActive = true
+            model.introRunning = true
+            let g = Task { @MainActor in
+                await IntroSequence(clock: clock, tracker: t, bird: bird, layer: layer, card: introCard).run()
+            }
+            game = g
+            await g.value
+            if !Task.isCancelled { model.finishIntro() }
         }
         // Anatomy viewer, or a finished session with the overlay on: keep tracking until the space closes.
         while !Task.isCancelled { try? await Task.sleep(for: .seconds(1)) }
@@ -128,6 +150,9 @@ struct ImmersiveView: View {
         game = nil
         clock.stop()
         hud.visible = false
+        introCard.answer()
+        introCard.visible = false
+        bird?.dismiss()
         layer.children.removeAll()
     }
 

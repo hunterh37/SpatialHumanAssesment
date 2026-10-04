@@ -5,15 +5,26 @@ import UIKit
 
 /// Yellow songbird (canary build, life size) living in the Dusk stage. Spec: specs/games/design.md, Bird.
 ///
+/// It always flies in front of the participant: waypoints stay inside an arc around where the head faces
+/// (smoothed), and when the participant turns away it flies around the near side back into view, never
+/// across or behind them.
+///
 /// Between blocks it flies bounding loops 2.6 to 4.8 m out and answers an offered hand: a hand held out,
 /// open, palm up and still for 0.3 s calls it in. It lands on the palm, faces the participant, blinks,
 /// tilts its head, hops, flicks its tail and chirps. A finger from the other hand near its head pets it.
 /// Turning the palm over, lowering or closing the hand sends it off; a fast shake startles it off.
 /// When a countdown starts (`ambient` false) it leaves the hand, stays silent and keeps to a far ring
 /// 13 to 17 m out and 6 to 8.5 m up, so nothing near the targets moves during trials.
+/// As the game guide (`BirdGuide`) it flies in, lands on a small floating twig and talks.
 @MainActor
 final class Bird {
+    /// Static container in the stage. Holds the flying bird and the guide twig.
     let root = Entity()
+    /// The bird itself; moves every frame. Sounds play from here.
+    let flight = Entity()
+    /// Floating perch for scripted landings (intro, game guide). Grows in on `summon`, shrinks after takeoff.
+    private let twig = Entity()
+    private var twigGrow: Float = 0, twigVel: Float = 0
 
     // Rig. Bird space: origin between the feet, -Z forward, +Y up.
     private let poseNode = Entity()
@@ -50,6 +61,11 @@ final class Bird {
     private var orbitDir: Float = 1
     private var far = false
     private var rng = SeededRNG(seed: 0xB1D)
+    /// Smoothed horizontal facing of the participant, Rig yaw convention. Nil until the first frame.
+    private var facing: Float?
+    /// Half-width of the flight arc in front of the participant, radians.
+    static let nearArc: Float = 0.95
+    static let farArc: Float = 0.7
 
     // Wing and body pose.
     private var flapPhase: Float = 0
@@ -96,9 +112,15 @@ final class Bird {
 
     init() {
         root.name = "bird"
-        root.addChild(poseNode)
+        flight.name = "bird-body"
+        root.addChild(flight)
+        flight.addChild(poseNode)
         build()
-        root.position = p
+        flight.position = p
+        twig.name = "bird-twig"
+        twig.isEnabled = false
+        root.addChild(twig)
+        buildTwig()
     }
 
     // MARK: Per frame
@@ -118,6 +140,15 @@ final class Bird {
         }()
         let eye = SIMD3<Float>(headM.columns.3.x, headM.columns.3.y, headM.columns.3.z)
         center += (SIMD3<Float>(eye.x, 0, eye.z) - center) * min(1, dt * 0.5)
+        let headYaw = Rig(head: headM).yaw
+        if let f = facing {
+            facing = wrap(f + wrap(headYaw - f) * min(1, dt * 1.5))
+        } else {
+            facing = headYaw
+            center = SIMD3<Float>(eye.x, 0, eye.z)
+            pickWaypoint(fresh: true)
+        }
+        lastEye = eye
 
         if far == ambient {
             far = !ambient
@@ -151,12 +182,19 @@ final class Bird {
 
         orient(eye: eye, dt: dt)
         animate(eye: eye, dt: dt)
+        growTwig(dt: dt)
     }
 
     // MARK: Modes
 
     private func wander(_ offers: [Hand: Offer], eye: SIMD3<Float>, ambient: Bool, dt: Float) {
-        let speed: Float = UIAccessibility.isReduceMotionEnabled ? 1.4 : (far ? 4.0 : 2.6)
+        var speed: Float = UIAccessibility.isReduceMotionEnabled ? 1.4 : (far ? 4.0 : 2.6)
+        // Back from the far ring: hurry in.
+        if !far, simd_length(SIMD2<Float>(p.x - center.x, p.z - center.z)) > 7 { speed = max(speed, 4.5) }
+        if let around = herd(eye: eye) {
+            waypoint = around
+            speed *= 1.6
+        }
         steer(to: waypoint, speed: speed, rate: 2.2, dt: dt)
         if simd_distance(p, waypoint) < (far ? 1.6 : 0.8) { pickWaypoint(fresh: false) }
 
@@ -181,9 +219,12 @@ final class Bird {
         out = simd_length(out) > 1e-3 ? simd_normalize(out) : [0, 0, -1]
         let staging = perchPoint + out * 0.7 + [0, 0.3, 0]
         let d = simd_distance(p, perchPoint)
-        let target = d > 0.9 && simd_distance(p, staging) > 0.35 ? staging : perchPoint + [0, 0.03, 0]
-        let speed = simd_clamp(simd_distance(p, target) * 1.8, 0.45, 2.6)
-        steer(to: target, speed: speed, rate: 4, dt: dt)
+        var target = d > 0.9 && simd_distance(p, staging) > 0.35 ? staging : perchPoint + [0, 0.03, 0]
+        // Behind or beside the participant: come around the near side first.
+        if d > 0.9, let around = herd(eye: eye) { target = around }
+        // Long legs (called back from the far ring) fly fast; the last meter slows into the flare.
+        let speed = simd_clamp(simd_distance(p, target) * 1.8, 0.45, d > 4 ? 7 : 2.6)
+        steer(to: target, speed: speed, rate: d > 4 ? 3 : 4, dt: dt)
         if d < 0.28 {
             mode = .land
             landFrom = p
@@ -244,7 +285,7 @@ final class Bird {
             chirp(.chirp(Int.random(in: 0...3, using: &rng)), gain: -20)
             chirpIn = .random(in: 2.5...6, using: &rng)
         }
-        hopIn -= dt
+        hopIn -= attentive ? dt * 0.3 : dt
         if hopIn <= 0, balance < 0.2 {
             startHop(turn: .random(in: -0.6...0.6, using: &rng))
             hopIn = .random(in: 4...8, using: &rng)
@@ -256,9 +297,59 @@ final class Bird {
         }
     }
 
-    #if DEBUG
+    /// Scripted perch point (intro sequence, captures). While set, the bird treats it as an offered hand.
     private var pinned: SIMD3<Float>?
 
+    /// Intro sequence and game guide: a twig grows at `point`, the bird flies in from where it is, lands
+    /// on it and perches there facing the participant.
+    func summon(to point: SIMD3<Float>) {
+        if pinned == nil || simd_distance(pinned!, point) > 0.05 {
+            twig.position = point
+            var d = lastEye - point
+            d.y = 0
+            if simd_length(d) > 1e-3 { twig.orientation = simd_quatf(angle: atan2(-d.x, -d.z) + .pi, axis: [0, 1, 0]) }
+        }
+        pinned = point
+        perchPoint = point
+        hand = nil
+        lostTime = 0
+        cooldown = 0
+        if mode == .perch || mode == .land { return }
+        mode = .approach
+        chirp(.chirp(0), gain: -18)
+    }
+
+    /// Ends a scripted perch: the bird takes off and goes back to wandering; the twig shrinks away.
+    func dismiss() {
+        guard pinned != nil else { return }
+        pinned = nil
+        attentive = false
+    }
+
+    /// True once the bird sits on its scripted perch.
+    var perched: Bool { mode == .perch && pinned != nil }
+
+    /// Guide mode: while true the perched bird mostly looks at the participant and does not hop about.
+    var attentive = false
+
+    /// One spoken word of a speech bubble: a soft syllable, the bill opens, the head bobs.
+    func talk(_ word: Int) {
+        guard mode == .perch, !far else { return }
+        Tone.play(.peep(word &* 7 &+ Int(clock * 10)), on: flight, gain: -27)
+        beakT = 0
+        puff = max(puff, 0.15)
+        if word % 3 == 0 { rollGoal = .random(in: -0.25...0.25, using: &rng) }
+        lookAt = lastEye
+        lookIn = max(lookIn, 0.6)
+    }
+
+    /// Plays one call from the bird (intro lines).
+    func sing() {
+        chirp(.trill, gain: -18)
+        startHop(turn: 0)
+    }
+
+    #if DEBUG
     /// Captures: perches the bird at a fixed point as if on a hand, until the space closes.
     func preview(at point: SIMD3<Float>) {
         pinned = point
@@ -272,9 +363,7 @@ final class Bird {
 
     /// Updates the perch point from the tracked hand. False once the offer has been gone for `loseHold`.
     private func track(_ offers: [Hand: Offer], dt: Float) -> Bool {
-        #if DEBUG
         if let pinned { perchPoint = pinned; return true }
-        #endif
         guard let h = hand else { return false }
         if let o = offers[h] {
             perchPoint = o.perch
@@ -283,6 +372,8 @@ final class Bird {
         lostTime += dt
         return lostTime < Self.loseHold
     }
+
+    private var lastEye = SIMD3<Float>(0, 1.5, 0)
 
     private func flyAway(eye: SIMD3<Float>, startled: Bool) {
         let wasNear = mode == .perch || mode == .land
@@ -300,7 +391,7 @@ final class Bird {
         cooldown = startled ? 2.0 : 1.0
         happy = 0
         if wasNear {
-            Tone.play(.whirr, on: root, gain: -24)
+            Tone.play(.whirr, on: flight, gain: -24)
             if startled && !far { chirp(.alarm, gain: -20) }
         }
         orbit = atan2(p.x - center.x, -(p.z - center.z))
@@ -316,7 +407,7 @@ final class Bird {
 
     private func chirp(_ cue: Tone.Cue, gain: Double) {
         guard !far else { return }
-        Tone.play(cue, on: root, gain: gain)
+        Tone.play(cue, on: flight, gain: gain)
         beakT = 0
         puff = max(puff, 0.3)
     }
@@ -370,15 +461,44 @@ final class Bird {
         p += v * dt
     }
 
+    /// Orbit angle (0 = -Z, positive toward +X) straight ahead of the participant.
+    private var ahead: Float { -(facing ?? 0) }
+
+    /// Next loop waypoint, inside the arc in front of the participant. At an arc edge the bird turns back.
     private func pickWaypoint(fresh: Bool) {
         if fresh {
             orbit = atan2(p.x - center.x, -(p.z - center.z))
         }
+        let arc = far ? Self.farArc : Self.nearArc
+        let rel = simd_clamp(wrap(orbit - ahead), -arc, arc)
         if Float.random(in: 0...1, using: &rng) < 0.12 { orbitDir = -orbitDir }
-        orbit += Float.random(in: 0.6...1.2, using: &rng) * orbitDir
+        let step = Float.random(in: 0.4...0.85, using: &rng)
+        var next = rel + step * orbitDir
+        if abs(next) > arc {
+            orbitDir = -orbitDir
+            next = simd_clamp(rel + step * orbitDir, -arc, arc)
+        }
+        orbit = ahead + next
         let r = far ? Float.random(in: 13...17, using: &rng) : .random(in: 2.6...4.8, using: &rng)
         let h = far ? Float.random(in: 6...8.5, using: &rng) : .random(in: 1.7...3.1, using: &rng)
         waypoint = center + [sin(orbit) * r, h, -cos(orbit) * r]
+    }
+
+    /// When the bird has drifted out of the front arc (the participant turned), a waypoint up to 57 degrees
+    /// further around the circle on the side the bird is already on, so it sweeps back into view around
+    /// the participant instead of cutting across or behind them. Nil while it is in view.
+    private func herd(eye: SIMD3<Float>) -> SIMD3<Float>? {
+        let off = SIMD2<Float>(p.x - center.x, p.z - center.z)
+        let rel = wrap(atan2(off.x, -off.y) - ahead)
+        let arc = far ? Self.farArc : Self.nearArc
+        guard abs(rel) > arc + 0.2 else { return nil }
+        let side: Float = rel >= 0 ? 1 : -1
+        let a = ahead + rel - side * min(abs(rel) - arc * 0.5, 1.0)
+        let r = max(simd_length(off), far ? 13 : 2.6)
+        orbit = a
+        orbitDir = -side
+        let h = max(p.y, far ? 6 : 1.7)
+        return center + [sin(a) * r, h, -cos(a) * r]
     }
 
     private func orient(eye: SIMD3<Float>, dt: Float) {
@@ -404,8 +524,8 @@ final class Bird {
         }
         pitch += (pitchGoal - pitch) * min(1, 6 * dt)
         bank += (bankGoal - bank) * min(1, 5 * dt)
-        root.position = p
-        root.orientation = simd_quatf(angle: yaw, axis: [0, 1, 0])
+        flight.position = p
+        flight.orientation = simd_quatf(angle: yaw, axis: [0, 1, 0])
             * simd_quatf(angle: pitch, axis: [1, 0, 0])
             * simd_quatf(angle: bank, axis: [0, 0, 1])
     }
@@ -471,7 +591,7 @@ final class Bird {
         tailLift += (lift - tailLift) * min(1, 18 * dt)
         tail.orientation = simd_quatf(angle: 0.12 + tailLift, axis: [1, 0, 0])
         for (i, f) in tailFeathers.enumerated() {
-            let k = (Float(i) - 2.5) / 2.5
+            let k = (Float(i) - Self.tailMid) / Self.tailMid
             f.orientation = simd_quatf(angle: k * tailSpread * 0.7, axis: [0, 1, 0])
         }
 
@@ -522,7 +642,7 @@ final class Bird {
         case .perch:
             if lookIn <= 0 {
                 let r = Float.random(in: 0...1, using: &rng)
-                if r < 0.55 {
+                if r < (attentive ? 0.85 : 0.55) {
                     lookAt = eye
                 } else {
                     lookAt = p + [.random(in: -1...1, using: &rng), .random(in: -0.2...0.6, using: &rng),
@@ -553,6 +673,9 @@ final class Bird {
             * simd_quatf(angle: headPitch, axis: [1, 0, 0])
             * simd_quatf(angle: headRoll, axis: [0, 0, 1])
     }
+
+    private static let tailCount = 5
+    private static let tailMid = Float(tailCount - 1) / 2
 
     private static let featherPitch = simd_quatf(angle: 0.05, axis: [1, 0, 0])
 
@@ -615,14 +738,19 @@ final class Bird {
         return m
     }
 
-    private static func blob(_ radii: SIMD3<Float>, taper: Float, rings: Int = 24, segments: Int = 36) -> MeshResource? {
+    /// Low-poly style: few rings and segments, flat-shaded facets.
+    private static func blob(_ radii: SIMD3<Float>, taper: Float, rings: Int = 6, segments: Int = 10) -> MeshResource? {
         cached("blob\(radii)\(taper)\(rings)\(segments)") {
-            Meshes.blob(radii: radii, taper: taper, rings: rings, segments: segments)
+            Meshes.facetBlob(radii: radii, taper: taper, rings: rings, segments: segments)
         }
     }
 
     private static func feather(length: Float, width: Float, curl: Float) -> MeshResource? {
-        cached("feather\(length),\(width),\(curl)") { Meshes.feather(length: length, width: width, curl: curl) }
+        cached("feather\(length),\(width),\(curl)") { Meshes.facetFeather(length: length, width: width, curl: curl) }
+    }
+
+    private static func pyramid(height: Float, radius: Float, sides: Int) -> MeshResource? {
+        cached("pyramid\(height),\(radius),\(sides)") { Meshes.facetCone(height: height, radius: radius, sides: sides) }
     }
 
     private static func plumage(_ c: UIColor, rough: Float = 0.82) -> PhysicallyBasedMaterial {
@@ -633,7 +761,7 @@ final class Bird {
         m.roughness = .init(floatLiteral: rough)
         m.metallic = 0.0
         m.emissiveColor = .init(color: c)
-        m.emissiveIntensity = 0.32
+        m.emissiveIntensity = 0.26
         materialCache[key] = m
         return m
     }
@@ -647,14 +775,14 @@ final class Bird {
             e.position = [0, 0.046, 0.004]
             body.addChild(e)
         }
-        if let m = Self.blob([0.025, 0.025, 0.032], taper: 0.2, rings: 28, segments: 44) {
+        if let m = Self.blob([0.025, 0.026, 0.032], taper: 0.2, rings: 6, segments: 10) {
             let e = ModelEntity(mesh: m, materials: [Self.plumage(Palette.belly, rough: 0.9)])
-            e.position = [0, 0.036, -0.012]
+            e.position = [0, 0.037, -0.0125]
             body.addChild(e)
         }
-        if let m = Self.blob([0.025, 0.021, 0.025], taper: 0) {
+        if let m = Self.blob([0.024, 0.024, 0.024], taper: 0, rings: 6, segments: 10) {
             let e = ModelEntity(mesh: m, materials: [Self.plumage(Palette.body)])
-            e.position = [0, 0.068, -0.020]
+            e.position = [0, 0.070, -0.021]
             body.addChild(e)
         }
 
@@ -662,7 +790,7 @@ final class Bird {
         head.position = Self.headPivot
         poseNode.addChild(head)
         let hc = Self.headCenter
-        if let m = Self.blob([0.026, 0.025, 0.027], taper: 0) {
+        if let m = Self.blob([0.026, 0.025, 0.027], taper: 0, rings: 7, segments: 12) {
             let e = ModelEntity(mesh: m, materials: [Self.plumage(Palette.head)])
             e.position = hc
             head.addChild(e)
@@ -674,10 +802,10 @@ final class Bird {
         gloss.clearcoatRoughness = .init(floatLiteral: 0.02)
         let catchlight = Look.flat(.white)
         let blush = Look.veil(Palette.blush, opacity: 0.55)
-        let eyeball = Self.cached("eye") { .generateSphere(radius: 0.0068) }
+        let eyeball = Self.cached("eye") { .generateSphere(radius: 0.0072) }
         let glints = [Self.cached("glint0") { .generateSphere(radius: 0.0019) },
                       Self.cached("glint1") { .generateSphere(radius: 0.0009) }]
-        let cheek = Self.cached("cheek") { Meshes.ellipse(width: 0.012, height: 0.008) }
+        let cheek = Self.cached("cheek") { Meshes.ellipse(width: 0.012, height: 0.008, segments: 6) }
         for s in [Float(-1), 1] {
             let dir = simd_normalize(SIMD3<Float>(s * 0.62, 0.22, -0.75))
             let eye = Entity()
@@ -703,14 +831,16 @@ final class Bird {
         }
         // Beak: short conical seed-eater bill, lower mandible hinged.
         let beakMat = Self.plumage(Palette.beak, rough: 0.45)
-        let upper = ModelEntity(mesh: .generateCone(height: 0.013, radius: 0.0056), materials: [beakMat])
+        guard let upperMesh = Self.pyramid(height: 0.013, radius: 0.0058, sides: 5),
+              let lowerMesh = Self.pyramid(height: 0.010, radius: 0.0044, sides: 5) else { return }
+        let upper = ModelEntity(mesh: upperMesh, materials: [beakMat])
         upper.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0])
         upper.scale = [1, 1, 0.8]
         upper.position = hc + [0, -0.002, -0.031]
         head.addChild(upper)
         lowerBeak.position = hc + [0, -0.006, -0.024]
         head.addChild(lowerBeak)
-        let lower = ModelEntity(mesh: .generateCone(height: 0.010, radius: 0.0042), materials: [beakMat])
+        let lower = ModelEntity(mesh: lowerMesh, materials: [beakMat])
         lower.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0])
         lower.scale = [1, 1, 0.7]
         lower.position = [0, 0, -0.005]
@@ -731,10 +861,10 @@ final class Bird {
         // Tail.
         tail.position = [0, 0.040, 0.042]
         poseNode.addChild(tail)
-        if let m = Self.feather(length: 0.05, width: 0.012, curl: 0.05) {
-            for i in 0..<6 {
+        if let m = Self.feather(length: 0.05, width: 0.015, curl: 0.05) {
+            for i in 0..<Self.tailCount {
                 let f = ModelEntity(mesh: m, materials: [Self.plumage(i % 2 == 0 ? Palette.tail : Palette.flightB)])
-                f.position = [0, Float(abs(Float(i) - 2.5)) * -0.0005, 0]
+                f.position = [0, abs(Float(i) - Self.tailMid) * -0.0005, 0]
                 tail.addChild(f)
                 tailFeathers.append(f)
             }
@@ -772,131 +902,134 @@ final class Bird {
         shoulder.addChild(hand)
         var feathers: [(Entity, Float)] = []
 
-        if let arm = Self.blob([0.017, 0.005, 0.007], taper: 0) {
+        if let arm = Self.blob([0.017, 0.005, 0.007], taper: 0, rings: 4, segments: 6) {
             let e = ModelEntity(mesh: arm, materials: [Self.plumage(Palette.covert)])
             e.position = [s * 0.015, 0.001, 0.001]
             shoulder.addChild(e)
         }
-        if let arm = Self.blob([0.015, 0.004, 0.005], taper: 0) {
+        if let arm = Self.blob([0.015, 0.004, 0.005], taper: 0, rings: 4, segments: 6) {
             let e = ModelEntity(mesh: arm, materials: [Self.plumage(Palette.covert)])
             e.position = [s * 0.013, 0.001, 0]
             hand.addChild(e)
         }
         // Secondaries.
-        for i in 0..<6 {
-            guard let m = Self.feather(length: 0.042 + Float(i) * 0.0015, width: 0.012, curl: 0.06) else { continue }
+        for i in 0..<4 {
+            guard let m = Self.feather(length: 0.042 + Float(i) * 0.002, width: 0.016, curl: 0.06) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(i % 2 == 0 ? Palette.flightA : Palette.flightB)])
-            f.position = [s * (0.003 + Float(i) * 0.0048), -0.001 - Float(i) * 0.0003, 0.002]
+            f.position = [s * (0.004 + Float(i) * 0.0072), -0.001 - Float(i) * 0.0003, 0.002]
             shoulder.addChild(f)
-            feathers.append((f, s * Float(i) * 0.03))
+            feathers.append((f, s * Float(i) * 0.045))
         }
         // Coverts over the secondaries.
-        for i in 0..<5 {
-            guard let m = Self.feather(length: 0.022, width: 0.012, curl: 0.04) else { continue }
+        for i in 0..<3 {
+            guard let m = Self.feather(length: 0.022, width: 0.017, curl: 0.04) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(Palette.covert)])
-            f.position = [s * (0.004 + Float(i) * 0.006), 0.0025, -0.002]
+            f.position = [s * (0.005 + Float(i) * 0.010), 0.0025, -0.002]
             shoulder.addChild(f)
-            feathers.append((f, s * Float(i) * 0.04))
+            feathers.append((f, s * Float(i) * 0.06))
         }
         // Primaries, fanning out to the wing tip.
-        for i in 0..<7 {
-            let len = 0.05 + 0.014 * sin(Float(i) / 6 * .pi * 0.8)
-            guard let m = Self.feather(length: len, width: 0.011, curl: 0.07) else { continue }
+        for i in 0..<5 {
+            let len = 0.05 + 0.014 * sin(Float(i) / 4 * .pi * 0.8)
+            guard let m = Self.feather(length: len, width: 0.014, curl: 0.07) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(i % 2 == 0 ? Palette.flightB : Palette.flightA)])
-            f.position = [s * (0.002 + Float(i) * 0.0042), -0.0015 - Float(i) * 0.0003, 0.001]
+            f.position = [s * (0.002 + Float(i) * 0.0059), -0.0015 - Float(i) * 0.0003, 0.001]
             hand.addChild(f)
-            feathers.append((f, s * (0.15 + Float(i) * 0.17)))
+            feathers.append((f, s * (0.15 + Float(i) * 0.24)))
         }
         // Primary coverts.
-        for i in 0..<3 {
-            guard let m = Self.feather(length: 0.02, width: 0.011, curl: 0.04) else { continue }
+        for i in 0..<2 {
+            guard let m = Self.feather(length: 0.02, width: 0.015, curl: 0.04) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(Palette.covert)])
-            f.position = [s * (0.003 + Float(i) * 0.008), 0.002, -0.001]
+            f.position = [s * (0.004 + Float(i) * 0.011), 0.002, -0.001]
             hand.addChild(f)
-            feathers.append((f, s * (0.2 + Float(i) * 0.25)))
+            feathers.append((f, s * (0.2 + Float(i) * 0.38)))
         }
         return Wing(side: s, shoulder: shoulder, hand: hand, feathers: feathers)
     }
 }
 
 extension Meshes {
-    /// Closed smooth ellipsoid with radii (x, y, z), its back (+Z) half tapered toward a point by `taper`.
-    static func blob(radii: SIMD3<Float>, taper: Float, rings: Int = 24, segments: Int = 36) -> MeshResource? {
-        var positions: [SIMD3<Float>] = [], indices: [UInt32] = []
-        for r in 0...rings {
+    /// Low-poly ellipsoid: same shape rule as `blob`, flat-shaded facets. Odd ring rows are offset half a
+    /// segment so the facets read as triangles in a gem pattern instead of a quad grid.
+    static func facetBlob(radii: SIMD3<Float>, taper: Float, rings: Int, segments: Int) -> MeshResource? {
+        func point(_ r: Int, _ s: Float) -> SIMD3<Float> {
             let phi = Float(r) / Float(rings) * .pi
-            for s in 0...segments {
-                let th = Float(s) / Float(segments) * 2 * .pi
-                let n = SIMD3<Float>(sin(phi) * cos(th), cos(phi), sin(phi) * sin(th))
-                let k = 1 - taper * pow(max(0, n.z), 1.5)
-                positions.append([n.x * radii.x * k, n.y * radii.y * k, n.z * radii.z])
+            let th = (s + (r % 2 == 1 ? 0.5 : 0)) / Float(segments) * 2 * .pi
+            let n = SIMD3<Float>(sin(phi) * cos(th), cos(phi), sin(phi) * sin(th))
+            let k = 1 - taper * pow(max(0, n.z), 1.5)
+            return [n.x * radii.x * k, n.y * radii.y * k, n.z * radii.z]
+        }
+        // Pole triangles collapse to zero area and are dropped in `faceted`.
+        var tris: [SIMD3<Float>] = []
+        for r in 0..<rings {
+            for i in 0..<segments {
+                let a0 = point(r, Float(i)), a1 = point(r, Float(i + 1))
+                let b0 = point(r + 1, Float(i)), b1 = point(r + 1, Float(i + 1))
+                if r % 2 == 0 {
+                    tris += [a0, a1, b0, a1, b1, b0]  // next ring sits half a segment ahead
+                } else {
+                    tris += [a0, a1, b1, a0, b1, b0]  // next ring sits half a segment behind
+                }
             }
         }
-        let stride = UInt32(segments + 1)
-        for r in 0..<UInt32(rings) {
-            for s in 0..<UInt32(segments) {
-                let a = r * stride + s, b = (r + 1) * stride + s
-                indices += [a, a + 1, b, a + 1, b + 1, b]
+        return faceted(tris, name: "facetBlob", twoSided: false)
+    }
+
+    /// Low-poly feather: a five-point blade (quill, two shoulders, tip, raised rachis ridge), both faces.
+    static func facetFeather(length: Float, width: Float, curl: Float) -> MeshResource? {
+        let hw = width / 2
+        let quill = SIMD3<Float>(0, 0, 0)
+        let lS = SIMD3<Float>(-hw, -0.25 * curl * length - 0.0004, 0.45 * length)
+        let rS = SIMD3<Float>(hw, -0.25 * curl * length - 0.0004, 0.45 * length)
+        let ridge = SIMD3<Float>(0, -0.2 * curl * length + 0.0008, 0.5 * length)
+        let lT = SIMD3<Float>(-hw * 0.55, -0.7 * curl * length - 0.0003, 0.82 * length)
+        let rT = SIMD3<Float>(hw * 0.55, -0.7 * curl * length - 0.0003, 0.82 * length)
+        let tip = SIMD3<Float>(0, -curl * length, length)
+        // Counterclockwise seen from +Y.
+        let tris: [SIMD3<Float>] = [quill, ridge, lS, quill, rS, ridge,
+                                    lS, ridge, lT, ridge, rS, rT, ridge, rT, lT,
+                                    lT, rT, tip]
+        return faceted(tris, name: "facetFeather", twoSided: true)
+    }
+
+    /// Low-poly cone along +Y, base at -height/2, matching `generateCone` placement.
+    static func facetCone(height: Float, radius: Float, sides: Int) -> MeshResource? {
+        let apex = SIMD3<Float>(0, height / 2, 0), base = SIMD3<Float>(0, -height / 2, 0)
+        var tris: [SIMD3<Float>] = []
+        for i in 0..<sides {
+            let a0 = Float(i) / Float(sides) * 2 * .pi, a1 = Float(i + 1) / Float(sides) * 2 * .pi
+            let p0 = SIMD3<Float>(cos(a0) * radius, -height / 2, sin(a0) * radius)
+            let p1 = SIMD3<Float>(cos(a1) * radius, -height / 2, sin(a1) * radius)
+            tris += [p0, apex, p1, p0, p1, base]
+        }
+        return faceted(tris, name: "facetCone", twoSided: false)
+    }
+
+    /// Unindexed triangle soup with one normal per face. Winding is fixed per triangle so the normal
+    /// points away from the mesh centroid, which holds for the convex-ish shapes above.
+    static func faceted(_ tris: [SIMD3<Float>], name: String, twoSided: Bool) -> MeshResource? {
+        var positions: [SIMD3<Float>] = [], normals: [SIMD3<Float>] = []
+        positions.reserveCapacity(tris.count * (twoSided ? 2 : 1))
+        let centroid = tris.reduce(SIMD3<Float>.zero, +) / Float(max(1, tris.count))
+        for k in stride(from: 0, to: tris.count - 2, by: 3) {
+            let a = tris[k]
+            var b = tris[k + 1], c = tris[k + 2]
+            var n = simd_cross(b - a, c - a)
+            guard simd_length(n) > 1e-14 else { continue }
+            n = simd_normalize(n)
+            if !twoSided, simd_dot(n, (a + b + c) / 3 - centroid) < 0 { swap(&b, &c); n = -n }
+            positions += [a, b, c]
+            normals += [n, n, n]
+            if twoSided {
+                positions += [a, c, b]
+                normals += [-n, -n, -n]
             }
         }
-        var normals = smoothNormals(positions, indices)
-        // Weld the seam and the poles so shading has no crease.
-        for r in 0...rings {
-            let a = r * Int(stride), b = a + segments
-            let n = simd_normalize(normals[a] + normals[b] + 1e-9)
-            normals[a] = n; normals[b] = n
-        }
-        for r in [0, rings] {
-            let range = (r * Int(stride))..<(r * Int(stride) + Int(stride))
-            let n = simd_normalize(range.reduce(SIMD3<Float>.zero) { $0 + normals[$1] } + [0, r == 0 ? 1e-6 : -1e-6, 0])
-            for i in range { normals[i] = n }
-        }
-        var d = MeshDescriptor(name: "blob")
+        var d = MeshDescriptor(name: name)
         d.positions = MeshBuffer(positions)
         d.normals = MeshBuffer(normals)
-        d.primitives = .triangles(indices)
+        d.primitives = .triangles((0..<UInt32(positions.count)).map { $0 })
         return try? MeshResource.generate(from: [d])
-    }
-
-    /// Feather blade along +Z from the quill at the origin, both faces drawn. Raised rachis down the middle,
-    /// rounded tip, and `curl` droops the tip (positive bends it down).
-    static func feather(length: Float, width: Float, curl: Float, rows: Int = 10) -> MeshResource? {
-        var positions: [SIMD3<Float>] = [], indices: [UInt32] = []
-        for i in 0...rows {
-            let u = Float(i) / Float(rows)
-            let base: Float = u < 0.12 ? 0.35 + u / 0.12 * 0.65 : 1
-            let profile: Float = pow(sin(Float.pi * min(1, 0.18 + u * 0.82)), 0.55)
-            let hw: Float = width / 2 * profile * base
-            let y = -curl * length * u * u
-            let z = length * u
-            positions += [[-hw, y - 0.0004, z], [0, y + 0.0006, z], [hw, y - 0.0004, z]]
-        }
-        for i in 0..<UInt32(rows) {
-            let a = i * 3, b = (i + 1) * 3
-            // Top face, seen from +Y.
-            indices += [a, b, a + 1, a + 1, b, b + 1, a + 1, b + 1, a + 2, a + 2, b + 1, b + 2]
-        }
-        let top = smoothNormals(positions, indices)
-        let count = UInt32(positions.count)
-        var backIndices: [UInt32] = []
-        for k in stride(from: 0, to: indices.count, by: 3) {
-            backIndices += [indices[k] + count, indices[k + 2] + count, indices[k + 1] + count]
-        }
-        var d = MeshDescriptor(name: "feather")
-        d.positions = MeshBuffer(positions + positions)
-        d.normals = MeshBuffer(top + top.map { -$0 })
-        d.primitives = .triangles(indices + backIndices)
-        return try? MeshResource.generate(from: [d])
-    }
-
-    /// Area-weighted vertex normals for counterclockwise triangles.
-    static func smoothNormals(_ positions: [SIMD3<Float>], _ indices: [UInt32]) -> [SIMD3<Float>] {
-        var n = [SIMD3<Float>](repeating: .zero, count: positions.count)
-        for k in stride(from: 0, to: indices.count, by: 3) {
-            let i = Int(indices[k]), j = Int(indices[k + 1]), l = Int(indices[k + 2])
-            let f = simd_cross(positions[j] - positions[i], positions[l] - positions[i])
-            n[i] += f; n[j] += f; n[l] += f
-        }
-        return n.map { simd_length($0) > 1e-12 ? simd_normalize($0) : [0, 1, 0] }
     }
 }

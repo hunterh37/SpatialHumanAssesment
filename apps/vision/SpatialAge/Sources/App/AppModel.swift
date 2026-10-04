@@ -9,7 +9,8 @@ final class AppModel {
     static let immersiveID = "Tasks"
     static let windowID = "Main"
 
-    enum Phase { case onboarding, catalog, running, results, switchPlayer }
+    /// `.intro` is the first-launch title sequence in the immersive space (3D title, Buddy), before setup.
+    enum Phase { case intro, onboarding, catalog, running, results, switchPlayer }
     /// Leading tab ornament on the catalog phase (Dusk spec section 6).
     enum Tab: Hashable { case home, games, progress, duel }
 
@@ -32,6 +33,15 @@ final class AppModel {
     var profile: PlayerProfile?
     /// Setup opens on its review screen when reached from Home's "Edit setup".
     var editingSetup = false
+    /// True from the intro sequence until its first game starts: setup runs from Welcome and ends in Leaf Drop.
+    var introFlow = false
+    /// Set when setup finishes inside the intro flow. ContentView opens the space and clears it.
+    var firstGamePending = false
+    /// True while the immersive space is playing the title sequence.
+    var introRunning = false
+    /// First game after the intro sequence. Stick Drop: catch the falling leaf.
+    static let firstGame: Game = .pendulum
+    private static let introSeenKey = "introSeen"
     var tab: Tab = .home
     /// Game whose intro screen is open on the Games tab.
     var intro: Game?
@@ -65,7 +75,9 @@ final class AppModel {
         let saved = PlayerProfile.load()
         profile = saved
         participant = saved?.participant ?? Participant(code: Participant.randomCode(), ageYears: 30)
-        phase = saved == nil ? .onboarding : .catalog
+        let seen = UserDefaults.standard.bool(forKey: Self.introSeenKey)
+        phase = saved != nil ? .catalog : (seen ? .onboarding : .intro)
+        introFlow = phase == .intro
         // `.running` spans every practice and scored block, so the bed can never cue timing.
         music.follow { [unowned self] in self.phase == .running || self.skyPlank }
     }
@@ -84,6 +96,27 @@ final class AppModel {
         editingSetup = false
         tab = .home
         phase = .catalog
+        if introFlow {
+            introFlow = false
+            firstGamePending = true
+        }
+    }
+
+    /// Home's replay control: runs the title sequence again, then setup from Welcome, then Leaf Drop.
+    func replayIntro() {
+        guard phase == .catalog else { return }
+        editingSetup = false
+        notice = nil
+        introFlow = true
+        phase = .intro
+    }
+
+    /// Called when the title sequence ends (finished, or the space closed or failed to open). Opens setup.
+    func finishIntro() {
+        guard phase == .intro else { return }
+        introRunning = false
+        UserDefaults.standard.set(true, forKey: Self.introSeenKey)
+        phase = .onboarding
     }
 
     func editSetup() {

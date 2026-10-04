@@ -15,9 +15,20 @@ struct ContentView: View {
         @Bindable var model = model
         Group {
             switch model.phase {
+            case .intro:
+                screen {
+                    VStack(spacing: 20) {
+                        DuskLabel(DuskCopy.brand)
+                        Text("Look around").font(DuskType.title)
+                        Button("Skip intro") { model.finishIntro() }.buttonStyle(.duskTertiary)
+                    }
+                }
             case .onboarding:
                 if model.editingSetup, let p = model.profile {
                     OnboardingView(start: .review, draft: OnboardingDraft(p))
+                } else if model.introFlow, let p = model.profile {
+                    // Replayed intro: the same setup screens from Welcome, prefilled with the saved answers.
+                    OnboardingView(start: .welcome, draft: OnboardingDraft(p))
                 } else {
                     OnboardingView()
                 }
@@ -50,6 +61,14 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .animation(Dusk.Motion.spring, value: model.phase)
         .onAppear { model.windowOpen = true }
+        .onChange(of: model.phase, initial: true) { _, phase in
+            if phase == .intro, !model.introRunning { beginIntro() }
+        }
+        .onChange(of: model.firstGamePending, initial: true) { _, pending in
+            guard pending else { return }
+            model.firstGamePending = false
+            start([AppModel.firstGame])
+        }
         #if DEBUG
         // Screenshot hook: SA_DEMO=<game> skips setup and runs that one game.
         .task {
@@ -71,6 +90,23 @@ struct ContentView: View {
             .padding(48)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .duskGlass()
+    }
+
+    /// Opens the stage in full immersion for the title sequence and hides the window in front of it.
+    /// ImmersiveView runs the sequence, then sets the phase to setup and reopens the window.
+    private func beginIntro() {
+        Task {
+            if model.spaceOpen { await dismissImmersiveSpace() }
+            guard model.phase == .intro else { return }
+            model.skyPlank = false
+            model.passthrough = false
+            switch await openImmersiveSpace(id: AppModel.immersiveID) {
+            case .opened:
+                if model.phase == .intro { dismissWindow(id: AppModel.windowID) }
+            default:
+                model.finishIntro()
+            }
+        }
     }
 
     private func start(_ games: [Game]) {
@@ -127,6 +163,8 @@ struct HomeView: View {
                 VStack(spacing: Dusk.Layout.spacing) {
                     Button("Start a duel") { model.tab = .duel }.buttonStyle(.duskPrimaryLarge)
                     Button("Play one game") { model.tab = .games }.buttonStyle(.duskSecondaryLarge)
+                    Button("Replay intro", systemImage: "sparkles") { model.replayIntro() }
+                        .buttonStyle(.duskTertiary)
                 }
                 .padding(.top, 12)
                 if let notice = model.notice { DuskChip(text: notice) }

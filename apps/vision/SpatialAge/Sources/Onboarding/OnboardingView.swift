@@ -87,7 +87,7 @@ struct OnboardingView: View {
         switch step {
         case .welcome: "Begin"
         case .consent: "I agree"
-        case .review: "Go to home"
+        case .review: model.introFlow ? "Play \(AppModel.firstGame.duskTitle)" : "Go to home"
         default: "Continue"
         }
     }

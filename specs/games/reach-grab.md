@@ -39,7 +39,7 @@ The HUD shows the instruction from `Game.instruction`, the title and progress do
 
 The nearest fingertip of either hand within 3 cm (half the edge) plus 1 cm (`ReachTrial.contactSlack`) of the cube center. 6 s without a grab is a miss.
 
-Micro-interactions: appear, breathe, proximity glow, pop with ring on a grab (paper ring), sink on a miss. The pop pitch climbs one step per rung, so the ladder is audible. Speed is not rewarded here, so reach time does not set the pitch.
+Micro-interactions: appear, breathe, proximity glow, pop with ring on a grab (paper ring), sink on a miss. The pop pitch climbs one step per rung, so the ladder is audible. Speed is not rewarded here, so reach time does not set the pitch. Reaching the floor spot plays `.lock`; a held freeze plays `.soft` from the cube, a broken one `.wrong`.
 
 Logged per cube:
 

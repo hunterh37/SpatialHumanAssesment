@@ -29,6 +29,11 @@ enum Tone {
         case alarm
         /// Wing whirr at takeoff.
         case whirr
+        /// Buddy talking: one soft syllable per word while a speech bubble types out, variant 0 to 3.
+        /// Lower and shorter than `.chirp`, so a line reads as chatter, not song.
+        case peep(Int)
+        /// Speech bubble tapped: a low rising plop.
+        case bubble
         /// A target appeared. A noise click over a tone: broadband onsets are what the ear localizes,
         /// so the participant can hear which way to turn before the target is in view.
         case spawn
@@ -61,6 +66,11 @@ enum Tone {
         [(0, 0.06, 5200, 4000, 1), (0.09, 0.06, 5100, 3900, 0.85)],
     ]
 
+    /// Talking syllables: rise, fall, rise-fall, flat. 2.2 to 3.4 kHz, 45 to 70 ms.
+    private static let peeps: [Syllable] = [
+        (0, 0.055, 2400, 3200, 1), (0, 0.06, 3300, 2500, 1), (0, 0.07, 2600, 3400, 1), (0, 0.045, 2900, 2800, 1),
+    ]
+
     private static var cache: [Cue: AudioFileResource] = [:]
 
     static func play(_ cue: Cue, on entity: Entity, gain: Double = -12) {
@@ -87,6 +97,8 @@ enum Tone {
         case .trill: song = (0..<9).map { (Double($0) * 0.045, 0.032, 4300, 4900, 1) }; partials = []; duration = 0
         case .alarm: song = (0..<3).map { (Double($0) * 0.06, 0.04, 6000, 3800, 1) }; partials = []; duration = 0
         case .whirr: partials = [(120, 0.05)]; duration = 0.32; noise = 1
+        case .peep(let k): song = [Self.peeps[abs(k) % Self.peeps.count]]; partials = []; duration = 0
+        case .bubble: song = [(0, 0.075, 380, 820, 1), (0.05, 0.05, 900, 1300, 0.25)]; partials = []; duration = 0
         case .pop(let step):
             let f = 660 * pow(2, Double(min(max(step, 0), 6)) / 6)
             partials = [(f, 1), (f * 2, 0.25)]; duration = 0.09
@@ -158,9 +170,9 @@ enum Tone {
 
     typealias Partial = (ratio: Double, gain: Double, decay: Double)
     /// Glockenspiel ratios: bright, long ring.
-    static let glock: [Partial] = [(1, 1, 1), (2.76, 0.32, 0.45), (5.40, 0.12, 0.25), (2, 0.18, 0.7)]
+    nonisolated static let glock: [Partial] = [(1, 1, 1), (2.76, 0.32, 0.45), (5.40, 0.12, 0.25), (2, 0.18, 0.7)]
     /// Marimba ratios: a round fundamental, a quiet fourth partial that dies fast. Soft and wooden.
-    static let mallet: [Partial] = [(1, 1, 1), (3.93, 0.10, 0.18), (2, 0.06, 0.4)]
+    nonisolated static let mallet: [Partial] = [(1, 1, 1), (3.93, 0.10, 0.18), (2, 0.06, 0.4)]
 
     /// Bell partials with a soft 3 ms attack and exponential decay, summed and normalized.
     static func bell(_ strikes: [Strike], partials: [Partial] = glock) -> Data {

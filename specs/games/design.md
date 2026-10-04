@@ -12,7 +12,7 @@ Full immersion. Ink sky dome (#0B0F17), a faint horizon band at eye level, a 6 m
 
 ## Bird
 
-`Design/Bird.swift`, owned by `ImmersiveView` and parented to the stage, so it appears in every game and hides with the stage (passthrough, Sky Plank). A yellow canary at life size (body 12 cm, wingspan about 22 cm), procedural meshes: egg body, pale belly, large round head, glossy eyes with two catchlights, blush, hinged bill, crest tuft, two-segment wings with 21 feathers each, six-feather tail, legs with four toes.
+`Design/Bird.swift`, owned by `ImmersiveView` and parented to the stage, so it appears in every game and hides with the stage (passthrough, Sky Plank). A yellow canary at life size (body 12 cm, wingspan about 22 cm), low-poly procedural meshes with flat-shaded facets: egg body, pale belly, large round head, smooth glossy eyes with two catchlights, hexagon blush, five-sided hinged bill, crest tuft, two-segment wings with 14 feathers each, five-feather tail, legs with four toes.
 
 | State | Behavior |
 |---|---|
@@ -49,7 +49,7 @@ Five primitives in `MicroInteractions.swift`, plus the reward layer below. Games
 | Breathe | live target scales 1.00 to 1.03 at 0.5 Hz | shows the target is touchable |
 | Proximity glow | emissive 0.6 + 2.4 c^2, c = closeness inside 30 cm | feedforward as the finger lands |
 | Contact pop | 90 ms scale 1 to 1.25 to 0, ring to 3x radius over 240 ms, tick pitched by reach speed | confirms contact, rewards speed with pitch |
-| Miss sink | 250 ms desaturate, drop 3 cm, fade, soft low tone | a miss reads as quiet, never as punishment |
+| Miss sink | 250 ms desaturate, drop 3 cm, fade, one soft low mallet note (`.miss`) | a miss reads as quiet, never as punishment |
 | Release snap | cord shortens and fades in 120 ms with a low tock | unused since Stick Drop, which plays the tock alone |
 
 Appearance is 60 ms, so spawn time stays exact to a frame. Spawn time is the first frame the target is in the scene.
@@ -63,8 +63,10 @@ Appearance is 60 ms, so spawn time stays exact to a frame. Spawn time is the fir
 | Success (go touch, catch, grab, cleared wall, clean recall, correct sequence, pursuit end) | a soft halo that swells to 5 to 8 cm and fades over 0.35 s, a spark burst from the contact (10 sparks plus 4 per tier, 0.6 s, drag and light gravity), an extruded 3D praise word that springs in and rises 10 cm over 0.85 s, a bell arpeggio (`Tone.Cue.chime`) on top of the speed-pitched tick |
 | Partial success (each recalled ball before the last, the second wall ring) | halo and a 6-spark burst; no word, no chime, streak unchanged |
 | Streak | consecutive successes in a block: tiers at 3, 5 and 8 lift the chime register, add sparks and twinkles (`.sparkle`) and pick stronger words. Shown as a word, never a count |
-| Wrong touch, miss, timeout | streak resets; nothing else changes (miss sink keeps its quiet tone) |
-| Correct no-go | no reward, as before |
+| Wrong touch (orange, wrong star, wrong recall ball, wall hit, freeze broken) | streak resets; two soft mallet notes falling a minor third (`.wrong`) replace the contact tick |
+| Miss, timeout, drop | streak resets; the miss sink's single low mallet note (`.miss`) |
+| Pursuit end under 50 percent on target | small burst, `.miss`, streak resets |
+| Correct no-go, freeze held | one quiet bell note with its fifth (`.soft`); no burst, streak unchanged |
 | End of block | confetti and burst 1.1 m ahead at eye height; scored blocks add the fanfare (`.fanfare`) |
 | HUD cue | each new cue springs 1.0 to 1.22 to 1.0 with a soft gold glow |
 
@@ -73,6 +75,8 @@ One 3D word is in view at a time; a new word replaces the old one. Safety: effec
 ## Sound
 
 Procedural sine partials with exponential decay, rendered to WAV once (`Tone.swift`) and played spatially from the entity. Contact pitch steps 0 to 6 over reach time 0.9 to 0.3 s. Constellation stars sit on a pentatonic scale. Spark, Gate and Reach and Grab targets play a spawn cue from where they appear: a 30 ms noise click over a short tone, because broadband onsets are what the ear localizes, so the participant hears which way to turn. Gate plays it from both orbs, so the sound never tells blue from orange. Two cues add sound beyond sines: a filtered-noise rustle (Spatial Tracking audio cue) and a 2.2 s low hum with a 3 Hz wobble (Scary Balance creature).
+
+Feedback cues share one key (C major pentatonic). Success uses glockenspiel partials (`.chime`, `.sparkle`, `.fanfare`, `.ready`, `.soft`); errors and lock-ons use marimba partials, a round fundamental with a fast-dying fourth partial (`.miss`, `.wrong`, `.lock`), so a wrong answer sounds soft and wooden. `.lock` (two quick rising notes) plays when Orbit acquires the fingertip and when the Reach and Grab floor spot is reached. `.ready` (a rising fifth) opens the Constellation and Color Dots response phases. Gains: chime -13 to -10 dB, `.wrong` -14 to -16, `.miss` -20, `.lock` and `.ready` -14 to -16, `.soft` -15 to -16.
 
 ## No score in play
 
