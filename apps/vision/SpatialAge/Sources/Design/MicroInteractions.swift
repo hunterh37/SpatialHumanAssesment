@@ -17,7 +17,9 @@ struct Micro {
     }
 
     /// Appear: 60 ms ease-out from zero. Spawn time is the first frame it is drawn.
-    func appear(_ e: Entity) {
+    /// `announce` plays the spatial spawn cue from the entity, for targets the participant may need to turn to find.
+    func appear(_ e: Entity, announce: Bool = false) {
+        if announce { Tone.play(.spawn, on: e, gain: -10) }
         e.scale = .init(repeating: 0.001)
         clock.animate(Theme.Motion.appear) { p in e.scale = .init(repeating: Float(Ease.out(p))) }
     }

@@ -27,7 +27,7 @@ struct ReachTrial {
             let e = Micro.orb(color, radius: Theme.Size.target)
             e.position = p
             ctx.layer.addChild(e)
-            ctx.micro.appear(e)
+            ctx.micro.appear(e, announce: true)
             orbs.append(Orb(entity: e, color: color, isGo: isGo))
         }
         // Spawn time: the first frame the orbs are in the scene.

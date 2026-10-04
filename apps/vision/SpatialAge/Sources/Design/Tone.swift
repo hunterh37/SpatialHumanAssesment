@@ -25,6 +25,9 @@ enum Tone {
         case alarm
         /// Wing whirr at takeoff.
         case whirr
+        /// A target appeared. A noise click over a tone: broadband onsets are what the ear localizes,
+        /// so the participant can hear which way to turn before the target is in view.
+        case spawn
     }
 
     /// One swept syllable: start and length in seconds, start and end frequency in Hz, relative gain.
@@ -42,6 +45,10 @@ enum Tone {
 
     static func play(_ cue: Cue, on entity: Entity, gain: Double = -12) {
         guard let res = resource(cue) else { return }
+        // Explicitly spatial and omnidirectional, so the cue comes from where the entity is.
+        if entity.components[SpatialAudioComponent.self] == nil {
+            entity.components.set(SpatialAudioComponent(directivity: .beam(focus: 0)))
+        }
         let controller = entity.prepareAudio(res)
         controller.gain = gain
         controller.play()
@@ -51,7 +58,7 @@ enum Tone {
         if let r = cache[cue] { return r }
         var partials: [(Double, Double)]
         var duration: Double
-        var noise = 0.0, sustain = false
+        var noise = 0.0, click = 0.0, sustain = false
         var song: [Syllable]?
         switch cue {
         case .chirp(let k): song = calls[abs(k) % calls.count]; partials = []; duration = 0
@@ -70,10 +77,12 @@ enum Tone {
         case .caught: partials = [(784, 1), (1176, 0.5)]; duration = 0.35
         case .rustle: partials = [(2400, 0.08)]; duration = 0.45; noise = 1
         case .creature: partials = [(73, 1), (110, 0.6), (146, 0.25)]; duration = 2.2; sustain = true
+        case .spawn: partials = [(1046, 1), (2093, 0.35), (3136, 0.15)]; duration = 0.16; click = 0.9
         }
         let url = FileManager.default.temporaryDirectory.appending(path: "tone-\(abs(cue.hashValue)).wav")
         do {
-            let data = song.map(Self.song) ?? wav(partials: partials, duration: duration, noise: noise, sustain: sustain)
+            let data = song.map(Self.song)
+                ?? wav(partials: partials, duration: duration, noise: noise, click: click, sustain: sustain)
             try data.write(to: url)
             let r = try AudioFileResource.load(contentsOf: url)
             cache[cue] = r
@@ -84,11 +93,14 @@ enum Tone {
     }
 
     /// 16-bit mono 44.1 kHz PCM. 2 ms attack, decay to -60 dB at `duration`. `noise` mixes in band-limited
-    /// noise with a fast flutter (a rustle). `sustain` holds level with a 3 Hz wobble and fades at both ends.
-    static func wav(partials: [(Double, Double)], duration: Double, noise: Double = 0, sustain: Bool = false) -> Data {
+    /// noise with a fast flutter (a rustle). `click` mixes in a white noise burst that decays within the first
+    /// 30 ms. `sustain` holds level with a 3 Hz wobble and fades at both ends.
+    static func wav(partials: [(Double, Double)], duration: Double, noise: Double = 0, click: Double = 0,
+                    sustain: Bool = false) -> Data {
         let rate = 44_100.0
         let n = Int(rate * duration)
-        let norm = partials.reduce(0) { $0 + $1.1 } + noise
+        let norm = partials.reduce(0) { $0 + $1.1 } + noise + click
+        var clickRNG = SeededRNG(seed: 1)
         var pcm = Data(capacity: n * 2)
         var rng = SeededRNG(seed: 7)
         var low = 0.0, prev = 0.0
@@ -105,8 +117,9 @@ enum Tone {
                 hiss = (low - prev) * 3 * (0.55 + 0.45 * sin(2 * .pi * 22 * t)) * noise
                 prev = low
             }
+            let burst = click > 0 ? click * Double.random(in: -1...1, using: &clickRNG) * exp(-6.9 * t / 0.03) : 0
             let tone = partials.reduce(0) { $0 + sin(2 * .pi * $1.0 * t) * $1.1 }
-            let s = (tone + hiss) / norm * env * 0.8
+            let s = ((tone + hiss) * env + burst) / norm * 0.8
             var v = Int16(max(-1, min(1, s)) * Double(Int16.max)).littleEndian
             withUnsafeBytes(of: &v) { pcm.append(contentsOf: $0) }
         }
