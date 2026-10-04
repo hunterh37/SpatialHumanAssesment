@@ -15,6 +15,9 @@ final class Director {
         case .gate: GateGame(ctx)
         case .constellation: ConstellationGame(ctx)
         case .orbit: OrbitGame(ctx)
+        case .reach: ReachGrabGame(ctx)
+        case .wall: WallGame(ctx)
+        case .dots: ColorDotsGame(ctx)
         }
     }
 

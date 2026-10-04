@@ -1,6 +1,6 @@
 import Foundation
 
-// Mirrors packages/schema/session.schema.json v0.2.0. Keep in sync.
+// Mirrors packages/schema/session.schema.json v0.3.0. Keep in sync.
 // Times are seconds since session start. Positions are meters, ARKit world frame, y up.
 
 public struct Participant: Codable, Sendable, Equatable {
@@ -32,6 +32,7 @@ public struct Device: Codable, Sendable {
 
 public enum TaskKind: String, Codable, CaseIterable, Sendable {
     case simpleRT = "simple_rt", choiceRT = "choice_rt", corsi, pendulum, pursuit
+    case reachGrab = "reach_grab", wall, colorDots = "color_dots"
 }
 
 public enum Hand: String, Codable, Sendable { case left, right }
@@ -189,11 +190,116 @@ public struct PursuitTrial: Codable, Sendable {
     }
 }
 
+/// Reach and grab. An object waits at a set distance from the dominant shoulder; with feet planted the
+/// participant reaches out and touches it. Distances climb past arm's length, so leaning decides the last ones.
+public struct ReachGrabTrial: Codable, Sendable {
+    public enum Outcome: String, Codable, Sendable { case grab, miss }
+
+    public var index: Int
+    /// Direction from the dominant shoulder, degrees. 0 is straight ahead, positive is toward the dominant side.
+    public var azimuthDeg: Double
+    public var elevationDeg: Double
+    /// Start-pose shoulder to object center, meters.
+    public var distanceM: Double
+    public var position: V3
+    public var spawnT: Double
+    public var grabT: Double?
+    public var hand: Hand?
+    public var outcome: Outcome
+    /// Horizontal head travel from the start pose at the grab, meters: how far the participant leaned.
+    public var leanM: Double?
+    public var trackingGapMs: Double
+    public var trace: Trace?
+
+    public init(index: Int, azimuthDeg: Double, elevationDeg: Double, distanceM: Double, position: V3,
+                spawnT: Double, grabT: Double?, hand: Hand?, outcome: Outcome, leanM: Double?,
+                trackingGapMs: Double, trace: Trace? = nil) {
+        self.index = index; self.azimuthDeg = azimuthDeg; self.elevationDeg = elevationDeg
+        self.distanceM = distanceM; self.position = position; self.spawnT = spawnT; self.grabT = grabT
+        self.hand = hand; self.outcome = outcome; self.leanM = leanM; self.trackingGapMs = trackingGapMs
+        self.trace = trace
+    }
+}
+
+/// Hole in the wall. A wall with two hand cutouts moves toward the participant, who fits both hands into the
+/// cutouts and holds still while it passes. Scored on how still the head and hands stay during the hold.
+public struct WallTrial: Codable, Sendable {
+    public enum Outcome: String, Codable, Sendable { case cleared, hit }
+
+    public var index: Int
+    /// Pose name, for example `arms_out`, `arms_up`, `reach_left`.
+    public var pose: String
+    public var startT: Double
+    /// Hold window: from `holdStartT` until the wall reaches the participant at `passT`.
+    public var holdStartT: Double
+    public var passT: Double
+    /// Cutout centers in world space, meters.
+    public var leftTarget: V3
+    public var rightTarget: V3
+    /// Mean hand-to-cutout distance during the hold, meters. Nil when that hand was not tracked.
+    public var leftErrorM: Double?
+    public var rightErrorM: Double?
+    /// Head path length during the hold divided by the hold duration, cm/s.
+    public var headSwayCmS: Double
+    /// RMS distance of each tracked hand from its own mean position during the hold, averaged over hands, cm.
+    public var handDriftCm: Double?
+    public var outcome: Outcome
+    public var trackingGapMs: Double
+
+    public init(index: Int, pose: String, startT: Double, holdStartT: Double, passT: Double, leftTarget: V3,
+                rightTarget: V3, leftErrorM: Double?, rightErrorM: Double?, headSwayCmS: Double,
+                handDriftCm: Double?, outcome: Outcome, trackingGapMs: Double) {
+        self.index = index; self.pose = pose; self.startT = startT; self.holdStartT = holdStartT
+        self.passT = passT; self.leftTarget = leftTarget; self.rightTarget = rightTarget
+        self.leftErrorM = leftErrorM; self.rightErrorM = rightErrorM; self.headSwayCmS = headSwayCmS
+        self.handDriftCm = handDriftCm; self.outcome = outcome; self.trackingGapMs = trackingGapMs
+    }
+}
+
+/// Color dots. Some dots light up around the participant, then every dot turns grey alongside decoys and the
+/// participant touches only the ones that lit. Dots spread past the field of view, so recall needs head turns.
+public struct ColorDotsTrial: Codable, Sendable {
+    public var index: Int
+    /// Dots that lit during study.
+    public var setSize: Int
+    /// Azimuth of each dot around the participant, degrees. 0 is ahead, positive is right.
+    public var dotAzimuthDeg: [Double]
+    public var dotPositions: [V3]
+    /// True for the dots that lit.
+    public var shown: [Bool]
+    /// Dot indexes touched during recall, in order, and when.
+    public var touched: [Int]
+    public var touchT: [Double]
+    public var studyStartT: Double
+    /// Recall starts when the dots turn grey.
+    public var recallStartT: Double
+    public var endT: Double
+    public var hits: Int
+    public var falseTaps: Int
+    public var misses: Int
+    /// Largest head yaw away from the start direction during recall, degrees.
+    public var maxHeadTurnDeg: Double
+    public var trackingGapMs: Double
+
+    public init(index: Int, setSize: Int, dotAzimuthDeg: [Double], dotPositions: [V3], shown: [Bool],
+                touched: [Int], touchT: [Double], studyStartT: Double, recallStartT: Double, endT: Double,
+                hits: Int, falseTaps: Int, misses: Int, maxHeadTurnDeg: Double, trackingGapMs: Double) {
+        self.index = index; self.setSize = setSize; self.dotAzimuthDeg = dotAzimuthDeg
+        self.dotPositions = dotPositions; self.shown = shown; self.touched = touched; self.touchT = touchT
+        self.studyStartT = studyStartT; self.recallStartT = recallStartT; self.endT = endT; self.hits = hits
+        self.falseTaps = falseTaps; self.misses = misses; self.maxHeadTurnDeg = maxHeadTurnDeg
+        self.trackingGapMs = trackingGapMs
+    }
+}
+
 public enum Trial: Sendable {
     case reaction(ReactionTrial)
     case corsi(CorsiTrial)
     case pendulum(PendulumTrial)
     case pursuit(PursuitTrial)
+    case reachGrab(ReachGrabTrial)
+    case wall(WallTrial)
+    case colorDots(ColorDotsTrial)
 }
 
 public struct Block: Codable, Sendable {
@@ -218,6 +324,9 @@ public struct Block: Codable, Sendable {
         case .corsi: trials = try c.decode([CorsiTrial].self, forKey: .trials).map(Trial.corsi)
         case .pendulum: trials = try c.decode([PendulumTrial].self, forKey: .trials).map(Trial.pendulum)
         case .pursuit: trials = try c.decode([PursuitTrial].self, forKey: .trials).map(Trial.pursuit)
+        case .reachGrab: trials = try c.decode([ReachGrabTrial].self, forKey: .trials).map(Trial.reachGrab)
+        case .wall: trials = try c.decode([WallTrial].self, forKey: .trials).map(Trial.wall)
+        case .colorDots: trials = try c.decode([ColorDotsTrial].self, forKey: .trials).map(Trial.colorDots)
         }
     }
 
@@ -233,6 +342,9 @@ public struct Block: Codable, Sendable {
             case .corsi(let t): try arr.encode(t)
             case .pendulum(let t): try arr.encode(t)
             case .pursuit(let t): try arr.encode(t)
+            case .reachGrab(let t): try arr.encode(t)
+            case .wall(let t): try arr.encode(t)
+            case .colorDots(let t): try arr.encode(t)
             }
         }
     }
@@ -241,6 +353,9 @@ public struct Block: Codable, Sendable {
     public var corsiTrials: [CorsiTrial] { trials.compactMap { if case .corsi(let t) = $0 { t } else { nil } } }
     public var pendulumTrials: [PendulumTrial] { trials.compactMap { if case .pendulum(let t) = $0 { t } else { nil } } }
     public var pursuitTrials: [PursuitTrial] { trials.compactMap { if case .pursuit(let t) = $0 { t } else { nil } } }
+    public var reachGrabTrials: [ReachGrabTrial] { trials.compactMap { if case .reachGrab(let t) = $0 { t } else { nil } } }
+    public var wallTrials: [WallTrial] { trials.compactMap { if case .wall(let t) = $0 { t } else { nil } } }
+    public var colorDotsTrials: [ColorDotsTrial] { trials.compactMap { if case .colorDots(let t) = $0 { t } else { nil } } }
 }
 
 public struct HealthKitSnapshot: Codable, Sendable {
@@ -250,7 +365,7 @@ public struct HealthKitSnapshot: Codable, Sendable {
 }
 
 public struct Session: Codable, Sendable {
-    public static let schemaVersion = "0.2.0"
+    public static let schemaVersion = "0.3.0"
 
     public var schemaVersion = Session.schemaVersion
     public var sessionId = UUID().uuidString

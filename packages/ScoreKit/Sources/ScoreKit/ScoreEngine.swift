@@ -68,9 +68,10 @@ public struct ScoreReport: Codable, Sendable {
 
 /// Session in, `ScoreReport` out. Pure function of the session and the norm table.
 public struct ScoreEngine: Sendable {
-    public static let version = "0.2.0"
+    public static let version = "0.3.0"
     public static let extractors: [any MetricExtractor.Type] = [
         PendulumMetrics.self, SparkMetrics.self, GateMetrics.self, ConstellationMetrics.self, OrbitMetrics.self,
+        ReachGrabMetrics.self, WallMetrics.self, ColorDotsMetrics.self,
     ]
     /// Sessions under this valid trial rate are flagged unusable (specs/features.md).
     public static let minValidRate = 0.7
@@ -153,6 +154,7 @@ public struct ScoreEngine: Sendable {
     public static let headline: [Game: MetricID] = [
         .pendulum: .catchDropCm, .spark: .reachRT, .gate: .decisionTime,
         .constellation: .corsiSpan, .orbit: .pursuitRMS,
+        .reach: .reachLeanCm, .wall: .wallSwayCmS, .dots: .dotsSpan,
     ]
 
     /// 0 to 100, higher is better, from an aging z-score.

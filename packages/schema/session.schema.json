@@ -14,7 +14,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "pattern": "^0\\.[12]\\.\\d+$"
+      "pattern": "^0\\.[123]\\.\\d+$"
     },
     "session_id": {
       "type": "string"
@@ -85,7 +85,10 @@
               "choice_rt",
               "corsi",
               "pendulum",
-              "pursuit"
+              "pursuit",
+              "reach_grab",
+              "wall",
+              "color_dots"
             ]
           },
           "familiarization": {
@@ -109,6 +112,15 @@
                 },
                 {
                   "$ref": "#/$defs/pursuitTrial"
+                },
+                {
+                  "$ref": "#/$defs/reachGrabTrial"
+                },
+                {
+                  "$ref": "#/$defs/wallTrial"
+                },
+                {
+                  "$ref": "#/$defs/colorDotsTrial"
                 }
               ]
             }
@@ -434,6 +446,223 @@
             "right",
             null
           ]
+        },
+        "tracking_gap_ms": {
+          "type": "number"
+        }
+      }
+    },
+    "reachGrabTrial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "azimuth_deg",
+        "elevation_deg",
+        "distance_m",
+        "position",
+        "spawn_t",
+        "outcome",
+        "tracking_gap_ms"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "azimuth_deg": {
+          "type": "number"
+        },
+        "elevation_deg": {
+          "type": "number"
+        },
+        "distance_m": {
+          "type": "number"
+        },
+        "position": {
+          "$ref": "#/$defs/vec3"
+        },
+        "spawn_t": {
+          "type": "number"
+        },
+        "grab_t": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "hand": {
+          "enum": [
+            "left",
+            "right",
+            null
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "grab",
+            "miss"
+          ]
+        },
+        "lean_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "tracking_gap_ms": {
+          "type": "number"
+        },
+        "trace": {
+          "$ref": "#/$defs/trace"
+        }
+      }
+    },
+    "wallTrial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "pose",
+        "start_t",
+        "hold_start_t",
+        "pass_t",
+        "left_target",
+        "right_target",
+        "head_sway_cm_s",
+        "outcome",
+        "tracking_gap_ms"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "pose": {
+          "type": "string"
+        },
+        "start_t": {
+          "type": "number"
+        },
+        "hold_start_t": {
+          "type": "number"
+        },
+        "pass_t": {
+          "type": "number"
+        },
+        "left_target": {
+          "$ref": "#/$defs/vec3"
+        },
+        "right_target": {
+          "$ref": "#/$defs/vec3"
+        },
+        "left_error_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "right_error_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "head_sway_cm_s": {
+          "type": "number"
+        },
+        "hand_drift_cm": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "cleared",
+            "hit"
+          ]
+        },
+        "tracking_gap_ms": {
+          "type": "number"
+        }
+      }
+    },
+    "colorDotsTrial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "set_size",
+        "dot_azimuth_deg",
+        "dot_positions",
+        "shown",
+        "touched",
+        "touch_t",
+        "study_start_t",
+        "recall_start_t",
+        "end_t",
+        "hits",
+        "false_taps",
+        "misses",
+        "max_head_turn_deg",
+        "tracking_gap_ms"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "set_size": {
+          "type": "integer"
+        },
+        "dot_azimuth_deg": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "dot_positions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vec3"
+          }
+        },
+        "shown": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          }
+        },
+        "touched": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "touch_t": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "study_start_t": {
+          "type": "number"
+        },
+        "recall_start_t": {
+          "type": "number"
+        },
+        "end_t": {
+          "type": "number"
+        },
+        "hits": {
+          "type": "integer"
+        },
+        "false_taps": {
+          "type": "integer"
+        },
+        "misses": {
+          "type": "integer"
+        },
+        "max_head_turn_deg": {
+          "type": "number"
         },
         "tracking_gap_ms": {
           "type": "number"
