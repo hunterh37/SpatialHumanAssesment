@@ -94,6 +94,7 @@ struct OnboardingView: View {
     private var canContinue: Bool {
         switch step {
         case .name: !draft.name.trimmingCharacters(in: .whitespaces).isEmpty
+        case .age: draft.ageSet
         case .sex: draft.sex != nil
         case .hand: draft.hand != nil
         case .posture: draft.posture != nil
@@ -149,10 +150,11 @@ struct OnboardingView: View {
                 BigStepper(minus: "Younger", plus: "Older",
                            canMinus: draft.age > 18, canPlus: draft.age < 100) { d in
                     draft.age = min(100, max(18, draft.age + Double(d)))
+                    draft.ageSet = true
                 } value: {
-                    ValueText(number: "\(Int(draft.age))", unit: "YRS")
+                    ValueText(number: draft.ageSet ? "\(Int(draft.age))" : "–", unit: "YRS")
                 }
-                Slider(value: $draft.age, in: 18...100, step: 1)
+                Slider(value: $draft.age, in: 18...100, step: 1) { _ in draft.ageSet = true }
                     .tint(Color.duskAccentStrong)
                     .frame(maxWidth: 480)
                     .accessibilityLabel("Age")

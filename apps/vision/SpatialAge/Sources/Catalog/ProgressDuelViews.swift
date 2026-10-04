@@ -131,6 +131,8 @@ struct DuelView: View {
     @Environment(AppModel.self) private var model
     let start: ([Game]) -> Void
     @State private var second = Participant(code: Participant.randomCode(), ageYears: 30)
+    /// Player 2 must set an age; the stepper's starting value would otherwise label their sessions.
+    @State private var secondAgeSet = false
 
     var body: some View {
         if let duel = model.duel { active(duel) } else { setup }
@@ -150,11 +152,14 @@ struct DuelView: View {
                 }
                 panel(title: "Player 2", code: second.code) {
                     AgeStepper(age: $second.ageYears)
+                        .onChange(of: second.ageYears) { secondAgeSet = true }
+                    if !secondAgeSet { Text("Set Player 2's age").font(.callout).duskSecondary() }
                 }
             }
             .frame(maxWidth: 760)
             Button("Start the duel") { model.startDuel(second: second) }
                 .buttonStyle(.duskPrimaryLarge)
+                .disabled(!secondAgeSet)
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity)

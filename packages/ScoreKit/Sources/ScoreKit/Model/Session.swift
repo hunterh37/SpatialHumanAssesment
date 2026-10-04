@@ -1,19 +1,28 @@
 import Foundation
 
-// Mirrors packages/schema/session.schema.json v0.4.0. Keep in sync.
+// Mirrors packages/schema/session.schema.json v0.5.0. Keep in sync.
 // Times are seconds since session start. Positions are meters, ARKit world frame, y up.
 
 public struct Participant: Codable, Sendable, Equatable {
     public enum Sex: String, Codable, CaseIterable, Sendable { case female, male, other, unspecified }
     public enum Handedness: String, Codable, CaseIterable, Sendable { case left, right, ambi }
 
+    public enum Posture: String, Codable, CaseIterable, Sendable { case standing, seated }
+
     public var code: String
     public var ageYears: Double
     public var sex: Sex
     public var handedness: Handedness
+    /// Body size scales reach and lean, so reach metrics need it to compare people.
+    public var heightCm: Double?
+    public var weightKg: Double?
+    /// Seated play skips the standing games.
+    public var posture: Posture?
 
-    public init(code: String, ageYears: Double, sex: Sex = .unspecified, handedness: Handedness = .right) {
+    public init(code: String, ageYears: Double, sex: Sex = .unspecified, handedness: Handedness = .right,
+                heightCm: Double? = nil, weightKg: Double? = nil, posture: Posture? = nil) {
         self.code = code; self.ageYears = ageYears; self.sex = sex; self.handedness = handedness
+        self.heightCm = heightCm; self.weightKg = weightKg; self.posture = posture
     }
 
     public static func randomCode() -> String {
@@ -25,10 +34,16 @@ public struct Device: Codable, Sendable {
     public var model: String
     public var osVersion: String
     public var appVersion: String
-    public init(model: String, osVersion: String, appVersion: String) {
-        self.model = model; self.osVersion = osVersion; self.appVersion = appVersion
+    /// Random per-install id, so sessions from different headsets can be told apart. Not tied to the person.
+    public var deviceId: String?
+    public init(model: String, osVersion: String, appVersion: String, deviceId: String? = nil) {
+        self.model = model; self.osVersion = osVersion; self.appVersion = appVersion; self.deviceId = deviceId
     }
 }
+
+/// How the session was started. Only `full` sessions play every game once in a fixed setting, so norm
+/// calibration uses those.
+public enum PlayMode: String, Codable, Sendable { case full, single, duel }
 
 public enum TaskKind: String, Codable, CaseIterable, Sendable {
     case simpleRT = "simple_rt", choiceRT = "choice_rt", corsi, pendulum, pursuit
@@ -421,20 +436,24 @@ public struct HealthKitSnapshot: Codable, Sendable {
 }
 
 public struct Session: Codable, Sendable {
-    public static let schemaVersion = "0.4.0"
+    public static let schemaVersion = "0.5.0"
 
     public var schemaVersion = Session.schemaVersion
     public var sessionId = UUID().uuidString
     public var startedAt = Date()
     public var participant: Participant
     public var device: Device
+    public var mode: PlayMode?
+    /// Sessions this participant code had already saved on this device. Practice makes repeat scores look
+    /// younger, so calibration uses first sessions.
+    public var priorSessions: Int?
     public var blocks: [Block] = []
     public var healthkit: HealthKitSnapshot?
 
     public init(sessionId: String = UUID().uuidString, startedAt: Date = Date(), participant: Participant,
-                device: Device, blocks: [Block] = []) {
+                device: Device, mode: PlayMode? = nil, priorSessions: Int? = nil, blocks: [Block] = []) {
         self.sessionId = sessionId; self.startedAt = startedAt; self.participant = participant
-        self.device = device; self.blocks = blocks
+        self.device = device; self.mode = mode; self.priorSessions = priorSessions; self.blocks = blocks
     }
 
     /// Scored (non-familiarization) blocks of one task.

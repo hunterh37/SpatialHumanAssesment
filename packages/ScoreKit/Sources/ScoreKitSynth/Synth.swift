@@ -69,7 +69,7 @@ public struct Synth {
         return Session(sessionId: uuid, startedAt: date,
                        participant: Participant(code: code, ageYears: age, sex: .unspecified, handedness: .right),
                        device: Device(model: "synthetic", osVersion: "-", appVersion: "scorekit-synth"),
-                       blocks: blocks)
+                       mode: .full, blocks: blocks)
     }
 
     mutating func block(_ g: Game, _ p: Physiology, n: Int, familiarization: Bool, clock: inout Double, seed: Int) -> Block {
