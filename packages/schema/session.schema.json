@@ -3,41 +3,115 @@
   "$id": "https://spatialhumanassessment/session.schema.json",
   "title": "Session",
   "type": "object",
-  "required": ["schema_version", "session_id", "participant", "device", "started_at", "blocks"],
+  "required": [
+    "schema_version",
+    "session_id",
+    "participant",
+    "device",
+    "started_at",
+    "blocks"
+  ],
   "properties": {
-    "schema_version": { "type": "string", "pattern": "^0\\.1\\.\\d+$" },
-    "session_id": { "type": "string" },
-    "started_at": { "type": "string", "format": "date-time" },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^0\\.[12]\\.\\d+$"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "participant": {
       "type": "object",
-      "required": ["code", "age_years"],
+      "required": [
+        "code",
+        "age_years"
+      ],
       "properties": {
-        "code": { "type": "string" },
-        "age_years": { "type": "number", "minimum": 10, "maximum": 110 },
-        "sex": { "enum": ["female", "male", "other", "unspecified"] },
-        "handedness": { "enum": ["left", "right", "ambi"] }
+        "code": {
+          "type": "string"
+        },
+        "age_years": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 110
+        },
+        "sex": {
+          "enum": [
+            "female",
+            "male",
+            "other",
+            "unspecified"
+          ]
+        },
+        "handedness": {
+          "enum": [
+            "left",
+            "right",
+            "ambi"
+          ]
+        }
       }
     },
     "device": {
       "type": "object",
       "properties": {
-        "model": { "type": "string" },
-        "os_version": { "type": "string" },
-        "app_version": { "type": "string" }
+        "model": {
+          "type": "string"
+        },
+        "os_version": {
+          "type": "string"
+        },
+        "app_version": {
+          "type": "string"
+        }
       }
     },
     "blocks": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["task", "familiarization", "trials"],
+        "required": [
+          "task",
+          "familiarization",
+          "trials"
+        ],
         "properties": {
-          "task": { "enum": ["simple_rt", "choice_rt", "corsi"] },
-          "familiarization": { "type": "boolean" },
-          "seed": { "type": "integer" },
+          "task": {
+            "enum": [
+              "simple_rt",
+              "choice_rt",
+              "corsi",
+              "pendulum",
+              "pursuit"
+            ]
+          },
+          "familiarization": {
+            "type": "boolean"
+          },
+          "seed": {
+            "type": "integer"
+          },
           "trials": {
             "type": "array",
-            "items": { "oneOf": [ { "$ref": "#/$defs/reactionTrial" }, { "$ref": "#/$defs/corsiTrial" } ] }
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/reactionTrial"
+                },
+                {
+                  "$ref": "#/$defs/corsiTrial"
+                },
+                {
+                  "$ref": "#/$defs/pendulumTrial"
+                },
+                {
+                  "$ref": "#/$defs/pursuitTrial"
+                }
+              ]
+            }
           }
         }
       }
@@ -45,40 +119,325 @@
     "healthkit": {
       "type": "object",
       "properties": {
-        "resting_hr_bpm": { "type": "number" },
-        "hrv_sdnn_ms": { "type": "number" },
-        "vo2max": { "type": "number" }
+        "resting_hr_bpm": {
+          "type": "number"
+        },
+        "hrv_sdnn_ms": {
+          "type": "number"
+        },
+        "vo2max": {
+          "type": "number"
+        }
       }
     }
   },
   "$defs": {
     "reactionTrial": {
       "type": "object",
-      "required": ["index", "kind", "spawn_t", "move_t", "contact_t", "eccentricity_deg", "outcome"],
+      "required": [
+        "index",
+        "kind",
+        "spawn_t",
+        "move_t",
+        "contact_t",
+        "eccentricity_deg",
+        "outcome"
+      ],
       "properties": {
-        "index": { "type": "integer" },
-        "kind": { "enum": ["go", "nogo"] },
-        "hand": { "enum": ["left", "right", null] },
-        "spawn_t": { "type": "number" },
-        "move_t": { "type": ["number", "null"] },
-        "contact_t": { "type": ["number", "null"] },
-        "position": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
-        "eccentricity_deg": { "type": "number" },
-        "outcome": { "enum": ["hit", "miss", "false_alarm", "correct_reject"] },
-        "tracking_gap_ms": { "type": "number" }
-      }
+        "index": {
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "go",
+            "nogo"
+          ]
+        },
+        "hand": {
+          "enum": [
+            "left",
+            "right",
+            null
+          ]
+        },
+        "spawn_t": {
+          "type": "number"
+        },
+        "move_t": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "contact_t": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "position": {
+          "$ref": "#/$defs/vec3"
+        },
+        "eccentricity_deg": {
+          "type": "number"
+        },
+        "outcome": {
+          "enum": [
+            "hit",
+            "miss",
+            "false_alarm",
+            "correct_reject"
+          ]
+        },
+        "tracking_gap_ms": {
+          "type": "number"
+        },
+        "endpoint_error_m": {
+          "type": "number"
+        },
+        "trace": {
+          "$ref": "#/$defs/trace"
+        }
+      },
+      "additionalProperties": false
     },
     "corsiTrial": {
       "type": "object",
-      "required": ["index", "span", "sequence", "response", "correct"],
+      "required": [
+        "index",
+        "span",
+        "sequence",
+        "response",
+        "correct"
+      ],
       "properties": {
-        "index": { "type": "integer" },
-        "span": { "type": "integer" },
-        "sequence": { "type": "array", "items": { "type": "integer" } },
-        "response": { "type": "array", "items": { "type": "integer" } },
-        "correct": { "type": "boolean" },
-        "start_t": { "type": "number" },
-        "end_t": { "type": "number" }
+        "index": {
+          "type": "integer"
+        },
+        "span": {
+          "type": "integer"
+        },
+        "sequence": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "response": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "correct": {
+          "type": "boolean"
+        },
+        "start_t": {
+          "type": "number"
+        },
+        "end_t": {
+          "type": "number"
+        },
+        "tap_t": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "vec3": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "trace": {
+      "type": "object",
+      "required": [
+        "t",
+        "p"
+      ],
+      "description": "Fingertip path at hand tracking rate",
+      "properties": {
+        "t": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "p": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vec3"
+          }
+        }
+      }
+    },
+    "pendulumTrial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "length_m",
+        "amplitude_deg",
+        "release_t",
+        "release_angle_deg",
+        "release_position",
+        "release_velocity",
+        "outcome",
+        "tracking_gap_ms"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "length_m": {
+          "type": "number"
+        },
+        "amplitude_deg": {
+          "type": "number"
+        },
+        "release_t": {
+          "type": "number"
+        },
+        "release_angle_deg": {
+          "type": "number"
+        },
+        "release_position": {
+          "$ref": "#/$defs/vec3"
+        },
+        "release_velocity": {
+          "$ref": "#/$defs/vec3"
+        },
+        "catch_t": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "catch_position": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/vec3"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hand": {
+          "enum": [
+            "left",
+            "right",
+            null
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "catch",
+            "drop",
+            "anticipation"
+          ]
+        },
+        "tracking_gap_ms": {
+          "type": "number"
+        },
+        "aperture_release_m": {
+          "type": "number"
+        },
+        "aperture_catch_m": {
+          "type": "number"
+        },
+        "trace": {
+          "$ref": "#/$defs/trace"
+        }
+      }
+    },
+    "pursuitTrial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "start_t",
+        "duration_s",
+        "path",
+        "t",
+        "target",
+        "finger",
+        "tracking_gap_ms"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "start_t": {
+          "type": "number"
+        },
+        "duration_s": {
+          "type": "number"
+        },
+        "path": {
+          "type": "object",
+          "required": [
+            "center",
+            "amplitude",
+            "frequency_hz",
+            "phase"
+          ],
+          "properties": {
+            "center": {
+              "$ref": "#/$defs/vec3"
+            },
+            "amplitude": {
+              "$ref": "#/$defs/vec3"
+            },
+            "frequency_hz": {
+              "$ref": "#/$defs/vec3"
+            },
+            "phase": {
+              "$ref": "#/$defs/vec3"
+            }
+          }
+        },
+        "t": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "target": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vec3"
+          }
+        },
+        "finger": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "hand": {
+          "enum": [
+            "left",
+            "right",
+            null
+          ]
+        },
+        "tracking_gap_ms": {
+          "type": "number"
+        }
       }
     }
   }

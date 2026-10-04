@@ -1,4 +1,5 @@
 import Foundation
+import ScoreKit
 
 struct IngestClient {
     let baseURL: URL

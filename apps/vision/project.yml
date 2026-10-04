@@ -6,11 +6,17 @@ options:
 settings:
   SWIFT_VERSION: "5.10"
   DEVELOPMENT_TEAM: ""
+packages:
+  ScoreKit:
+    path: ../../packages/ScoreKit
 targets:
   SpatialAge:
     type: application
     platform: visionOS
     sources: [SpatialAge/Sources]
+    dependencies:
+      - package: ScoreKit
+        product: ScoreKit
     info:
       path: SpatialAge/Info.plist
       properties:
