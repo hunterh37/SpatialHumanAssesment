@@ -1,0 +1,85 @@
+{
+  "version": "lit-0.1",
+  "notes": "Klemera-Doubal parameters from published age curves. Each biomarker follows x(a) = mean25 + slope (a - 25) + accel max(0, a - knee)^2 with residual SD `sd` given age. Shapes (slope, knee, accel) come from the cited studies. Levels (mean25, sd) are set for a fingertip reach in a headset, which none of the studies used, so they are provisional until re-anchored on a young-adult group on the device. Refit on collected sessions and bump `version`.",
+  "age_range": [18, 95],
+  "chronological_prior_sd": 9.0,
+  "biomarkers": {
+    "catch_latency": {
+      "game": "pendulum",
+      "unit": "s",
+      "mean25": 0.19,
+      "sd": 0.025,
+      "slope": 0.0004,
+      "accel": 0.000012,
+      "knee": 50,
+      "provisional": true,
+      "source": "Simple-RT shape, little slowing before ~50: Der and Deary 2006, Psychol Aging 21(1), UK HALS n=7130. Baseline from ruler-drop RT, Eckner et al. 2010; device level not calibrated."
+    },
+    "reach_rt": {
+      "game": "spark",
+      "unit": "s",
+      "mean25": 0.30,
+      "sd": 0.04,
+      "slope": 0.0005,
+      "accel": 0.00002,
+      "knee": 50,
+      "provisional": true,
+      "source": "Simple RT nearly flat until ~50 then accelerates: Der and Deary 2006; young-adult minimum, rise through adulthood: Dykiert et al. 2012, n=1994."
+    },
+    "rt_tau": {
+      "game": "spark",
+      "unit": "s",
+      "mean25": 0.040,
+      "sd": 0.015,
+      "slope": 0.0006,
+      "accel": 0.0,
+      "knee": 50,
+      "provisional": true,
+      "source": "RT variability higher in older adults after controlling for speed: Hultsch, MacDonald and Dixon 2002 (extreme groups, slope not sourced); ex-Gaussian tau rises with age: West et al. 2002."
+    },
+    "choice_rt": {
+      "game": "gate",
+      "unit": "s",
+      "mean25": 0.43,
+      "sd": 0.05,
+      "slope": 0.0025,
+      "accel": 0.00003,
+      "knee": 50,
+      "provisional": true,
+      "source": "Choice RT slows across adulthood: Der and Deary 2006. Keypress go RT 277 ms at ~18 to 351 ms at 60-69 (Communications Medicine 2025, s43856-025-01239-1), scaled by ~1.5x for reach; UK Biobank ~3 ms/yr at 40-70 (npj Aging 2021, s41514-021-00067-6)."
+    },
+    "omission_rate": {
+      "game": "gate",
+      "unit": "fraction",
+      "mean25": 0.01,
+      "sd": 0.03,
+      "slope": 0.0002,
+      "accel": 0.000053,
+      "knee": 50,
+      "provisional": true,
+      "source": "Go/no-go omissions 1.09% (~18), 3.06% (60-69), 4.92% (70-79), 10.05% (80+): Communications Medicine 2025. Curve fit to those group means. That study used a 500 ms deadline; Gate's 2 s window will give fewer omissions, so sd is set wide."
+    },
+    "corsi_span": {
+      "game": "constellation",
+      "unit": "items",
+      "mean25": 6.0,
+      "sd": 1.0,
+      "slope": -0.025,
+      "accel": 0.0,
+      "knee": 50,
+      "provisional": true,
+      "source": "Span SD 1.03 and r(age) = -0.46 over ages 21-89, implying about -0.025 span/yr: Facchin et al. 2024, PMC11554723. Young-adult level 6-7 depends on protocol: Kessels et al. 2000; Pagulayan et al. 2006."
+    },
+    "pursuit_rms_cm": {
+      "game": "orbit",
+      "unit": "cm",
+      "mean25": 4.0,
+      "sd": 1.0,
+      "slope": 0.02,
+      "accel": 0.0006,
+      "knee": 50,
+      "provisional": true,
+      "source": "Direction only: older adults track with larger error and lag (Neuroscience 2026, S0306452226004264; 3D tracking, T&F 2024, 18824889.2024.2359183). Magnitude is a placeholder with a deliberately shallow slope so it carries little weight until fitted."
+    }
+  }
+}
