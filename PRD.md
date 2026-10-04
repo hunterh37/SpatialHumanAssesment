@@ -74,7 +74,7 @@ Jason and Hunter lead the idea; it is their Vision Pro work.
 | Jessica Myles | Team | Business use case, name, UI/UX | [MBA Candidate at Harvard Business School · Ex-Doordash, Accenture](https://www.linkedin.com/in/jessica-myles/) |
 | Wilson Wu | Team | Memory and balance games, PRD and research | [Building with AI · Founder, Dubbs Capital · CRO at Snappy · MSCS @ Georgia Tech](https://www.linkedin.com/in/wilson1wu/) |
 | Alex Fu | Team | Memory and balance games; designed Scary Balance and Hole in the Wall; branding and the Games Ideas deck | [Non-Invasive Devices · BU Mechanical Engineering Student, focusing on Human-Machine Interaction and MedTech](https://www.linkedin.com/in/alex-fu-bu/) |
-| Franco | Team | Memory and balance games | To add |
+| Franco | Team | Memory and balance games; the KDM age pipeline (PRs #14, #15, #18, #20; GitHub Funkey08) | To add |
 | Ben | Team | The data set; Vision Pro landscape research | To add |
 
 Headlines are as shown on each LinkedIn profile on 4 October 2026.
