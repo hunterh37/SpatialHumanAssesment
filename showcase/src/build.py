@@ -103,11 +103,25 @@ def save(name, s):
 class Scene:
     """Isometric scene in meters."""
 
-    def __init__(self, s, cx, cy):
+    def __init__(self, s, cx=0, cy=0):
         self.s, self.cx, self.cy = s, cx, cy
+        self.box_ = [1e9, 1e9, -1e9, -1e9]
 
     def P(self, x, y, z):
-        return iso(x, y, z, self.s, self.cx, self.cy)
+        # World: x forward from the participant, y lateral, z up. The camera sits behind-left of the
+        # participant, so forward recedes up-right and nearer things draw later.
+        p = iso(y, -x, z, self.s, self.cx, self.cy)
+        b = self.box_
+        b[0], b[1], b[2], b[3] = min(b[0], p[0]), min(b[1], p[1]), max(b[2], p[0]), max(b[3], p[1])
+        return p
+
+    def fit(self, body, pad=(70, 40, 90, 40)):
+        """SVG cropped to everything projected so far. pad = left, top, right, bottom."""
+        x0, y0, x1, y1 = self.box_
+        x0 -= pad[0]; y0 -= pad[1]; x1 += pad[2]; y1 += pad[3]
+        w, h = x1 - x0, y1 - y0
+        return (f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='{x0:.0f} {y0:.0f} {w:.0f} {h:.0f}' "
+                f"width='{w:.0f}' height='{h:.0f}'>{body}</svg>")
 
     def floor(self, r=1.5, step=0.5, cx=0.0, cy=0.0):
         n = 72
@@ -124,8 +138,9 @@ class Scene:
     def box(self, x0, y0, z0, dx, dy, dz, top=WOOD, s1=WOOD2, s2=WOOD3, sw=1.5):
         P = self.P
         x1, y1, z1 = x0 + dx, y0 + dy, z0 + dz
+        # Visible from the camera: top, the face toward the participant (x0) and the +y face.
         o = poly([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], top, sw=sw)
-        o += poly([P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)], s1, sw=sw)
+        o += poly([P(x0, y0, z0), P(x0, y1, z0), P(x0, y1, z1), P(x0, y0, z1)], s1, sw=sw)
         o += poly([P(x0, y1, z0), P(x1, y1, z0), P(x1, y1, z1), P(x0, y1, z1)], s2, sw=sw)
         return o
 
@@ -192,22 +207,22 @@ class Scene:
 
 def pendulum_scene(w=760, h=600, s=230, cx=300, cy=135, full=True):
     S = Scene(s, cx, cy)
-    o = S.floor(1.2, 0.3) if full else ""
+    o = S.floor(1.25, 0.3, cx=0.3) if full else ""
     piv = (0.48, 0.0, 1.95)
     L = 0.7
     amp = math.radians(30)
-    # support beam
-    o += S.box(0.44, -0.55, 1.95, 0.08, 1.1, 0.05, "#c9d3e3", "#b7c3d8", "#aab7cd")
     # ruler behind the swing plane: 0.75 m to 1.95 m
     rx = 0.80
-    o += S.box(rx, -0.03, 0.75, 0.015, 0.06, 1.2, "#fbfaf6", "#e9e4d8", "#dcd5c6", 1.2)
-    for i in range(0, 121, 5):
-        z = 1.95 - i / 100
+    o += S.box(rx, -0.03, 0.70, 0.015, 0.06, 1.1, "#fbfaf6", "#e9e4d8", "#dcd5c6", 1.2)
+    for i in range(0, 111, 5):
+        z = 1.80 - i / 100
         a = S.P(rx, -0.03, z)
         ln = 0.035 if i % 10 == 0 else 0.018
         o += line(a, S.P(rx, -0.03 + ln, z), INK, 1 if i % 10 else 1.4)
         if i % 20 == 0 and full:
             o += text(a[0] - 6, a[1] + 4, f"{i}", 10, MUTE, 400, "end")
+    # support beam
+    o += S.box(0.44, -0.55, 1.95, 0.08, 1.1, 0.05, "#c9d3e3", "#b7c3d8", "#aab7cd")
     # swing arc ghost
     arc = [S.P(piv[0], piv[1] + L * math.sin(t), piv[2] - L * math.cos(t))
            for t in [amp * (k / 30 - 1) for k in range(61)]]
@@ -233,7 +248,7 @@ def pendulum_scene(w=760, h=600, s=230, cx=300, cy=135, full=True):
     o += pline([S.P(*p) for p in path], GOLD, 2, "1 6")
     for k, t in enumerate([0.05, 0.10, 0.15]):
         p = (rel[0], rel[1] + vel[1] * t, rel[2] + vel[2] * t - 4.905 * t * t)
-        o += S.orb(*p, 0.04, GOLD, ring=False, drop=False).replace("<circle", "<circle opacity='0.35'", 3)
+        o += f"<g opacity='{0.25 + 0.15 * k:.2f}'>" + S.orb(*p, 0.04, GOLD, ring=False, drop=False) + "</g>"
     o += S.orb(*rel, 0.04, GOLD, ring=False, drop=False)
     cat = (rel[0], rel[1] + vel[1] * lat, rel[2] + vel[2] * lat - 4.905 * lat * lat)
     if full:
@@ -245,22 +260,20 @@ def pendulum_scene(w=760, h=600, s=230, cx=300, cy=135, full=True):
     o += line((tick[0] - 2, tick[1]), (tick[0] + 26, tick[1] - 6), "#d9a400", 4)
     drop_cm = (rel[2] - cat[2]) * 100
     if full:
-        o += text(tick[0] + 32, tick[1] - 2, f"{drop_cm:.0f} cm", 16, INK, 700)
-        o += text(tick[0] + 32, tick[1] + 16, "d = g t² / 2", 12, MUTE)
+        o += text(tick[0] + 40, tick[1] + 2, f"{drop_cm:.0f} cm", 16, INK, 700)
+        o += text(tick[0] + 40, tick[1] + 20, "d = g t² / 2", 12, MUTE)
         o += S.dim((0.48, -0.75, 0), (0.48, -0.75, 1.95), "1.95 m", (-30, 0))
         o += S.dim((0, -0.75, 0), (0.48, -0.75, 0), "0.48 m", (-24, 14))
         mid = S.P(piv[0], piv[1] + 0.5 * L * math.sin(-amp), piv[2] - 0.5 * L * math.cos(-amp))
-        o += text(mid[0] - 14, mid[1], "cord 0.55–0.85 m", 12, SOFT, 600, "end")
-        a = S.P(piv[0], piv[1] + L * math.sin(amp), piv[2] - L * math.cos(amp))
-        o += text(a[0] + 14, a[1] + 4, "±22–34°", 12, SOFT, 600)
+        o += text(mid[0] - 14, mid[1] - 10, "cord 0.55–0.85 m, ±22–34°", 12, SOFT, 600, "end")
         r = S.P(*rel)
         o += text(r[0] + 16, r[1] - 10, "release", 12, SOFT, 600)
-    return svg(o, w, h)
+    return S.fit(o)
 
 
 def spark_scene(w=760, h=560):
-    S = Scene(250, 380, 120)
-    o = S.floor(1.1, 0.3)
+    S = Scene(250)
+    o = S.floor(1.1, 0.3, cx=0.25)
     sh_z = 1.4
     # eccentricity bins as an annulus band at shoulder height, facing +x
     for b, col in enumerate(["#dfe8ff", "#e8eeff", "#dfe8ff", "#e8eeff"]):
@@ -275,41 +288,40 @@ def spark_scene(w=760, h=560):
             p = S.P(0.69 * math.cos(a), 0.69 * math.sin(a), sh_z)
             if side == 1 or b == 0:
                 o += text(p[0], p[1] + 4, f"{b * 30}°", 11, MUTE, 600, "middle")
-    o += S.person(0, 0, hand=(0.4, 0.32, 1.28), facing=(1, 0))
     tgt = (0.47, 0.36, 1.3)
     o += S.orb(*tgt, 0.06, BLUE)
+    o += S.person(0, 0, hand=(0.4, 0.32, 1.28), facing=(1, 0))
     o += S.dim((0, 0, sh_z + 0.32), (0.35, 0, sh_z + 0.32), "0.35 m", (0, -8))
     o += S.dim((0, -0.05, sh_z + 0.42), (0.65, -0.05, sh_z + 0.42), "0.65 m", (0, -8))
     t = S.P(*tgt)
     o += text(t[0] + 36, t[1] + 4, "r 6 cm", 12, SOFT, 600)
-    return svg(o, w, h)
+    return S.fit(o)
 
 
 def gate_scene(w=760, h=560):
-    S = Scene(250, 380, 120)
-    o = S.floor(1.1, 0.3)
-    blue = (0.5, 0.25, 1.32)
-    orange = (0.45, -0.12, 1.18)
-    o += S.person(0, 0, hand=(0.44, 0.22, 1.3), facing=(1, 0))
+    S = Scene(250)
+    o = S.floor(1.0, 0.3, cx=0.3)
+    blue = (0.5, 0.22, 1.32)
+    orange = (0.62, -0.18, 1.2)
     o += S.orb(*orange, 0.06, ORANGE)
     o += S.orb(*blue, 0.06, BLUE)
+    o += S.person(0, 0, hand=(0.44, 0.22, 1.3), facing=(1, 0))
     o += S.dim((orange[0], orange[1], orange[2] + 0.12), (blue[0], blue[1], blue[2] + 0.12), "≥ 0.25 m", (0, -10))
     b, r = S.P(*blue), S.P(*orange)
     o += text(b[0] + 36, b[1] + 4, "touch", 13, INK, 700)
-    o += text(r[0] + 36, r[1] + 4, "leave", 13, INK, 700)
-    return svg(o, w, h)
+    o += text(r[0] - 30, r[1] + 4, "leave", 13, INK, 700, "end")
+    return S.fit(o)
 
 
-STAR_NODES = [(0.9, -0.7, 0.76), (1.0, -0.2, 0.76), (0.85, 0.35, 0.76), (0.6, 0.85, 1.25), (0.2, 1.0, 1.25),
+STAR_NODES = [(0.9, -0.7, 0.76), (1.0, -0.2, 0.76), (0.85, 0.4, 0.02), (0.65, 0.95, 1.25), (0.4, 0.95, 1.25),
               (1.1, 0.6, 0.02), (0.55, -1.0, 1.55), (1.05, 0.15, 1.7), (0.35, -0.9, 0.02)]
 
 
 def constellation_scene(w=760, h=560, seq=(6, 1, 3, 5)):
-    S = Scene(200, 360, 150)
-    o = S.floor(1.4, 0.35)
-    o += S.box(0.7, -0.85, 0, 0.5, 1.4, 0.72)          # table
+    S = Scene(200)
+    o = S.floor(1.45, 0.35, cx=0.45)
+    o += S.box(0.75, -0.9, 0, 0.5, 0.85, 0.72)         # table
     o += S.box(0.3, 0.75, 1.15, 0.5, 0.35, 0.06)        # shelf
-    o += S.person(0, 0, hand=None, facing=(1, 0))
     # azimuth fan 140 deg
     fan = [S.P(1.3 * math.cos(math.radians(a)), 1.3 * math.sin(math.radians(a)), 0) for a in range(-70, 71, 5)]
     o += pline(fan, MUTE, 1.2, "2 5")
@@ -322,7 +334,8 @@ def constellation_scene(w=760, h=560, seq=(6, 1, 3, 5)):
         if lit:
             c = S.P(*n)
             o += text(c[0], c[1] - 18, seq.index(i) + 1, 13, INK, 700, "middle")
-    return svg(o, w, h)
+    o += S.person(0, 0, hand=None, facing=(1, 0))
+    return S.fit(o)
 
 
 def lissajous(t, ph=(0.4, 1.3, 2.1)):
@@ -332,52 +345,53 @@ def lissajous(t, ph=(0.4, 1.3, 2.1)):
 
 
 def orbit_scene(w=760, h=560):
-    S = Scene(330, 330, 70)
-    o = S.floor(0.9, 0.3)
+    S = Scene(270)
+    o = S.floor(0.95, 0.3, cx=0.3)
     path = [S.P(*lissajous(k * 0.05)) for k in range(0, 241)]
-    o += pline(path, TEAL, 1.2, None, "opacity='0.35'")
+    o += pline(path, TEAL, 1.6, None, "opacity='0.5'")
     t0 = 7.3
     trail = [S.P(*lissajous(t0 + k * 0.01)) for k in range(0, 31)]
     o += pline(trail, TEAL, 6, None, "opacity='0.18'")
     cur = lissajous(t0)
-    fin = lissajous(t0 - 0.13)
-    o += S.person(0, -0.05, hand=(fin[0] - 0.01, fin[1] + 0.01, fin[2] - 0.01), facing=(1, 0))
+    fin = lissajous(t0 - 0.35)
+    fin = (fin[0] - 0.03, fin[1] + 0.02, fin[2] - 0.03)
+    o += S.person(0, -0.05, hand=fin, facing=(1, 0))
     o += S.orb(*cur, 0.04, TEAL, ring=True, drop=True)
     c, f = S.P(*cur), S.P(*fin)
     o += line(c, f, INK, 1.2, "2 3")
-    o += text((c[0] + f[0]) / 2 + 10, (c[1] + f[1]) / 2 + 20, "error", 12, SOFT, 600)
+    o += text(max(c[0], f[0]) + 22, max(c[1], f[1]) + 18, "error", 12, SOFT, 600)
     o += S.dim((0.45, -0.2, 1.62), (0.45, 0.2, 1.62), "0.40 m", (0, -10))
     o += S.dim((0.75, 0.22, 1.2), (0.75, 0.22, 1.44), "0.24 m", (34, 4))
-    return svg(o, w, h)
+    return S.fit(o)
 
 
 def icon(game, size=150):
     """Small object-only icon for catalog cards."""
     if game == "pendulum":
-        S = Scene(95, 60, 8)
-        o = line(S.P(0.48, 0, 1.0), S.P(0.48, 0.25, 0.6), INK, 2)
-        o += circle(S.P(0.48, 0, 1.0), 3, INK, "none", 0)
-        o += pline([S.P(0.48, 0.25 - 0.02 * k, 0.6 - 0.006 * k * k) for k in range(12)], GOLD, 2, "1 5")
-        o += S.orb(0.48, 0.25, 0.6, 0.08, GOLD, ring=False, drop=False)
-        o += S.orb(0.48, 0.08, 0.15, 0.08, GOLD, ring=True, drop=False)
+        piv, bob = (60, 18), (98, 66)
+        o = line(piv, (76, 38), INK, 2) + line((82, 46), bob, INK, 1.5, "3 4", "opacity='0.4'")
+        o += circle(piv, 3.5, INK, "none", 0)
+        o += pline([(98 + 1.2 * k, 66 + 0.55 * k * k) for k in range(0, 9)], GOLD, 2, "1 5")
+        o += circle(bob, 10, GOLD, INK, 2, "opacity='0.45'")
+        o += circle((108, 112), 18, "none", GOLD, 1.5, "opacity='0.6'")
+        o += circle((108, 112), 11, GOLD) + circle((104, 108), 3, "white", "none", 0, "opacity='0.7'")
     elif game == "spark":
         S = Scene(110, 75, 120)
         o = S.orb(0.1, 0.1, 0.6, 0.12, BLUE)
     elif game == "gate":
         S = Scene(110, 75, 120)
-        o = S.orb(0.35, -0.2, 0.5, 0.1, ORANGE) + S.orb(0.0, 0.25, 0.65, 0.1, BLUE)
+        o = S.orb(0.0, -0.32, 0.55, 0.1, ORANGE) + S.orb(0.0, 0.32, 0.55, 0.1, BLUE)
     elif game == "constellation":
-        S = Scene(60, 75, 100)
-        nodes = [(0.6, -0.9, 0.9), (0.2, 0.3, 1.4), (1.0, 0.2, 0.5), (-0.4, 0.6, 0.8), (0.9, -0.2, 1.6)]
-        o = pline([S.P(*n) for n in nodes[:4]], BLUE, 1.5, "3 4")
+        nodes = [(30, 70), (70, 32), (120, 52), (96, 112), (42, 118)]
+        o = pline(nodes[:4], BLUE, 1.5, "3 4")
         for i, n in enumerate(nodes):
-            o += S.orb(*n, 0.09, BLUE if i < 4 else "#c9ced8", ring=False, drop=False)
+            o += circle(n, 7, BLUE if i < 4 else "#c9ced8", INK, 1.5)
     else:
-        S = Scene(170, 75, -150)
-        o = pline([S.P(*[lissajous(k * 0.06)[0] - 0.45, lissajous(k * 0.06)[1], lissajous(k * 0.06)[2] - 1.32 + 1.2][0:3])
-                   for k in range(200)], TEAL, 1.5, None, "opacity='0.5'")
-        p = lissajous(3.0)
-        o += S.orb(p[0] - 0.45, p[1], p[2] - 1.32 + 1.2, 0.05, TEAL, ring=True, drop=False)
+        curve = [(75 + 52 * math.sin(2 * math.pi * 0.21 * t), 78 + 38 * math.sin(2 * math.pi * 0.29 * t + 1.3))
+                 for t in [k * 0.05 for k in range(0, 220)]]
+        o = pline(curve, TEAL, 1.5, None, "opacity='0.45'")
+        c = curve[60]
+        o += circle(c, 18, "none", TEAL, 1.5, "opacity='0.5'") + circle(c, 10, TEAL)
     return svg(o, size, size)
 
 
@@ -474,17 +488,22 @@ def metric_bars(cohort):
             m0 = next(m for m in cohort[0]["metrics"] if m["id"] == mid)
             rows.append((m0["label"], m0["game"], statistics.correlation(*zip(*pairs))))
     rows.sort(key=lambda r: (GAME_ORDER.index(r[1]), -r[2]))
-    W, H = 380, 26 + 19 * len(rows)
+    W, H = 380, 26 + 19 * len(rows) + 34
     x0, bw = 150, 200
     o = text(x0, 14, "r, metric age vs chronological age", 11, MUTE)
     for v in (0, 0.5, 1):
         xx = x0 + v * bw
-        o += line((xx, 22), (xx, H - 4), GRID, 1)
+        o += line((xx, 22), (xx, H - 38), GRID, 1)
     for i, (label, game, rr) in enumerate(rows):
         y = 26 + i * 19
         o += text(x0 - 8, y + 11, label, 11, INK, 400, "end")
         o += f"<rect x='{x0}' y='{y + 2}' width='{max(rr, 0) * bw:.1f}' height='12' rx='3' fill='{GAME_COLOR[game]}' stroke='{INK}' stroke-width='1'/>"
         o += text(x0 + max(rr, 0) * bw + 6, y + 12, f"{rr:.2f}", 10, SOFT)
+    lx, ly = 10, H - 12
+    for g in GAME_ORDER:
+        o += circle((lx + 5, ly - 4), 5, GAME_COLOR[g], INK, 1)
+        o += text(lx + 14, ly, g.capitalize(), 10, SOFT)
+        lx += 14 + 7 * len(g) + 12
     return svg(o, W, H)
 
 
@@ -510,7 +529,7 @@ def pace_chart(history, pace):
     for d, a in zip(days, sa):
         o += circle((p.X(d), p.Y(a)), 5.5, BLUE, PAPER, 2)
     o += text(p.X(days[-1]) - 6, p.Y(chrono[-1]) - 10, "chronological", 12, INK, 600, "end")
-    o += text(p.X(days[-1]) - 6, p.Y(sa[-1]) + 22, "Spatial Age, 80% band", 12, BLUE, 600, "end")
+    o += text(p.X(days[-1]) - 6, p.Y(sa[-1]) + 44, "Spatial Age, 80% band", 12, BLUE, 600, "end")
     return svg(o, W, H)
 
 
@@ -667,9 +686,9 @@ GAMES = {
         title="Pendulum", n=(12, 3),
         instruction="Catch the weight when the cord lets go.",
         measures="Catch latency and drop distance",
-        mechanic=["A gold bob, 8 cm, swings on a 0.55 to 0.85 m cord from a pivot 1.95 m high, 0.48 m ahead.",
+        mechanic=["A gold bob, 8 cm, swings on a 0.55 to 0.85 m cord from a pivot 0.4 m above eye level (1.95 m standing), 0.48 m ahead.",
                   "Swing amplitude 22 to 34°. The cord releases at a random time, 1.5 to 4 s into the swing.",
-                  "The bob falls ballistically at 9.81 m/s² from its release position and velocity. Catch when the thumb-index midpoint is within 6 cm of the bob.",
+                  "The bob falls ballistically at 9.81 m/s² from its release position and velocity. Catch when the thumb-index midpoint is within 7 cm of the bob with the pinch closed under 4.5 cm.",
                   "A life-size cm ruler stands behind the swing plane. A gold tick marks the catch height."],
         fields="length_m, amplitude_deg, release_t, release_angle_deg, release_position, release_velocity, catch_t, catch_position, hand, outcome, aperture_release_m, aperture_catch_m, tracking_gap_ms, trace",
         metrics=[("Catch latency", "catch_t − release_t, median of catches"),
@@ -748,7 +767,7 @@ p{font-size:13px;line-height:1.5;color:#3a4150;margin:0 0 .1in}
 .foot{position:absolute;right:.6in;bottom:.4in;font-size:10px;color:#8a8f99}
 .lede{font-size:15px;color:#4a5160;max-width:4.6in}
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:.16in;margin-top:.35in}
-.card{background:#fff;border-radius:16px;padding:.16in;border:1.5px solid #d9d4c7;height:5.4in;position:relative}
+.card{background:#fff;border-radius:16px;padding:.16in;border:1.5px solid #d9d4c7;height:4.5in;position:relative}
 .card img{width:100%;height:1.5in;object-fit:contain}
 .card h3{font-size:19px;margin:.1in 0 .06in}
 .card .i{font-size:13px;line-height:1.4;color:#1b2430;min-height:.6in}
@@ -756,7 +775,7 @@ p{font-size:13px;line-height:1.5;color:#3a4150;margin:0 0 .1in}
 .card .t{position:absolute;left:.16in;bottom:.16in;font-size:10px;color:#8a8f99;letter-spacing:1px}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px solid #1b2430;margin-right:6px;vertical-align:1px}
 .game{display:grid;grid-template-columns:6.1in 3.6in;gap:.1in}
-.game img{width:6.1in;height:auto;margin-top:.05in}
+.game img{width:6.1in;height:6.35in;object-fit:contain;object-position:center top;margin-top:.05in}
 .side .sec{margin-top:.17in}
 .side ul{margin:0;padding-left:0;list-style:none}
 .side li{font-size:11.5px;line-height:1.45;color:#3a4150;margin-bottom:.06in}
@@ -802,7 +821,7 @@ def build_doc(cohort, history, pace, norms):
     # 1 cover
     cover = save("cover.svg", pendulum_scene(w=760, h=640, s=250, cx=310, cy=150))
     pages.append(
-        f"<section class='page'><img src='{cover}' style='position:absolute;right:.1in;top:.7in;width:7.4in'>"
+        f"<section class='page'><img src='{cover}' style='position:absolute;right:.3in;top:.4in;width:6.9in;height:7.7in;object-fit:contain'>"
         f"<div style='position:absolute;left:.7in;top:1.35in;width:3.6in'><div class='k'>Spatial Human Assessment</div>"
         f"<h1>Spatial Age</h1><p class='lede'>Five reaction minigames for Apple Vision Pro. Life scale, fully immersive, "
         f"scored on device into one functional age.</p>"
@@ -931,7 +950,7 @@ def build_doc(cohort, history, pace, norms):
     pages.append(page(13, total, f"Cohort · n = {len(cohort)}", "Does it track age",
                       f"<div class='two'><img src='{sc_img}' style='width:5.4in'><img src='{bars}' style='width:3.5in'></div>"
                       f"<img src='{dm}' style='width:9.8in;margin-top:.05in'>", synthetic=True,
-                      foot="Synthetic r says the pipeline works, not that the biomarker does"))
+                      foot="Synthetic r checks the pipeline. Validity needs real sessions."))
 
     # 14 pace
     pc = save("pace.svg", pace_chart(history, pace))
@@ -953,7 +972,7 @@ def build_doc(cohort, history, pace, norms):
                  f"<td>{n['sd25']:g}</td><td>{n['slope']:+g}</td><td>{n['tau_years'] if model else '–'}</td>"
                  f"<td>{esc(n['source'])}</td></tr>")
     table = ("<table><tr><th>Metric</th><th>Domain</th><th>Mean 25</th><th>SD 25</th><th>Per year</th>"
-             f"<th>τ years</th><th>Shape source</th></tr>{rows}</table>")
+             f"<th>Model SD, y</th><th>Shape source</th></tr>{rows}</table>")
     limits = ("<div class='env' style='grid-template-columns:1fr;gap:.12in;margin-top:0'>"
               "<div><b>PRIORS</b>Every norm is provisional. The cited studies set curve shape. None used a headset "
               "reach task, so values need refitting on collected sessions (specs/age-model.md v1).</div>"

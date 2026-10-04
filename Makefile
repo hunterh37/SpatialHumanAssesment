@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: sample features test ingest app scorekit-test scorekit-synth scorekit-score concept-algo
+.PHONY: sample features test ingest app showcase scorekit-test scorekit-synth scorekit-score concept-algo
 
 sample:
 	cd ml && $(PY) -m sha_biomarkers.synth --out ../data/synthetic --n 30
@@ -40,3 +40,6 @@ scorekit-synth:
 
 scorekit-score:
 	$(SK) score ../../data/synthetic-minigames/*.json
+
+showcase:
+	$(PY) showcase/src/build.py
