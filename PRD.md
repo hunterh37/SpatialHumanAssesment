@@ -269,6 +269,29 @@ Open-source code that makes the games look and feel real, checked through the Gi
 
 Most of the realism comes from RealityKit itself: grounding shadows, image-based lighting, physics bodies and spatial audio.
 
+**From Ben's landscape** (`research/bw2_vision_pro_health_games_landscape_and_gaps.html`): none of the apps listed are open source, so none can be forked. Spatial Boxing Pro is Hunter's own (Veep LLC), so its code is ours to reuse. The one forkable base is Stanford's [ResearchKit](https://github.com/StanfordBDHG/ResearchKit) under a BSD-style license: its core runs on visionOS for consent and surveys, while its active tasks (reaction time, range of motion, the nine-hole peg test) are iOS-only, so we port their protocols, not their code.
+
+## Design system
+
+Jess and Alex own the look. Every game already takes its colors from `Theme.swift` and its feedback from five shared micro-interactions (`specs/games/design.md`), so re-skinning all eight games is one token edit, not eight game edits.
+
+| Token | Meaning | Today | Proposed: yellow on black | Contrast on black |
+|---|---|---|---|---|
+| ink | Sky and background | #0B0F17 | #0A0A0A | n/a |
+| go | Touch it | #2F6BFF (4.3:1 on ink) | #FFD23F yellow | 13.7:1 |
+| nogo | Leave it | #FF7A3D | #FF4D6D red-pink, plus a spiky shape | 6.2:1 |
+| memory | Catch and recall items | #FFC83D | #F6F4EF white glow | 18.0:1 |
+| follow | Moving targets | #14B8A6 | #14B8A6 | 8.0:1 |
+| mute | At rest, missed | #8A8F99 | #8A8F99 | 6.1:1 |
+
+- **One object family:** spheres to touch, rounded cubes to grab, rings to hold, all with the same glowing rim.
+- **Never color alone:** no-go targets also change shape, which keeps yellow and orange-red apart for color-blind players.
+- **One module frame:** every game opens with the same intro card (title, one instruction, a ghost-hands demo from Hunter's DicyaninGestureTipGhostHands) and ends on the same results card with its movement age.
+- **Type:** SF Pro for the HUD, for legibility; Barlow Condensed for titles if the team wants the sports feel UI/UX Pro Max recommends.
+- **Motion:** 150 to 300 ms with spring easing; exits faster than entrances; respect Reduce Motion.
+
+UI/UX Pro Max recommends an immersive pattern with a vibrant, block-based style: a dark ground, bold high-contrast accents and visible game progress. The yellow-on-black palette fits that and keeps every token above 4.5:1.
+
 ## Hack-day plan
 
 Times are Boston time and stay targets until the team confirms them.
