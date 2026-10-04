@@ -1,8 +1,10 @@
 import json
 import random
 import unittest
+from unittest import mock
 
 from sha_biomarkers.kdm import DEFAULT_PARAMS, KDM, Biomarker
+from sha_biomarkers import kdm_fit
 from sha_biomarkers.kdm_fit import fitting_points, refit, update_biomarker
 
 PRIOR = json.loads(DEFAULT_PARAMS.read_text())
@@ -51,6 +53,19 @@ class FitTests(unittest.TestCase):
         self.assertLess(abs(many["mean25"] - target), abs(few["mean25"] - target) + 1e-3)
         self.assertLess(abs(many["mean25"] - target), 0.02)
         self.assertGreater(many_info["data_weight_slope"], few_info["data_weight_slope"])
+
+    def test_outliers_barely_move_the_curve(self):
+        p = PRIOR["biomarkers"]["choice_rt"]
+        clean = fitting_points(matrix(60, seed=4), "choice_rt")
+        # Five people with a mistyped age of 20 who actually perform like 80-year-olds.
+        bad = clean + [(20.0, 1.2)] * 5
+        a, _ = update_biomarker(p, clean)
+        b, info = update_biomarker(p, bad)
+        robust_shift = abs(b["mean25"] - a["mean25"])
+        self.assertGreaterEqual(info["outliers"], 5)
+        with mock.patch.object(kdm_fit, "HUBER_K", 1e9):  # plain least squares
+            ls_shift = abs(update_biomarker(p, bad)[0]["mean25"] - update_biomarker(p, clean)[0]["mean25"])
+        self.assertLess(robust_shift, 0.5 * ls_shift)
 
     def test_too_few_people_keep_the_prior(self):
         p = PRIOR["biomarkers"]["corsi_span"]

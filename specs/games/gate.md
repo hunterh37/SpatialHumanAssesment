@@ -8,4 +8,4 @@ Go trials show blue and orange at least 25 cm apart. No-go trials show orange al
 
 ## Metrics
 
-`choice_rt`, `decision_time` (choice RT minus Spark RT, computed in `ScoreEngine`), `commission_rate`, `omission_rate`, `d_prime` (log-linear corrected).
+`choice_rt`, `decision_time` (choice RT minus Spark RT, computed in `ScoreEngine`), `commission_rate`, `omission_rate`, `d_prime` (log-linear corrected). Commission rate is display only: go/no-go false alarms do not rise with age. Omission rate counts toward Decision.

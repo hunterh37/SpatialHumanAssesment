@@ -15,7 +15,7 @@ SwiftUI window for consent, participant entry and results. ImmersiveSpace (mixed
 - `ARKitSession` with `HandTrackingProvider` for index tip and wrist joints, `WorldTrackingProvider` for head pose, `SceneReconstructionProvider` and `PlaneDetectionProvider` for spawn points and Corsi anchors.
 - RealityKit entities for targets. Contact test is fingertip distance to target center under target radius, checked every hand update. RealityKit collisions are not used for scoring.
 - All timestamps are seconds since session start from one monotonic clock (`CACurrentMediaTime` offset).
-- Session builds in memory, saves to the app Documents folder, then POSTs to ingest. Upload failure keeps the file for retry.
+- Session builds in memory, saves to the app Documents folder, then POSTs to ingest. Upload failure keeps the file for retry: after every session the app resends each saved session ingest has not acknowledged, oldest first, and stops at the first failure. Ingest keys files by session id, so a resend overwrites.
 - Live events: `trial_start`, `trial_end` sent over WebSocket to ingest if connected. Tasks never wait on the network.
 
 Target: visionOS 2.0+, Swift 6 toolchain in Swift 5 language mode, XcodeGen `project.yml`.
