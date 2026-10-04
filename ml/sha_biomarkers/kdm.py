@@ -76,15 +76,28 @@ class KDM:
         self.age_range = (float(age_range[0]), float(age_range[1]))
         self.prior_sd = prior_sd
         self.version = version
+        self.bias: dict | None = None
+        """Linear age-gap correction `gap - (alpha + beta age)`, learned by `kdm_fit`."""
 
     @classmethod
     def from_config(cls, path: str | pathlib.Path = DEFAULT_PARAMS) -> "KDM":
-        cfg = json.loads(pathlib.Path(path).read_text())
+        return cls.from_dict(json.loads(pathlib.Path(path).read_text()))
+
+    @classmethod
+    def from_dict(cls, cfg: dict) -> "KDM":
         bms = {
             name: Biomarker(name, p["mean25"], p["sd"], p["slope"], p.get("accel", 0.0), p.get("knee", 50.0))
             for name, p in cfg["biomarkers"].items()
         }
-        return cls(bms, cfg.get("age_range", (18, 95)), cfg.get("chronological_prior_sd"), cfg.get("version", ""))
+        m = cls(bms, cfg.get("age_range", (18, 95)), cfg.get("chronological_prior_sd"), cfg.get("version", ""))
+        m.bias = cfg.get("bias_correction")
+        return m
+
+    def corrected_gap(self, estimate: float, age: float) -> float | None:
+        """Age gap with regression to the mean removed. None until a fit has learned the correction."""
+        if not self.bias:
+            return None
+        return estimate - age - (self.bias["alpha"] + self.bias["beta"] * age)
 
     def predict(self, X, columns: list[str], chronological_age=None) -> list[Estimate | None]:
         """Estimate age for each row of X.
@@ -175,6 +188,8 @@ def main(argv: list[str]):
 
     `kdm_age` uses the biomarkers only (BA_E) and is the number to validate against chronological age.
     `kdm_age_prior` adds the chronological-age prior (BA_EC) and is the one to show a player.
+    `kdm_gap_corrected` is the age gap after the bias correction a fit learned; empty before the first fit.
+    A row needs only one biomarker: missing games are skipped and widen the standard error.
     """
     import argparse
 
@@ -198,10 +213,15 @@ def main(argv: list[str]):
 
     keep = [c for c in PASS_THROUGH if rows and c in rows[0]]
     w = csv.writer(sys.stdout)
-    w.writerow(keep + ["kdm_age", "kdm_age_se", "kdm_age_prior", "kdm_age_prior_se", "n_biomarkers"])
-    for r, e, p in zip(rows, evidence, posterior):
-        tail = [e.age, e.se, p.age, p.se, e.n] if e else ["", "", "", "", 0]
-        w.writerow([r[c] for c in keep] + tail)
+    w.writerow(keep + ["kdm_age", "kdm_age_se", "kdm_age_prior", "kdm_age_prior_se", "kdm_gap_corrected",
+                       "n_biomarkers", "params_version"])
+    for r, e, p, ca in zip(rows, evidence, posterior, ages):
+        if e is None:
+            w.writerow([r[c] for c in keep] + ["", "", "", "", "", 0, model.version])
+            continue
+        gap = model.corrected_gap(e.age, float(ca)) if not _missing(ca) else None
+        w.writerow([r[c] for c in keep] + [e.age, e.se, p.age, p.se, "" if gap is None else round(gap, 2), e.n,
+                                           model.version])
 
 
 if __name__ == "__main__":
