@@ -191,7 +191,7 @@ final class Bird {
         var speed: Float = UIAccessibility.isReduceMotionEnabled ? 1.4 : (far ? 4.0 : 2.6)
         // Back from the far ring: hurry in.
         if !far, simd_length(SIMD2<Float>(p.x - center.x, p.z - center.z)) > 7 { speed = max(speed, 4.5) }
-        if let around = herd(eye: eye) {
+        if let around = herd() {
             waypoint = around
             speed *= 1.6
         }
@@ -221,7 +221,7 @@ final class Bird {
         let d = simd_distance(p, perchPoint)
         var target = d > 0.9 && simd_distance(p, staging) > 0.35 ? staging : perchPoint + [0, 0.03, 0]
         // Behind or beside the participant: come around the near side first.
-        if d > 0.9, let around = herd(eye: eye) { target = around }
+        if d > 0.9, let around = herd() { target = around }
         // Long legs (called back from the far ring) fly fast; the last meter slows into the flare.
         let speed = simd_clamp(simd_distance(p, target) * 1.8, 0.45, d > 4 ? 7 : 2.6)
         steer(to: target, speed: speed, rate: d > 4 ? 3 : 4, dt: dt)
@@ -303,11 +303,13 @@ final class Bird {
     /// Intro sequence and game guide: a twig grows at `point`, the bird flies in from where it is, lands
     /// on it and perches there facing the participant.
     func summon(to point: SIMD3<Float>) {
-        if pinned == nil || simd_distance(pinned!, point) > 0.05 {
+        let moved = pinned.map { simd_distance($0, point) > 0.05 } ?? true
+        if moved {
             twig.position = point
+            // Twig local -Z toward the participant, so the branch runs across their view.
             var d = lastEye - point
             d.y = 0
-            if simd_length(d) > 1e-3 { twig.orientation = simd_quatf(angle: atan2(-d.x, -d.z) + .pi, axis: [0, 1, 0]) }
+            if simd_length(d) > 1e-3 { twig.orientation = simd_quatf(angle: atan2(-d.x, -d.z), axis: [0, 1, 0]) }
         }
         pinned = point
         perchPoint = point
@@ -487,7 +489,7 @@ final class Bird {
     /// When the bird has drifted out of the front arc (the participant turned), a waypoint up to 57 degrees
     /// further around the circle on the side the bird is already on, so it sweeps back into view around
     /// the participant instead of cutting across or behind them. Nil while it is in view.
-    private func herd(eye: SIMD3<Float>) -> SIMD3<Float>? {
+    private func herd() -> SIMD3<Float>? {
         let off = SIMD2<Float>(p.x - center.x, p.z - center.z)
         let rel = wrap(atan2(off.x, -off.y) - ahead)
         let arc = far ? Self.farArc : Self.nearArc
@@ -674,6 +676,21 @@ final class Bird {
             * simd_quatf(angle: headRoll, axis: [0, 0, 1])
     }
 
+    /// Twig grows in with a little overshoot when summoned and shrinks once the bird has left it.
+    private func growTwig(dt: Float) {
+        let goal: Float = pinned != nil || mode == .perch || mode == .land ? 1 : 0
+        if goal == 0, twigGrow < 0.01, twigVel <= 0 {
+            twigGrow = 0
+            twigVel = 0
+            if twig.isEnabled { twig.isEnabled = false }
+            return
+        }
+        twig.isEnabled = true
+        twigVel += ((goal - twigGrow) * 160 - twigVel * 16) * dt
+        twigGrow += twigVel * dt
+        twig.scale = .init(repeating: max(twigGrow, 0.001))
+    }
+
     private static let tailCount = 5
     private static let tailMid = Float(tailCount - 1) / 2
 
@@ -725,6 +742,9 @@ final class Bird {
         static let legs = Dusk.hex(0xD9A99B)
         static let eye = Dusk.hex(0x121014)
         static let blush = Dusk.hex(0xF4A08A)
+        /// Guide twig. Warm bark and a muted sage leaf: scenery, clear of every game signal color.
+        static let bark = Dusk.hex(0x6A5249)
+        static let twigLeaf = Dusk.hex(0x9DAE8C)
     }
 
     // Shared meshes and materials: one resource per shape and color, built once per process.
@@ -890,6 +910,42 @@ final class Bird {
         }
     }
 
+    /// Low-poly branch: origin at the perch point (top of the bark), main limb across local X, a side
+    /// shoot and three leaves. Bark and leaf colors come from the valley trees, so it reads as scenery.
+    private func buildTwig() {
+        let bark = Self.plumage(Palette.bark, rough: 0.95)
+        let leaf = Self.plumage(Palette.twigLeaf, rough: 0.85)
+        let r: Float = 0.0075
+        let limb = Entity()
+        limb.position = [0, -r, 0]
+        limb.orientation = simd_quatf(angle: 0.08, axis: [0, 0, 1])
+        twig.addChild(limb)
+        if let m = Self.cached("twigLimb") { Meshes.facetBranch(length: 0.27, r0: r, r1: 0.0035, sides: 6) } {
+            let e = ModelEntity(mesh: m, materials: [bark])
+            e.position = [-0.12, 0, 0]
+            limb.addChild(e)
+        }
+        if let m = Self.cached("twigShoot") { Meshes.facetBranch(length: 0.075, r0: 0.0042, r1: 0.002, sides: 5) } {
+            let e = ModelEntity(mesh: m, materials: [bark])
+            e.position = [-0.075, 0.002, 0]
+            e.orientation = simd_quatf(angle: 2.3, axis: [0, 0, 1])
+            limb.addChild(e)
+        }
+        guard let m = Self.feather(length: 0.05, width: 0.024, curl: 0.18) else { return }
+        // (position on the limb, heading around Y, droop)
+        let leaves: [(SIMD3<Float>, Float, Float)] = [
+            ([0.145, 0, 0], .pi / 2, 0.35),
+            ([0.08, 0.002, 0.002], 0.35, 0.55),
+            ([-0.123, 0.052, 0], -.pi / 2, -0.5),
+        ]
+        for (pos, heading, droop) in leaves {
+            let e = ModelEntity(mesh: m, materials: [leaf])
+            e.position = pos
+            e.orientation = simd_quatf(angle: heading, axis: [0, 1, 0]) * simd_quatf(angle: droop, axis: [1, 0, 0])
+            limb.addChild(e)
+        }
+    }
+
     /// Two-segment wing: arm with secondaries and coverts, hand with primaries. Spread pose lies in the
     /// XZ plane, span along +X times `side`, feathers trailing +Z. Folding sweeps the arm back and turns
     /// every feather to lie along the span, so the folded wing rests over the back and side.
@@ -991,6 +1047,22 @@ extension Meshes {
                                     lS, ridge, lT, ridge, rS, rT, ridge, rT, lT,
                                     lT, rT, tip]
         return faceted(tris, name: "facetFeather", twoSided: true)
+    }
+
+    /// Low-poly tapered prism along +X from 0 to `length`, radius `r0` at the base to `r1` at the tip, capped.
+    static func facetBranch(length: Float, r0: Float, r1: Float, sides: Int) -> MeshResource? {
+        func ring(_ x: Float, _ r: Float, _ i: Int) -> SIMD3<Float> {
+            let a = Float(i) / Float(sides) * 2 * .pi
+            return [x, cos(a) * r, sin(a) * r]
+        }
+        var tris: [SIMD3<Float>] = []
+        let base = SIMD3<Float>(0, 0, 0), tip = SIMD3<Float>(length, 0, 0)
+        for i in 0..<sides {
+            let a0 = ring(0, r0, i), a1 = ring(0, r0, i + 1)
+            let b0 = ring(length, r1, i), b1 = ring(length, r1, i + 1)
+            tris += [a0, a1, b0, a1, b1, b0, base, a1, a0, tip, b0, b1]
+        }
+        return faceted(tris, name: "facetBranch", twoSided: false)
     }
 
     /// Low-poly cone along +Y, base at -height/2, matching `generateCone` placement.

@@ -21,6 +21,7 @@ struct ImmersiveView: View {
     @State private var game: Task<Void, Never>?
     @State private var closing = false
     @State private var introCard = IntroCard()
+    @State private var bubble = SpeechBubble()
     /// True once this space started the intro sequence, so only its own close ends the intro.
     @State private var introActive = false
 
@@ -52,6 +53,12 @@ struct ImmersiveView: View {
                 content.add(card)
             }
             let introEntity = attachments.entity(for: "intro")
+            let bubbleEntity = attachments.entity(for: "bubble")
+            if let bubbleEntity {
+                bubbleEntity.position = [0, 1.5, -1.25]
+                bubbleEntity.components.set(BillboardComponent())
+                content.add(bubbleEntity)
+            }
             let exit = attachments.entity(for: "exit")
             if let exit {
                 exit.position = [0, 0.4, -Theme.Layout.distance]
@@ -62,6 +69,7 @@ struct ImmersiveView: View {
                 if let a = hud.anchor, panel?.position != a { panel?.position = a }
                 if let a = hud.exitAnchor, exit?.position != a { exit?.position = a }
                 if let a = introCard.anchor, introEntity?.position != a { introEntity?.position = a }
+                if let a = bubble.anchor, bubbleEntity?.position != a { bubbleEntity?.position = a }
                 clock.tick(event.deltaTime)
                 Stage.tick(stage, dt: event.deltaTime, ambient: hud.ambient)
                 if stage.isEnabled { bird.update(dt: event.deltaTime, tracker: tracker, ambient: hud.ambient) }
@@ -70,6 +78,7 @@ struct ImmersiveView: View {
         } attachments: {
             Attachment(id: "hud") { HUDView(hud: hud) }
             Attachment(id: "intro") { IntroCardView(card: introCard) }
+            Attachment(id: "bubble") { SpeechBubbleView(bubble: bubble) }
             Attachment(id: "exit") {
                 if model.phase == .running { ExitControl { model.abortSession() } }
                 else if model.skyPlank { ExitControl(title: "Leave the roof") { model.skyPlank = false } }
@@ -138,6 +147,7 @@ struct ImmersiveView: View {
         await clock.wait(1.5)
         let ctx = GameContext(clock: clock, tracker: t, recorder: recorder, layer: layer, hud: hud,
                               handedness: model.participant.handedness)
+        if let bird, stage.isEnabled { ctx.guide = BirdGuide(bird: bird, bubble: bubble, clock: clock) }
         await Director(ctx: ctx, practice: model.practiceFirst).run(model.queue)
         // Ended early: the window already shows the catalog. Do not score a partial run.
         guard !Task.isCancelled, model.phase == .running else { return }
@@ -152,6 +162,8 @@ struct ImmersiveView: View {
         hud.visible = false
         introCard.answer()
         introCard.visible = false
+        bubble.release()
+        bubble.visible = false
         bird?.dismiss()
         layer.children.removeAll()
     }

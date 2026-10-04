@@ -42,13 +42,23 @@ final class Director {
                     let k = familiarization ? 0 : 1
                     let n = familiarization ? game.familiarizationTrials : game.scoredTrials
                     ctx.show(game, familiarization: familiarization, total: n)
-                    await ctx.clock.wait(familiarization ? 2.5 : 1.8)
+                    if let guide = ctx.guide {
+                        // Full explanation before the first block; one line between practice and scored.
+                        let lines = familiarization || !practice ? game.guideLines : [game.guideAgain]
+                        await guide.say(lines, action: familiarization ? "Tap to practice" : "Tap to start", rig: ctx.rig)
+                        // Buddy takes off before the first digit, so the countdown starts on a clear view.
+                        await ctx.clock.wait(0.45)
+                    } else {
+                        await ctx.clock.wait(familiarization ? 2.5 : 1.8)
+                    }
                     await ctx.countdown()
                     ctx.hud.ambient = false
                     ctx.micro.juice.reset()
                     let block = await instance.play(familiarization: familiarization, trials: n, seed: blockSeeds[k])
                     ctx.hud.ambient = true
                     guard !Task.isCancelled else { return }
+                    // Scored block next: Buddy starts back from the far ring during the cheer.
+                    if familiarization { ctx.guide?.arrive(ctx.rig) }
                     ctx.recorder.append(block)
                     ctx.celebrateBlock(scored: !familiarization)
                     ctx.cheer(familiarization ? "Practice done." : "Done!", hold: 1.4)
@@ -59,6 +69,7 @@ final class Director {
             await withTaskCancellationHandler { await current.value } onCancel: { current.cancel() }
             ctx.hud.skip = nil
             ctx.hud.ambient = true
+            ctx.guide?.leave()
             instance.teardown()
             ctx.hud.visible = false
             await ctx.clock.wait(1.0)
