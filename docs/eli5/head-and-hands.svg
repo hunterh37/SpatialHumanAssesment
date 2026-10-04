@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 690" width="1200" height="690" role="img" aria-labelledby="eli5-head-hands-title eli5-head-hands-desc" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <title id="eli5-head-hands-title">The headset watches your head and hands</title>
+  <desc id="eli5-head-hands-desc">A headset tracks two hands, shown as dots on each palm and fingertip, and measures how fast you catch, how far you reach, how still you hold and what you remember.</desc>
+  <rect width="1200" height="690" fill="#f6f4ef"/>
+  <text x="48" y="64" font-size="14" fill="#8a8f99" font-weight="700" letter-spacing="3">ELI5 · STEP 3</text>
+  <text x="48" y="100" font-size="32" fill="#1b2430" font-weight="700">The headset watches your head and hands</text>
+  <text x="48" y="132" font-size="16" fill="#8a8f99">That is enough to time you, measure you and check what you remember.</text>
+  <rect x="48" y="160" width="1104" height="440" rx="16" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+  <svg x="120" y="176" width="960" height="384" viewBox="0 0 600 240">
+        <g stroke="#2f6bff" fill="none" stroke-width="2.5" stroke-dasharray="7 7"><path d="M276 104 L172 168"/><path d="M324 104 L428 168"/></g>
+        <circle cx="300" cy="76" r="40" fill="none" stroke="#1b2430" stroke-width="4"/>
+        <rect x="266" y="60" width="68" height="28" rx="14" fill="#1b2430"/>
+        <g fill="none" stroke="#1b2430" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M128 228 V188 Q128 168 148 168 H176 Q196 168 196 188 V228"/>
+          <path d="M404 228 V188 Q404 168 424 168 H452 Q472 168 472 188 V228"/>
+        </g>
+        <g fill="#2f6bff">
+          <circle cx="162" cy="200" r="7"/><circle cx="130" cy="150" r="5"/><circle cx="146" cy="138" r="5"/><circle cx="162" cy="134" r="5"/><circle cx="178" cy="138" r="5"/><circle cx="196" cy="156" r="5"/>
+          <circle cx="438" cy="200" r="7"/><circle cx="404" cy="156" r="5"/><circle cx="422" cy="138" r="5"/><circle cx="438" cy="134" r="5"/><circle cx="454" cy="138" r="5"/><circle cx="470" cy="150" r="5"/>
+        </g>
+      </svg>
+  <text x="80" y="584" font-size="16" fill="#8a8f99">Bonus: the same hand tracking powers an x-ray view of your own hand.</text>
+  <rect x="48" y="616" width="186" height="40" rx="20" fill="none" stroke="#1b2430" stroke-width="1.5"/>
+  <text x="141.0" y="642" font-size="16" font-weight="600" fill="#1b2430" text-anchor="middle">how fast you catch</text>
+  <rect x="246" y="616" width="177" height="40" rx="20" fill="none" stroke="#1b2430" stroke-width="1.5"/>
+  <text x="334.5" y="642" font-size="16" font-weight="600" fill="#1b2430" text-anchor="middle">how far you reach</text>
+  <rect x="435" y="616" width="186" height="40" rx="20" fill="none" stroke="#1b2430" stroke-width="1.5"/>
+  <text x="528.0" y="642" font-size="16" font-weight="600" fill="#1b2430" text-anchor="middle">how still you hold</text>
+  <rect x="633" y="616" width="177" height="40" rx="20" fill="none" stroke="#1b2430" stroke-width="1.5"/>
+  <text x="721.5" y="642" font-size="16" font-weight="600" fill="#1b2430" text-anchor="middle">what you remember</text>
+</svg>

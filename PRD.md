@@ -22,15 +22,31 @@ Status: hackathon draft, v0.2 (4 October 2026), updated with the 12:27 to 12:37 
 - **Card line (draft):** How old do you move? Two players, two Vision Pros, one 6-minute duel that scores your movement age against published norms.
 - **Adds to v0.1:** the 12:00 brainstorm (head-to-head play, levelling up) and the 12:37 split: Hunter builds the catch game and a hand x-ray, Wilson builds the memory and balance games.
 - **Movement age** is the player-facing name for the spec's `functional_age` field.
-- **Team:** skylarwooster (idea lead), Hunter, Jess, bw2, Xelaf, franco, Wilson.
+- **Team:** skylarwooster (Wilson), Hunter, Jess, bw2, Xelaf, franco.
 
 ## ELI5: how it works
 
-You and a friend play four quick games in Vision Pro. The headset times your reactions, measures how far you reach and how steady you stay, and checks what you remember. We match your scores against published results from people of every age, and the age you match is your movement age. Play again, get better, and watch it drop.
+You play. The headset watches. We compare you with people of every age. The picture explainer is also a page: `docs/eli5/index.html`.
 
-![One loop: play, measure, compare, level up](docs/eli5/movement-age-loop.svg)
+**1. Two players, two headsets.** You and a friend each wear a Vision Pro and play the same games side by side.
+
+![Two players, two headsets](docs/eli5/duel.svg)
+
+**2. Four quick games.** Each game checks one thing your body or brain does every day. Both balance games keep your feet on the floor.
+
+![Four quick games](docs/eli5/games.svg)
+
+**3. The headset watches your head and hands.** That is enough to time you, measure you and check what you remember.
+
+![The headset watches your head and hands](docs/eli5/head-and-hands.svg)
+
+**4. We find the age that matches you.** Scientists measured thousands of people of every age. Where your score lands is your movement age.
 
 ![Your time lands on the age line](docs/eli5/age-curve.svg)
+
+**5. Play again. Get better. Watch it drop.** Each duel saves your movement age, so you can see the number move as you level up.
+
+![One loop: play, measure, compare, level up](docs/eli5/movement-age-loop.svg)
 
 ## Answers to the team to-do list
 
@@ -203,7 +219,9 @@ Movement age is a game score against published norms. It is not a biological age
 
 ## Architecture and ownership
 
-Data flow is in `specs/architecture.md`: each headset posts one session file to the ingest service on the laptop (port 8787), which scores it with `ml` and streams results to the dashboard. Whether the two headsets sync through SharePlay is an open question. Owners are proposed until the team confirms them.
+Data flow is in `specs/architecture.md`: each headset posts one session file to the ingest service on the laptop (port 8787), which scores it with `ml` and streams results to the dashboard. Whether the two headsets sync through SharePlay is an open question. Owners are proposed until the team confirms them. Hunter's merged catalog already holds Pendulum, Spark, Gate, Constellation and Orbit (`specs/games/`).
+
+![Each headset sends one session file; the laptop scores it and drives the dashboard](docs/prd/architecture.png)
 
 | Area | Path | Spec | Owner (proposed) |
 |---|---|---|---|
@@ -219,6 +237,8 @@ The schema is the contract between all areas. Changing it needs a version bump a
 ## Hack-day plan
 
 Times are Boston time and stay targets until the team confirms them.
+
+![The card goes live at 19:45, after 20 or more sessions are collected](docs/prd/timeline.png)
 
 | Time | Milestone |
 |---|---|
