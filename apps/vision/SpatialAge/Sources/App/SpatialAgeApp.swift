@@ -3,7 +3,6 @@ import SwiftUI
 @main
 struct SpatialAgeApp: App {
     @State private var model = AppModel()
-    @State private var immersion: ImmersionStyle = .full
 
     var body: some Scene {
         WindowGroup {
@@ -14,6 +13,9 @@ struct SpatialAgeApp: App {
         ImmersiveSpace(id: AppModel.immersiveID) {
             ImmersiveView().environment(model)
         }
-        .immersionStyle(selection: $immersion, in: .full)
+        .immersionStyle(selection: Binding<any ImmersionStyle>(
+            get: { model.passthrough ? .mixed : .full },
+            set: { model.passthrough = $0 is MixedImmersionStyle }
+        ), in: .mixed, .full)
     }
 }

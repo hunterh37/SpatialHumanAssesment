@@ -21,7 +21,7 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSHandsTrackingUsageDescription</key>
-	<string>Hand tracking times how fast you reach targets.</string>
+	<string>Hand tracking times how fast you reach targets and drives the anatomy overlay.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Sends session results to the operator laptop.</string>
 	<key>NSWorldSensingUsageDescription</key>

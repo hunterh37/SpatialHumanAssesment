@@ -22,6 +22,8 @@ final class HUD {
     var done = 0
     var total = 0
     var visible = false
+    /// Position in the queue, e.g. "2 / 5". Empty for a single game.
+    var step = ""
 }
 
 /// Everything a game needs: clock, hands, recorder, scene layer, interaction kit, and a frame at the user.

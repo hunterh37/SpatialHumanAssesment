@@ -2,13 +2,15 @@ name: SpatialAge
 options:
   bundleIdPrefix: io.medvr
   deploymentTarget:
-    visionOS: "2.0"
+    visionOS: "26.0"
 settings:
   SWIFT_VERSION: "5.10"
   DEVELOPMENT_TEAM: ""
 packages:
   ScoreKit:
     path: ../../packages/ScoreKit
+  RealityHD:
+    path: ../../../RealForge
 targets:
   SpatialAge:
     type: application
@@ -17,11 +19,13 @@ targets:
     dependencies:
       - package: ScoreKit
         product: ScoreKit
+      - package: RealityHD
+        product: RealityHD
     info:
       path: SpatialAge/Info.plist
       properties:
         CFBundleDisplayName: Spatial Age
-        NSHandsTrackingUsageDescription: Hand tracking times how fast you reach targets.
+        NSHandsTrackingUsageDescription: Hand tracking times how fast you reach targets and drives the anatomy overlay.
         NSWorldSensingUsageDescription: Room scanning places targets on real surfaces.
         NSLocalNetworkUsageDescription: Sends session results to the operator laptop.
         UIApplicationSceneManifest:

@@ -1,5 +1,6 @@
 import ARKit
 import QuartzCore
+import struct RealCore.HandPose
 import ScoreKit
 import simd
 
@@ -26,6 +27,8 @@ final class HandTracker {
 
     private(set) var left: HandState?
     private(set) var right: HandState?
+    /// All 27 joints per hand in world space, for the anatomy overlay.
+    private(set) var skeletons: [Hand: (t: Double, pose: HandPose)] = [:]
     let buffer = TraceBuffer()
 
     /// Samples older than this are treated as not tracked.
@@ -54,10 +57,30 @@ final class HandTracker {
         return m
     }
 
+    /// Full skeleton of a hand, nil when stale or untracked.
+    func skeleton(_ hand: Hand) -> HandPose? {
+        guard let s = skeletons[hand], now - s.t < Self.staleS else { return nil }
+        return s.pose
+    }
+
+    static let jointOrder: [HandSkeleton.JointName] = [
+        .wrist,
+        .thumbKnuckle, .thumbIntermediateBase, .thumbIntermediateTip, .thumbTip,
+        .indexFingerMetacarpal, .indexFingerKnuckle, .indexFingerIntermediateBase, .indexFingerIntermediateTip, .indexFingerTip,
+        .middleFingerMetacarpal, .middleFingerKnuckle, .middleFingerIntermediateBase, .middleFingerIntermediateTip, .middleFingerTip,
+        .ringFingerMetacarpal, .ringFingerKnuckle, .ringFingerIntermediateBase, .ringFingerIntermediateTip, .ringFingerTip,
+        .littleFingerMetacarpal, .littleFingerKnuckle, .littleFingerIntermediateBase, .littleFingerIntermediateTip, .littleFingerTip,
+        .forearmWrist, .forearmArm,
+    ]
+
+    /// Stops ARKit hand and world tracking. Ends `run()`.
+    func stop() { session.stop() }
+
     func run() async {
         guard HandTrackingProvider.isSupported else { return }
         do { try await session.run([hands, world]) } catch { return }
         for await update in hands.anchorUpdates {
+            if Task.isCancelled { break }
             let anchor = update.anchor
             let t = now
             let hand: Hand = anchor.chirality == .left ? .left : .right
@@ -70,6 +93,7 @@ final class HandTracker {
                 return SIMD3(m.columns.3.x, m.columns.3.y, m.columns.3.z)
             }
             let s = HandState(t: t, indexTip: joint(.indexFingerTip), thumbTip: joint(.thumbTip), wrist: joint(.wrist))
+            skeletons[hand] = (t, HandPose(chirality: hand == .left ? .left : .right, positions: Self.jointOrder.map(joint)))
             if hand == .left { left = s } else { right = s }
             buffer.append(hand, s)
         }

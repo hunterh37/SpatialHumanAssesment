@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import RealKit
 import ScoreKit
 
 @MainActor
@@ -18,15 +19,36 @@ final class AppModel {
     var pace: PaceOfAging.Pace?
     var uploadStatus: String?
 
+    /// Hand anatomy overlay, toggled from the main window. Works during games and on its own.
+    var anatomyMode: RealHandAnatomy.Mode = .off
+    /// True while the immersive space is open (set by ImmersiveView).
+    var spaceOpen = false
+    /// Games run fully immersive; the anatomy viewer alone runs in passthrough.
+    var passthrough = false
+    /// Shown on the catalog after a session was ended before the last game.
+    var notice: String?
+
     func start(_ games: [Game]) {
         queue = games
         recorder = SessionRecorder(participant: participant)
         report = nil
+        pace = nil
+        uploadStatus = nil
+        notice = nil
         phase = .running
     }
 
+    /// Ends the running session without scoring. Nothing is saved.
+    func abortSession(_ reason: String = "Session ended early. Nothing was saved.") {
+        guard phase == .running else { return }
+        recorder = nil
+        notice = reason
+        phase = .catalog
+    }
+
     func finishSession() async {
-        guard let session = recorder?.finish() else { return }
+        guard phase == .running, let session = recorder?.finish() else { return }
+        recorder = nil
         let engine = ScoreEngine()
         report = engine.score(session)
         do { try SessionStore.save(session) } catch { uploadStatus = "save failed: \(error.localizedDescription)" }
@@ -47,11 +69,20 @@ final class AppModel {
         }
     }
 
+    /// Back to the catalog for the same participant.
+    func playAgain() {
+        notice = nil
+        phase = .catalog
+    }
+
+    /// Full reset to the consent screen with a fresh participant code.
     func nextParticipant() {
+        recorder = nil
         participant = Participant(code: Participant.randomCode(), ageYears: 30)
         report = nil
         pace = nil
         uploadStatus = nil
+        notice = nil
         phase = .consent
     }
 }

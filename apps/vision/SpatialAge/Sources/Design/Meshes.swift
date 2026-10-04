@@ -57,4 +57,27 @@ enum Meshes {
         d.primitives = .triangles(indices)
         return try? MeshResource.generate(from: [d])
     }
+
+    /// Open tube seen from inside, no caps, centered on the origin. Same winding as `invertedSphere`.
+    static func innerTube(radius: Float, height: Float, segments: Int = 96) -> MeshResource? {
+        var positions: [SIMD3<Float>] = [], normals: [SIMD3<Float>] = [], indices: [UInt32] = []
+        for y in [height / 2, -height / 2] {
+            for s in 0...segments {
+                let theta = Float(s) / Float(segments) * 2 * .pi
+                let n = SIMD3<Float>(cos(theta), 0, sin(theta))
+                positions.append(n * radius + [0, y, 0])
+                normals.append(-n)
+            }
+        }
+        let stride = UInt32(segments + 1)
+        for s in 0..<UInt32(segments) {
+            let a = s, b = stride + s
+            indices += [a, a + 1, b, a + 1, b + 1, b]
+        }
+        var d = MeshDescriptor(name: "tube")
+        d.positions = MeshBuffer(positions)
+        d.normals = MeshBuffer(normals)
+        d.primitives = .triangles(indices)
+        return try? MeshResource.generate(from: [d])
+    }
 }

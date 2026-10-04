@@ -14,11 +14,12 @@ enum Stage {
             root.addChild(ModelEntity(mesh: sky, materials: [Look.flat(Theme.ink)]))
         }
         // Horizon: a faint band at eye level that gives the dark a scale.
-        let band = ModelEntity(mesh: .generateCylinder(height: 0.6, radius: Theme.Size.skyRadius * 0.9),
-                               materials: [Look.flat(Theme.inkLift)])
-        band.position.y = 1.5
-        band.scale = [-1, 1, -1]
-        root.addChild(band)
+        // Open tube: a capped cylinder's bottom disc covers the sky for a seated eye below 1.2 m.
+        if let tube = Meshes.innerTube(radius: Theme.Size.skyRadius * 0.9, height: 0.6) {
+            let band = ModelEntity(mesh: tube, materials: [Look.flat(Theme.inkLift)])
+            band.position.y = 1.5
+            root.addChild(band)
+        }
 
         let floor = ModelEntity(mesh: .generateCylinder(height: 0.002, radius: Theme.Size.floorRadius),
                                 materials: [Look.flat(Theme.inkLift)])

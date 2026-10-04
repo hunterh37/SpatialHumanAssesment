@@ -20,8 +20,9 @@ final class Director {
 
     func run(_ games: [Game]) async {
         var seeds = SeededRNG(seed: Int(ctx.recorder.start * 1000))
-        for game in games where !Task.isCancelled {
+        for (index, game) in games.enumerated() where !Task.isCancelled {
             ctx.recenter()
+            ctx.hud.step = games.count > 1 ? "\(index + 1) / \(games.count)" : ""
             let instance = Self.make(game, ctx)
             for familiarization in [true, false] {
                 let n = familiarization ? game.familiarizationTrials : game.scoredTrials
