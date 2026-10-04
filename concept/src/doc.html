@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Spatial reaction and memory</title>
+<style>
+@page{size:11in 8.5in;margin:0}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:#1b2430;background:#f6f4ef}
+.page:last-child{page-break-after:auto}.page{width:11in;height:8.5in;page-break-after:always;position:relative;overflow:hidden;background:#f6f4ef}
+.cover img{position:absolute;right:-.5in;top:1.5in;width:7.2in}
+.cover .t{position:absolute;left:.7in;top:1.1in;width:3.7in}
+.k{font-size:11px;letter-spacing:3px;font-weight:700;color:#8a8f99;text-transform:uppercase}
+h1{font-size:44px;line-height:1.05;margin:.18in 0 .2in}
+.cover p{font-size:15px;line-height:1.5;color:#4a5160}
+.tag{display:inline-block;margin-top:.15in;padding:5px 12px;border:2px solid #1b2430;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:1px}
+.fig img{position:absolute;left:0;top:0;width:11in;height:7.33in}
+.fig .cap{position:absolute;left:.5in;right:.5in;bottom:.32in;display:flex;gap:.4in;font-size:12.5px;line-height:1.45;color:#3a4150;border-top:1.5px solid #d9d4c7;padding-top:.14in}
+.cap b{display:block;font-size:10px;letter-spacing:2px;color:#8a8f99;margin-bottom:3px}
+.cap div{flex:1}
+.foot{position:absolute;right:.5in;top:.35in;font-size:10px;color:#8a8f99;letter-spacing:2px}
+</style></head><body>
+<section class="page cover"><img src="../svg/cover.svg">
+<div class="t"><div class="k">Concept 03</div>
+<h1>Spatial reaction and memory</h1>
+<p>Targets appear around the real room. The user reaches and touches them with a fingertip, tracked as a collision against the hand joint. A 3D Corsi task lights cubes on room surfaces in sequence and the user repeats the order.</p>
+<p>Output: reaction time, movement time, error rate, Corsi span, and reach time split by target eccentricity.</p>
+<span class="tag">CORE PICK</span></div></section>
+
+<section class="page fig"><img src="../svg/fig01_reaction.svg"><div class="foot">01 / 06</div><div class="cap">
+<div><b>TASK</b>One target at a random point in the room. Trial ends when the index tip joint enters the target radius.</div>
+<div><b>MEASURES</b>Reaction time to hand start, movement time to contact.</div>
+<div><b>PLACEMENT</b>Spawn points sampled from the scanned room volume within arm reach.</div></div></section>
+
+<section class="page fig"><img src="../svg/fig02_choice.svg"><div class="foot">02 / 06</div><div class="cap">
+<div><b>TASK</b>Blue and orange targets appear together. Only blue counts.</div>
+<div><b>ERRORS</b>Touching orange is a commission error. A blue left untouched past the window is an omission error.</div>
+<div><b>LOAD</b>Choice adds a decision step, so choice RT minus simple RT isolates decision time.</div></div></section>
+
+<section class="page fig"><img src="../svg/fig03_corsi.svg"><div class="foot">03 / 06</div><div class="cap">
+<div><b>TASK</b>Cubes anchored to table, shelf, sofa and floor. A sequence lights, then the user touches it back in order.</div>
+<div><b>ADAPTIVE</b>Span grows by one after two correct trials and stops after two failures at a length.</div>
+<div><b>SCORE</b>Corsi span is the longest sequence repeated correctly.</div></div></section>
+
+<section class="page fig"><img src="../svg/fig04_metrics.svg"><div class="foot">04 / 06</div><div class="cap">
+<div><b>FEATURES</b>Reaction time, movement time, error rate, Corsi span.</div>
+<div><b>ECCENTRICITY</b>Reach time binned by angle between head forward and target. Targets behind the user need a head turn first.</div>
+<div><b>VALUES</b>Numbers shown are placeholders for layout.</div></div></section>
+
+<section class="page fig"><img src="../svg/fig05_aging.svg"><div class="foot">05 / 06</div><div class="cap">
+<div><b>WHY IT AGES</b>Processing speed and spatial working memory decline steadily from early adulthood, with well documented curves.</div>
+<div><b>USE</b>A session's features place the user on these curves to estimate a functional age.</div>
+<div><b>NOTE</b>Curve shapes are drawn for illustration.</div></div></section>
+
+<section class="page fig"><img src="../svg/fig06_session.svg"><div class="foot">06 / 06</div><div class="cap">
+<div><b>DEMO</b>Fast and game-like. The audience follows along on the mirrored view.</div>
+<div><b>RISK</b>Practice effects inflate scores on repeat sessions.</div>
+<div><b>MITIGATION</b>A fixed short familiarization round runs first. Only trials after it are scored.</div></div></section>
+</body></html>
