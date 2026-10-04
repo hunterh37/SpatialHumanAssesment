@@ -45,6 +45,8 @@ final class GameContext {
     let hud: HUD
     let micro: Micro
     let handedness: Participant.Handedness
+    /// Buddy, who explains each game before its blocks. Nil in captures without the stage bird.
+    var guide: BirdGuide?
     private(set) var rig: Rig
 
     init(clock: FrameClock, tracker: HandTracker, recorder: SessionRecorder, layer: Entity, hud: HUD,

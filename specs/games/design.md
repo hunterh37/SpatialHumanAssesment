@@ -24,7 +24,7 @@ Full immersion. Ink sky dome (#0B0F17), a faint horizon band at eye level, a 6 m
 | Leave | the offer lapses for 0.3 s (palm turned down, hand closed, lowered or untracked): calm takeoff with a wing whirr; palm over 1.7 m/s: startled takeoff with an alarm call; 1 to 2 s before it can be called again |
 | Trials (ambient false) | leaves the hand at the countdown, no sound, bounding loops 13 to 17 m out and 6 to 8.5 m up (about 0.9 degrees of visual angle) |
 
-Bird calls are swept sines (`Tone.Cue.chirp`, `.trill`, `.alarm`) at -20 to -26 dB. Bird yellow (#F5D547, belly #FBE7A1) is scenery and carries no meaning. Debug launch argument `-birdpreview YES` opens the stage with the bird perched in front.
+Bird calls are swept sines (`Tone.Cue.chirp`, `.trill`, `.alarm`) at -20 to -26 dB. Bird yellow (#FBDAB4 brand swatch 1, belly #FDEBD5) is scenery and carries no meaning. Debug launch argument `-birdpreview YES` opens the stage with the bird perched in front.
 
 ## Color
 
