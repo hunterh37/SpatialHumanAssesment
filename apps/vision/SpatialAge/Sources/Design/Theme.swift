@@ -54,7 +54,7 @@ enum Look {
         var m = PhysicallyBasedMaterial()
         m.baseColor = .init(tint: color)
         m.roughness = 0.35
-        m.metallic = 0
+        m.metallic = 0.0
         m.emissiveColor = .init(color: color)
         m.emissiveIntensity = intensity
         return m
@@ -64,7 +64,7 @@ enum Look {
         var m = PhysicallyBasedMaterial()
         m.baseColor = .init(tint: color)
         m.roughness = 0.22
-        m.metallic = 1
+        m.metallic = 1.0
         return m
     }
 
