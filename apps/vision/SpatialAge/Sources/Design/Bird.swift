@@ -731,13 +731,13 @@ final class Bird {
     // MARK: Build
 
     private enum Palette {
-        static let body = Dusk.hex(0xF5D547)
-        static let belly = Dusk.hex(0xFBE7A1)
-        static let head = Dusk.hex(0xF7D84A)
-        static let covert = Dusk.hex(0xF0CF45)
-        static let flightA = Dusk.hex(0xD9B23A)
-        static let flightB = Dusk.hex(0xCDA535)
-        static let tail = Dusk.hex(0xD2AA38)
+        static let body = Dusk.hex(0xFBDAB4)
+        static let belly = Dusk.hex(0xFDEBD5)
+        static let head = Dusk.hex(0xFCDEBA)
+        static let covert = Dusk.hex(0xF4D0A8)
+        static let flightA = Dusk.hex(0xE3BC98)
+        static let flightB = Dusk.hex(0xD8AB8B)
+        static let tail = Dusk.hex(0xDDB290)
         static let beak = Dusk.hex(0xF0A868)
         static let legs = Dusk.hex(0xD9A99B)
         static let eye = Dusk.hex(0x121014)
