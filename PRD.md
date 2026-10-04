@@ -65,17 +65,17 @@ Proposed answers from the 12:27 to 12:37 team discussion. Jess owns the name, bu
 
 ## Team and ownership
 
-Jason and Hunter lead the idea; it is their Vision Pro work.
+Jason and Hunter lead the idea and work as a pair. Each brought a Vision Pro, and those two headsets are what make the head-to-head duel possible. Contributions below come from the repo's merged and open PRs.
 
-| Person | Role | Owns | LinkedIn |
+| Person | Role | Contributions | LinkedIn |
 |---|---|---|---|
-| Jason Morris | Idea lead | Works with Hunter: reaction games, the app shell, hand x-ray | [Medical Technology Specialist](https://www.linkedin.com/in/jason-morris-a803294/) |
-| Hunter Harris | Idea lead | Reaction games, the app shell, hand x-ray, with Jason | [Featured iOS / visionOS Engineer - ARKit, RealityKit, SharePlay. 10+ Vision Pro Apps](https://www.linkedin.com/in/hunt3r-harris/) |
-| Jessica Myles | Team | Business use case, name, UI/UX | [MBA Candidate at Harvard Business School · Ex-Doordash, Accenture](https://www.linkedin.com/in/jessica-myles/) |
-| Wilson Wu | Team | Memory and balance games, PRD and research | [Building with AI · Founder, Dubbs Capital · CRO at Snappy · MSCS @ Georgia Tech](https://www.linkedin.com/in/wilson1wu/) |
-| Alex Fu | Team | Memory and balance games; designed Scary Balance and Hole in the Wall; branding and the Games Ideas deck | [Non-Invasive Devices · BU Mechanical Engineering Student, focusing on Human-Machine Interaction and MedTech](https://www.linkedin.com/in/alex-fu-bu/) |
-| Franco | Team | Memory and balance games; the KDM age pipeline (PRs #14, #15, #18, #20; GitHub Funkey08) | To add |
-| Ben | Team | The data set; Vision Pro landscape research | To add |
+| Jason Morris | Idea lead, with Hunter | Brought one of the two Vision Pros. Builds the app with Hunter: reaction games, the app shell, hand x-ray. Added the spatial sound cue when a target appears (#9) | [Medical Technology Specialist](https://www.linkedin.com/in/jason-morris-a803294/) |
+| Hunter Harris | Idea lead, with Jason | Brought the other Vision Pro. Builds the app with Jason: minigame catalog, ScoreKit and the showcase (#2), timed-game cues and the hand anatomy overlay (#8), the Dusk theme, Sky Plank and onboarding (#12), and the five deck games as built | [Featured iOS / visionOS Engineer - ARKit, RealityKit, SharePlay. 10+ Vision Pro Apps](https://www.linkedin.com/in/hunt3r-harris/) |
+| Jessica Myles | Team | Business use case, the name (BetterYears Age) and UI/UX. Built the clickable first-run setup prototype (#11), the BetterYears Age results reveal and Detailed Score board (#13), and the Dusk grade colors | [MBA Candidate at Harvard Business School · Ex-Doordash, Accenture](https://www.linkedin.com/in/jessica-myles/) |
+| Alex Fu | Team | The look and the games: the Games Ideas deck (the five games now in the app), the branding deck, the Dusk design spec v1.0 the app follows, and the Dusk Meadow 3D environment. Designed Scary Balance and Hole in the Wall | [Non-Invasive Devices · BU Mechanical Engineering Student, focusing on Human-Machine Interaction and MedTech](https://www.linkedin.com/in/alex-fu-bu/) |
+| Franco | Team | The age engine: the Klemera-Doubal age model with literature parameters (#10), then the KDM age pipeline that collects session data, refits on collected sessions and retries uploads (#20, after #14, #15 and #18). GitHub Funkey08 | To add |
+| Ben Weisburd | Team | The Vision Pro health, exercise and games landscape and gap analysis, with prices, two-player games, learning apps and popularity (#3, #4, #7); the five age-norm references behind the age model; the hidden-objects memory game idea. GitHub bw2 | To add |
+| Wilson Wu | Team | The PRD, ELI5 and research (#1, #6, #17, #19); first builds of the memory and balance games and their scoring (#5); build fixes (#16, #21); Alex's branding in the app (#22, #23) | [Building with AI · Founder, Dubbs Capital · CRO at Snappy · MSCS @ Georgia Tech](https://www.linkedin.com/in/wilson1wu/) |
 
 Headlines are as shown on each LinkedIn profile on 4 October 2026.
 
