@@ -11,7 +11,7 @@ packages:
     path: ../../packages/ScoreKit
   RealityHD:
     url: https://github.com/hunterh37/RealityHD.git
-    from: 5.0.0
+    revision: 7bbde51b2b220fe08ade04f98ace0ed4387100fb
 targets:
   SpatialAge:
     type: application
