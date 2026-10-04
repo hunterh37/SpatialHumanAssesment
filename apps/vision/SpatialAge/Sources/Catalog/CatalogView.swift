@@ -1,7 +1,7 @@
 import ScoreKit
 import SwiftUI
 
-/// Games tab (Dusk spec section 7): centered title and primary "Play all", hand anatomy picker top left, above a 4 x 2 grid of the eight games.
+/// Games tab (Dusk spec section 7): centered title and primary "Play all", hand anatomy picker top left, music top right, above a 4 x 2 grid of the eight games.
 /// A card opens that game's intro.
 struct GamesView: View {
     @Environment(AppModel.self) private var model
@@ -21,6 +21,7 @@ struct GamesView: View {
                 .frame(maxWidth: .infinity)
                 // Hand anatomy viewer (X-ray / Muscle) in the top corner, beside the centered title.
                 .overlay(alignment: .topLeading) { AnatomyToggle().frame(width: 300) }
+                .overlay(alignment: .topTrailing) { MusicMiniPlayer(compact: true).frame(width: 300) }
                 if let notice = model.notice { DuskChip(text: notice) }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Dusk.Layout.spacing), count: 4),
                           spacing: Dusk.Layout.spacing) {

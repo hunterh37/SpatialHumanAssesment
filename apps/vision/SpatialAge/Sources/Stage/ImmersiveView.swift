@@ -147,7 +147,7 @@ struct ImmersiveView: View {
 
     private func play(_ recorder: SessionRecorder, _ t: HandTracker) async {
         // Let tracking settle and the eyes adapt to the dark before the first stimulus.
-        await clock.wait(1.5)
+        await clock.wait(0.8)
         let ctx = GameContext(clock: clock, tracker: t, recorder: recorder, layer: layer, hud: hud,
                               handedness: model.participant.handedness)
         if let bird, stage.isEnabled { ctx.guide = BirdGuide(bird: bird, bubble: bubble, clock: clock) }

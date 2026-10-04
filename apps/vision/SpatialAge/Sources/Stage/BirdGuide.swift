@@ -141,6 +141,13 @@ final class BirdGuide {
 
     private func waitForTap() async {
         guard !Task.isCancelled else { return }
+        #if DEBUG
+        // Capture hook: SA_AUTOTAP=<seconds> advances each bubble after a read pause.
+        if let s = ProcessInfo.processInfo.environment["SA_AUTOTAP"].flatMap(Double.init) {
+            await clock.wait(s)
+            return
+        }
+        #endif
         await withTaskCancellationHandler {
             await withCheckedContinuation { bubble.waiter = $0 }
         } onCancel: {

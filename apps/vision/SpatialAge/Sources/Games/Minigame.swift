@@ -113,19 +113,13 @@ final class GameContext {
         hud.visible = true
     }
 
-    /// 3, 2, 1, Go on the HUD, 0.7 s per step, a tock on each digit.
+    /// Start of a block: a short "Go" cue and chime, no countdown. Play starts immediately.
     func countdown() async {
-        // Ambient motion stops at the countdown: the bird leaves the hand before the first trial.
+        // Ambient motion stops here: the bird leaves the hand before the first trial.
         hud.ambient = false
-        for n in ["3", "2", "1"] where !Task.isCancelled {
-            hud.cue = n
-            Tone.play(.tock, on: layer, gain: -16)
-            await clock.wait(0.7)
-        }
-        hud.cue = "Go"
+        guard !Task.isCancelled else { return }
+        cheer("Go", hold: 0.5)
         Tone.play(.caught, on: layer, gain: -16)
-        await clock.wait(0.5)
-        if hud.cue == "Go" { hud.cue = "" }
     }
 
     static let praise = ["Nice.", "Got it.", "Good.", "Well done."]

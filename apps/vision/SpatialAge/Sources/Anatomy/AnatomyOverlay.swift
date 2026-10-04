@@ -19,8 +19,16 @@ final class AnatomyOverlay {
     private var demoT: Double = 0
     /// Time of the last ARKit sample applied per hand.
     private var lastSample: [Hand: Double] = [:]
+    /// Joint positions last applied per hand, for the motion gate.
+    private var lastApplied: [Hand: [SIMD3<Float>]] = [:]
+    /// Hand rebuilt on the previous frame; the other hand gets priority next frame.
+    private var lastBuilt: Hand?
     /// Seconds a hand keeps its last pose after tracking drops before it hides.
     static let holdS = 0.5
+    /// Soft-tissue tessellation. Bones load at 0.8; tissue is rebuilt per sample, so it runs lower.
+    static let tissueDetail: Float = 0.65
+    /// Samples whose joints all moved less than this (m) since the last rebuild are skipped.
+    static let minMove: Float = 0.001
 
     init() {
         RealKitSetup.register()
@@ -34,6 +42,7 @@ final class AnatomyOverlay {
         async let l = RealHandAnatomy.load(chirality: .left, detail: 0.8)
         async let r = RealHandAnatomy.load(chirality: .right, detail: 0.8)
         let left = await l, right = await r
+        left.detail = Self.tissueDetail; right.detail = Self.tissueDetail
         hands = [.left: left, .right: right]
         // Neutral studio light so tissue reads the same in the dark stage and in passthrough.
         var sky = SunSky(elevation: 55, azimuth: 160, turbidity: 2.2)
@@ -52,12 +61,16 @@ final class AnatomyOverlay {
     func setMode(_ m: RealHandAnatomy.Mode) {
         mode = m
         lastSample = [:]
+        lastApplied = [:]
         for h in hands.values { h.setMode(m) }
     }
 
     func update(tracker: HandTracker?, dt: Double) {
         guard mode != .off else { return }
         if let tracker, HandTrackingProvider.isSupported {
+            // Soft tissue is rebuilt on the main actor; rebuilding both hands in one frame
+            // doubled the frame cost. One hand per frame, alternating, keeps each near 45 Hz.
+            var pending: [(side: Hand, t: Double, pose: HandPose)] = []
             for (side, overlay) in hands {
                 // Hold the last pose through short tracking gaps; hiding on every gap made the hands blink.
                 guard let sample = tracker.skeletonSample(side, maxAge: Self.holdS) else {
@@ -66,13 +79,25 @@ final class AnatomyOverlay {
                         overlay.resetSmoothing()
                     }
                     lastSample[side] = nil
+                    lastApplied[side] = nil
                     continue
                 }
                 overlay.root.isEnabled = true
                 // Rebuild soft tissue only on a new ARKit sample, not on every render frame.
                 guard lastSample[side] != sample.t else { continue }
-                lastSample[side] = sample.t
-                overlay.update(sample.pose)
+                // Skip samples where the hand is effectively still.
+                if let prev = lastApplied[side], !Self.moved(prev, sample.pose.positions) {
+                    lastSample[side] = sample.t
+                    continue
+                }
+                pending.append((side, sample.t, sample.pose))
+            }
+            let pick = pending.first { $0.side != lastBuilt } ?? pending.first
+            if let pick, let overlay = hands[pick.side] {
+                lastSample[pick.side] = pick.t
+                lastApplied[pick.side] = pick.pose.positions
+                lastBuilt = pick.side
+                overlay.update(pick.pose)
             }
             return
         }
@@ -86,5 +111,12 @@ final class AnatomyOverlay {
             overlay.root.isEnabled = true
             overlay.update(pose)
         }
+    }
+
+    private static func moved(_ a: [SIMD3<Float>], _ b: [SIMD3<Float>]) -> Bool {
+        guard a.count == b.count else { return true }
+        let t = minMove * minMove
+        for i in a.indices where simd_distance_squared(a[i], b[i]) > t { return true }
+        return false
     }
 }
