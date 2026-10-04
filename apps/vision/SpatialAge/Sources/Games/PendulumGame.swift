@@ -77,7 +77,12 @@ final class PendulumGame: Minigame {
         }
         // Branch: one bark segment between neighboring stems, overhanging both ends.
         let b = Entity()
-        let ends = [stems[0] + (stems[0] - stems[1]) * 0.4] + stems + [stems[stems.count - 1] + (stems[stems.count - 1] - stems[stems.count - 2]) * 0.4]
+        // Split into typed steps: the one-line form times out the Swift 6.2 type checker (Xcode 26.2).
+        let first: SIMD3<Float> = stems[0], second: SIMD3<Float> = stems[1]
+        let last: SIMD3<Float> = stems[stems.count - 1], beforeLast: SIMD3<Float> = stems[stems.count - 2]
+        let head: SIMD3<Float> = first + (first - second) * Float(0.4)
+        let tail: SIMD3<Float> = last + (last - beforeLast) * Float(0.4)
+        let ends: [SIMD3<Float>] = [head] + stems + [tail]
         for k in 1..<ends.count {
             let a = ends[k - 1] + [0, 0.012, 0], c = ends[k] + [0, 0.012, 0]
             let seg = ModelEntity(mesh: .generateCylinder(height: simd_distance(a, c), radius: 0.012),
