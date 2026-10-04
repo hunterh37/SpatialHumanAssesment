@@ -42,8 +42,8 @@ Proposed answers from the 12:27 to 12:37 team discussion, for the team to confir
 | Branding | The concept deck look: warm paper, navy ink, blue for go targets, orange for no-go, Helvetica. Hook line: **How old do you move?** | It matches the figures already in the repo, and a question makes no health claim |
 | Target audience | **Clinics first:** patients play in the waiting room and staff see trends between visits. Consumers second, through head-to-head duels | The team already works with clinicians, and one clinic headset serves many patients |
 | Business use case | Waiting-room assessment as a per-clinic subscription, with the duel as the engagement layer that brings patients back | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
-| Final design | Four games in about 6 minutes: Catch the knives (reaction, Hunter), Color dots (memory and decisions, Wilson), Reach and grab plus Freeze (reach and stability in the Wii Fit U style, Wilson, from alex's ideas). Bonus: hand x-ray (Hunter). The result screen shows movement age per game and overall, then level up | It matches the 12:37 split and the ELI5 loop above |
-| Metrics (data) | Catch: reaction and movement time (ms), misses. Color dots: hits, false taps, misses, decision time (ms), head turn (degrees). Reach and grab: furthest object grabbed and head travel (cm). Freeze: hand drift and head sway during holds (cm), times caught. Per session: movement age per game and overall, valid trial rate | These fields go into the session schema; norm sources are in the Movement Age engine table |
+| Final design | Four games in about 6 minutes: Catch the knives (reaction, Hunter), Color dots (memory and decisions, Wilson), Reach and grab plus Hole in the wall (reach and balance in the Wii Fit U style, Wilson, from alex's ideas). Bonus: hand x-ray (Hunter). The result screen shows movement age per game and overall, then level up | It matches the 12:37 split and the ELI5 loop above |
+| Metrics (data) | Catch: reaction and movement time (ms), misses. Color dots: hits, false taps, misses, decision time (ms), head turn (degrees). Reach and grab: furthest object grabbed and head travel (cm). Hole in the wall: pose match, hand drift and head sway during each hold (cm), walls cleared. Per session: movement age per game and overall, valid trial rate | These fields go into the session schema; norm sources are in the Movement Age engine table |
 
 ## Problem
 
@@ -102,11 +102,11 @@ A duel is a set of short games in mixed reality. Both players run the same games
 | Catch the knives | Reaction | Catch knives as they fall | Movement onset and catch time, using the [simple reaction](specs/tasks/simple-reaction.md) timing rules | Hunter |
 | Color dots | Memory and decisions | Colored dots appear around the room; tap the ones you were shown and skip the rest | Taps and skips, decision time, how far you look around | Wilson |
 | Reach and grab | Reach and mobility | Feet planted, reach out and tap to pick up virtual objects placed farther and farther away; leaning is fine, stepping is not | Furthest object grabbed and head travel, in cm. Reaching farther means moving more freely | Wilson |
-| Freeze | Stability | Sneak to pick up objects quietly, then hold your position while the guard looks; move and you get caught | Hand drift and head sway during each hold, times caught | Wilson |
+| Hole in the wall | Balance and stability | A wall with a cutout moves toward you; strike the pose and hold it still until the wall passes; move and you hit the wall | Pose match, hand drift and head sway during each hold, walls cleared | Wilson |
 | Hand x-ray | Demo | A separate app that shows an x-ray view of your own hand | Hand skeleton from hand tracking | Hunter |
 | Chair sprint, one-leg hold | Strength, balance | Not built today | Reps from head height; hold time | Unassigned |
 
-- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. Wilson's Color dots, Reach and grab and Freeze games land on it as PRs. Reach and grab and Freeze come from alex's ideas.
+- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. Wilson's Color dots, Reach and grab and Hole in the wall games land on it as PRs. Reach and grab and Hole in the wall are alex's ideas, and his Freeze idea (move and you get caught) becomes the hold rule inside Hole in the wall.
 - **Head-to-head:** two headsets in sync, or one headset taken in turns (open question). The same hardware for both players cancels device latency between them.
 - **Levelling:** each duel earns XP. Each metric shows change against the player's own first session, and only changes larger than test-retest noise count.
 - **Safe balance:** both balance games keep both feet on the floor, so players find their limits before a fall. The design reference is the [Wii Fit U balance games](https://www.youtube.com/watch?v=ybKOF1_yLZg): players steer by shifting their weight. With no balance board, the headset's head position stands in for the center of balance; head position and force-plate sway agree only moderately to well, so the game calibrates on this headset.
@@ -116,7 +116,7 @@ A duel is a set of short games in mixed reality. Both players run the same games
 
 ## Outputs
 
-Per session from v0.1: reaction time, movement time, decision time, reaction time variability, commission and omission rates, Corsi span, reach time by target eccentricity, functional age, and age gap (functional minus chronological). Definitions live in `specs/features.md`. The new games add color-dot hits, false taps, misses and head turn; furthest grab distance; and hand drift, head sway and times caught during holds. Their feature definitions still need specs.
+Per session from v0.1: reaction time, movement time, decision time, reaction time variability, commission and omission rates, Corsi span, reach time by target eccentricity, functional age, and age gap (functional minus chronological). Definitions live in `specs/features.md`. The new games add color-dot hits, false taps, misses and head turn; furthest grab distance; and pose match, hand drift, head sway and walls cleared during holds. Their feature definitions still need specs.
 
 ## Movement Age engine
 
@@ -130,7 +130,7 @@ Movement age combines published age slopes with an anchor measured on this heads
 | Metric | Feature | Published norms | Status |
 |---|---|---|---|
 | Strength | 30 s chair-stand reps | [Colombian multicenter 2025](https://pubmed.ncbi.nlm.nih.gov/42183074/): percentiles by sex in six bands from 18-29 to 70-80. Its equation, reps = 26.458 - 0.171 x age - 1.394 x sex, has R2 0.258, so a chair-stand age alone is noisy | Verified |
-| Balance | Freeze: hand drift and head sway during holds | [Posturography sway norms](https://pmc.ncbi.nlm.nih.gov/articles/PMC12926707/): 250 adults in five bands from 25-40 to 76-80. These are force-plate numbers, so the headset needs its own calibration | Pending |
+| Balance | Hole in the wall: hand drift and head sway during holds | [Posturography sway norms](https://pmc.ncbi.nlm.nih.gov/articles/PMC12926707/): 250 adults in five bands from 25-40 to 76-80. These are force-plate numbers, so the headset needs its own calibration | Pending |
 | Reach | Reach and grab: furthest grab, cm | [Nakhostin-Ansari 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9422043/): functional reach in six bands from 18-29 to 70+ | Verified |
 | Reaction | Simple and choice reaction time, decision time | [Tap reaction time on a Wii Balance Board](https://pmc.ncbi.nlm.nih.gov/articles/PMC5747451/): percentiles by sex per decade from 20-29 to 80+, 354 adults. Slopes: choice reaction time rose 2.80 ms a year from 18 to 65 ([1,466 adults](https://pmc.ncbi.nlm.nih.gov/articles/PMC4407573/)); simple reaction time averaged 290, 318 and 354 ms at ages 30, 50 and 69 ([2,196 adults](https://pmc.ncbi.nlm.nih.gov/articles/PMC5608941/)). Use slopes, never lab milliseconds | Verified |
 | Mobility | Arm or neck angle, degrees | [Shoulder range norms](https://pmc.ncbi.nlm.nih.gov/articles/PMC7549223/): flexion, abduction and external rotation by sex in 5-year bands from 20-24 to 85+, 2,404 adults; right flexion fell 43 degrees in men. No headset arm-angle validation found | Pending |
@@ -157,7 +157,7 @@ Movement age combines published age slopes with an anchor measured on this heads
 **3. Balance games.** As a player, I want a safe way to see how far I can reach and how still I can hold, long before balance becomes a fall.
 
 - [ ] Reach and grab: virtual objects sit at growing distances and a tap picks each up, feet planted; score = furthest object grabbed, in cm
-- [ ] Freeze: sneak to pick up objects, then hold still while the guard looks; moving past a sway threshold gets you caught; score = hand drift, head sway and times caught
+- [ ] Hole in the wall: a wall with a cutout moves toward the player; head and hands must match the cutout and hold still until it passes; moving past a sway threshold hits the wall; score = pose match, hand drift, head sway and walls cleared
 - [ ] One tap skips a game for anyone unsteady
 
 **4. Color-dot memory.** As a player, I want to remember which colored dots appeared around me and tap only those, so one game checks memory, looking around and decisions.
@@ -208,7 +208,7 @@ Data flow is in `specs/architecture.md`: each headset posts one session file to 
 | Area | Path | Spec | Owner (proposed) |
 |---|---|---|---|
 | App shell (`mini-catalog`), catch game, hand x-ray, two-player sync | `apps/vision` | `specs/tasks/*`, `specs/architecture.md` | Hunter |
-| Color dots, Reach and grab, Freeze | `apps/vision` | New specs needed | Wilson |
+| Color dots, Reach and grab, Hole in the wall | `apps/vision` | New specs needed | Wilson |
 | Session contract | `packages/schema` | `specs/session-schema.md` | Shared |
 | Features, cited norms, movement age | `ml` | `specs/features.md`, `specs/age-model.md` | Wilson |
 | Ingest service | `services/ingest` | `specs/architecture.md` | Open |
