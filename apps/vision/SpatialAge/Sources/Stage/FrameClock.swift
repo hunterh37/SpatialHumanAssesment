@@ -8,6 +8,8 @@ final class FrameClock {
     private var waiters: [CheckedContinuation<Double, Never>] = []
     private var tweens: [Tween] = []
     private(set) var elapsed: Double = 0
+    /// Set when the immersive space closes. No more frames will arrive, so waiters are released.
+    private(set) var stopped = false
 
     struct Tween {
         var duration: Double
@@ -36,7 +38,17 @@ final class FrameClock {
     }
 
     func next() async -> Double {
-        await withCheckedContinuation { waiters.append($0) }
+        if stopped || Task.isCancelled { return 1 }
+        return await withCheckedContinuation { waiters.append($0) }
+    }
+
+    /// Releases every waiter. Called when the render loop ends so cancelled games can unwind.
+    func stop() {
+        stopped = true
+        tweens = []
+        let w = waiters
+        waiters = []
+        w.forEach { $0.resume(returning: 1) }
     }
 
     /// Frame-accurate wait. Returns early if the task is cancelled.

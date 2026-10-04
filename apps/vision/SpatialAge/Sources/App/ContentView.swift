@@ -1,10 +1,14 @@
+import RealKit
 import ScoreKit
 import SwiftUI
 
+/// Main window. Consent, participant, catalog, running, results, then back to catalog or consent.
+/// Opens the immersive space. `ImmersiveView` closes itself when the phase leaves `.running`.
 struct ContentView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+    @State private var confirmStartOver = false
 
     var body: some View {
         @Bindable var model = model
@@ -16,6 +20,7 @@ struct ContentView: View {
                     Text("Five short reach and memory games, about 7 minutes in full immersion. No names are stored. Not a medical test.")
                         .multilineTextAlignment(.center).frame(maxWidth: 520)
                     Button("I agree") { model.phase = .participant }
+                        .buttonStyle(.borderedProminent)
                 }
             case .participant:
                 VStack(spacing: 20) {
@@ -29,31 +34,121 @@ struct ContentView: View {
                             ForEach(Participant.Handedness.allCases, id: \.self) { Text($0.rawValue) }
                         }
                     }
-                    Button("Continue") { model.phase = .catalog }
+                    HStack {
+                        Button("Back") { model.phase = .consent }
+                        Button("Continue") { model.phase = .catalog }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(model.participant.code.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 }
             case .catalog:
-                CatalogView { games in
-                    model.start(games)
-                    Task { await openImmersiveSpace(id: AppModel.immersiveID) }
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack {
+                        Button("Participant", systemImage: "chevron.left") { model.phase = .participant }
+                        Spacer()
+                        Text(model.participant.code).monospaced().foregroundStyle(.secondary)
+                        Button("Start over") { confirmStartOver = true }
+                    }
+                    if let notice = model.notice {
+                        Label(notice, systemImage: "info.circle")
+                            .font(.callout).foregroundStyle(.secondary)
+                    }
+                    CatalogView { games in start(games) }
                 }
             case .running:
-                VStack(spacing: 12) {
-                    Text("Playing").font(.title)
-                    Text(model.queue.map(\.title).joined(separator: " · ")).foregroundStyle(.secondary)
-                }
+                RunningView { model.abortSession() }
             case .results:
                 ResultsView {
-                    Task { await dismissImmersiveSpace() }
                     model.nextParticipant()
                 } again: {
-                    Task { await dismissImmersiveSpace() }
-                    model.phase = .catalog
+                    model.playAgain()
                 }
             }
         }
         .padding(40)
-        .onChange(of: model.phase) { _, phase in
-            if phase == .results { Task { await dismissImmersiveSpace() } }
+        .animation(.easeInOut(duration: 0.25), value: model.phase)
+        .confirmationDialog("Start over with a new participant?", isPresented: $confirmStartOver) {
+            Button("Start over", role: .destructive) { model.nextParticipant() }
+        }
+        .onChange(of: model.spaceOpen) { _, open in
+            // Space closed by the system or the Digital Crown mid-session.
+            if !open, model.phase == .running { model.abortSession() }
+        }
+    }
+
+    private func start(_ games: [Game]) {
+        Task {
+            if model.spaceOpen { await dismissImmersiveSpace() }
+            model.start(games)
+            model.passthrough = false
+            switch await openImmersiveSpace(id: AppModel.immersiveID) {
+            case .opened: break
+            case .userCancelled: model.abortSession("Immersion was cancelled.")
+            case .error: model.abortSession("Could not open the immersive space.")
+            @unknown default: model.abortSession("Could not open the immersive space.")
+            }
+        }
+    }
+}
+
+/// Shown in the window while the games run. Also visible inside the full space.
+struct RunningView: View {
+    @Environment(AppModel.self) private var model
+    let end: () -> Void
+    @State private var confirm = false
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Playing").font(.title)
+            Text(model.queue.map(\.title).joined(separator: " · ")).foregroundStyle(.secondary)
+            Button("End session", systemImage: "xmark", role: .destructive) { confirm = true }
+                .padding(.top, 12)
+        }
+        .confirmationDialog("End the session? Progress is not saved.", isPresented: $confirm) {
+            Button("End session", role: .destructive, action: end)
+        }
+    }
+}
+
+/// Main-window control for the hand anatomy overlay. Opens the immersive space in passthrough when
+/// no game is running, and closes it again when the overlay is switched off.
+struct AnatomyToggle: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+    @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+
+    var body: some View {
+        @Bindable var model = model
+        HStack(spacing: 14) {
+            Image(systemName: "hand.raised.fingers.spread")
+            Picker("Hand anatomy", selection: $model.anatomyMode) {
+                Text("Off").tag(RealHandAnatomy.Mode.off)
+                Text("X-ray").tag(RealHandAnatomy.Mode.xray)
+                Text("Muscle").tag(RealHandAnatomy.Mode.muscle)
+                Text("Both").tag(RealHandAnatomy.Mode.both)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 360)
+        }
+        .padding(.horizontal, 20).padding(.vertical, 12)
+        .background(.regularMaterial, in: Capsule())
+        .task {
+            // Launch argument `-anatomy xray|muscle|both` opens the viewer directly (demos, captures).
+            if let m = UserDefaults.standard.string(forKey: "anatomy").flatMap(RealHandAnatomy.Mode.init(rawValue:)), m != .off {
+                model.anatomyMode = m
+                await sync(m)
+            }
+        }
+        .onChange(of: model.anatomyMode) { _, mode in Task { await sync(mode) } }
+    }
+
+    private func sync(_ mode: RealHandAnatomy.Mode) async {
+        if mode != .off, !model.spaceOpen {
+            model.passthrough = model.phase != .running
+            model.spaceOpen = true
+            if case .error = await openImmersiveSpace(id: AppModel.immersiveID) { model.spaceOpen = false }
+        } else if mode == .off, model.spaceOpen, model.phase != .running {
+            await dismissImmersiveSpace()
         }
     }
 }

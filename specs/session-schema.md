@@ -51,3 +51,4 @@ Semver in `schema_version`. Additive optional fields bump minor. Anything else b
 - 0.1.0 initial.
 - 0.2.0 tasks `pendulum` and `pursuit`; optional `trace`, `endpoint_error_m`, `tap_t`. 0.1 files still validate. Python `ml` ignores the new tasks; scoring for them lives in `packages/ScoreKit`.
 - 0.3.0 adds the `reach_grab`, `wall` and `color_dots` tasks and their trial types (Reach and Grab, Hole in the Wall, Color Dots). Additive, so existing sessions still validate.
+- 0.4.0 aligns the five catalog games with the Games Ideas deck. Optional fields only: `cue` on reaction trials (Spatial Tracking), `stick_index`, `eccentricity_deg`, `gravity_scale` on pendulum trials (Stick Drop), `stand_at` and `freeze` on reach-grab trials (Scary Balance), `rule`, `rule_match`, `colors`, `radii`, `selected`, `select_t`, `recall_mode` on color-dots trials (Spatial Memory). Task names are unchanged, so 0.3 files still validate and score.

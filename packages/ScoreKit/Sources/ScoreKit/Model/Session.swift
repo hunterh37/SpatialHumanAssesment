@@ -1,6 +1,6 @@
 import Foundation
 
-// Mirrors packages/schema/session.schema.json v0.3.0. Keep in sync.
+// Mirrors packages/schema/session.schema.json v0.4.0. Keep in sync.
 // Times are seconds since session start. Positions are meters, ARKit world frame, y up.
 
 public struct Participant: Codable, Sendable, Equatable {
@@ -63,18 +63,21 @@ public struct ReactionTrial: Codable, Sendable {
     /// Distance from fingertip to target center at contact.
     public var endpointErrorM: Double?
     public var trace: Trace?
+    /// Spatial Tracking: what announced the object, `audio`, `light` or `both`. Spawn time is the cue onset.
+    public var cue: String?
 
     public init(index: Int, kind: Kind, hand: Hand?, spawnT: Double, moveT: Double?, contactT: Double?,
                 position: V3, eccentricityDeg: Double, outcome: Outcome, trackingGapMs: Double,
-                endpointErrorM: Double? = nil, trace: Trace? = nil) {
+                endpointErrorM: Double? = nil, trace: Trace? = nil, cue: String? = nil) {
         self.index = index; self.kind = kind; self.hand = hand; self.spawnT = spawnT; self.moveT = moveT
         self.contactT = contactT; self.position = position; self.eccentricityDeg = eccentricityDeg
         self.outcome = outcome; self.trackingGapMs = trackingGapMs; self.endpointErrorM = endpointErrorM; self.trace = trace
+        self.cue = cue
     }
 
     enum CodingKeys: String, CodingKey {
         case index, kind, hand, spawnT, moveT, contactT, position, eccentricityDeg, outcome, trackingGapMs
-        case endpointErrorM, trace
+        case endpointErrorM, trace, cue
     }
 
     /// The schema requires `move_t`, `contact_t` and `hand` to be present, null when absent.
@@ -92,6 +95,7 @@ public struct ReactionTrial: Codable, Sendable {
         try c.encode(trackingGapMs, forKey: .trackingGapMs)
         try c.encodeIfPresent(endpointErrorM, forKey: .endpointErrorM)
         try c.encodeIfPresent(trace, forKey: .trace)
+        try c.encodeIfPresent(cue, forKey: .cue)
     }
 }
 
@@ -113,8 +117,9 @@ public struct CorsiTrial: Codable, Sendable {
     }
 }
 
-/// Pendulum drop. A bob swings on a cord, the cord releases at a random phase,
-/// the bob falls ballistically and the user grasps it.
+/// Stick Drop (task `pendulum`). A row of leaves hangs across the view; one lets go and falls under scaled
+/// gravity, and the user grasps it before it reaches the ground. Pre-0.4 sessions logged a swinging pendulum
+/// bob, which fills `lengthM` and `amplitudeDeg`; Stick Drop logs both as 0.
 public struct PendulumTrial: Codable, Sendable {
     public enum Outcome: String, Codable, Sendable { case `catch`, drop, anticipation }
 
@@ -134,11 +139,18 @@ public struct PendulumTrial: Codable, Sendable {
     public var apertureReleaseM: Double?
     public var apertureCatchM: Double?
     public var trace: Trace?
+    /// Stick Drop: which leaf in the row fell (0 is leftmost), its angle from head forward at release, and the
+    /// gravity scale of the fall (1 is 9.81 m/s^2).
+    public var stickIndex: Int?
+    public var eccentricityDeg: Double?
+    public var gravityScale: Double?
 
     public init(index: Int, lengthM: Double, amplitudeDeg: Double, releaseT: Double, releaseAngleDeg: Double,
                 releasePosition: V3, releaseVelocity: V3, catchT: Double?, catchPosition: V3?, hand: Hand?,
                 outcome: Outcome, trackingGapMs: Double, apertureReleaseM: Double? = nil,
-                apertureCatchM: Double? = nil, trace: Trace? = nil) {
+                apertureCatchM: Double? = nil, trace: Trace? = nil, stickIndex: Int? = nil,
+                eccentricityDeg: Double? = nil, gravityScale: Double? = nil) {
+        self.stickIndex = stickIndex; self.eccentricityDeg = eccentricityDeg; self.gravityScale = gravityScale
         self.index = index; self.lengthM = lengthM; self.amplitudeDeg = amplitudeDeg; self.releaseT = releaseT
         self.releaseAngleDeg = releaseAngleDeg; self.releasePosition = releasePosition
         self.releaseVelocity = releaseVelocity; self.catchT = catchT; self.catchPosition = catchPosition
@@ -190,10 +202,32 @@ public struct PursuitTrial: Codable, Sendable {
     }
 }
 
-/// Reach and grab. An object waits at a set distance from the dominant shoulder; with feet planted the
-/// participant reaches out and touches it. Distances climb past arm's length, so leaning decides the last ones.
+/// Scary Balance (task `reach_grab`). The participant walks to a floor spot, then reaches for an object a set
+/// distance from the dominant shoulder. Distances climb past arm's length, so leaning decides the last ones.
+/// On some trials a creature passes mid-reach and the participant freezes in place until it is gone.
 public struct ReachGrabTrial: Codable, Sendable {
     public enum Outcome: String, Codable, Sendable { case grab, miss }
+
+    /// One freeze while the creature passes. Sampled from the frame the freeze starts to the frame it ends.
+    public struct Freeze: Codable, Sendable {
+        public var startT: Double
+        public var endT: Double
+        /// Head path length over the freeze divided by its duration, cm/s.
+        public var headSwayCmS: Double
+        /// RMS distance of the reaching fingertip from its own mean during the freeze, cm. Nil when untracked.
+        public var handDriftCm: Double?
+        /// Largest head travel from where it was when the freeze began, cm.
+        public var headShiftCm: Double
+        /// False when the head moved more than `ReachGrabMetrics.freezeBreakCm` during the freeze.
+        public var held: Bool
+        public var trackingGapMs: Double
+
+        public init(startT: Double, endT: Double, headSwayCmS: Double, handDriftCm: Double?, headShiftCm: Double,
+                    held: Bool, trackingGapMs: Double) {
+            self.startT = startT; self.endT = endT; self.headSwayCmS = headSwayCmS; self.handDriftCm = handDriftCm
+            self.headShiftCm = headShiftCm; self.held = held; self.trackingGapMs = trackingGapMs
+        }
+    }
 
     public var index: Int
     /// Direction from the dominant shoulder, degrees. 0 is straight ahead, positive is toward the dominant side.
@@ -210,10 +244,14 @@ public struct ReachGrabTrial: Codable, Sendable {
     public var leanM: Double?
     public var trackingGapMs: Double
     public var trace: Trace?
+    /// Floor spot the participant walked to before the object appeared, world space.
+    public var standAt: V3?
+    public var freeze: Freeze?
 
     public init(index: Int, azimuthDeg: Double, elevationDeg: Double, distanceM: Double, position: V3,
                 spawnT: Double, grabT: Double?, hand: Hand?, outcome: Outcome, leanM: Double?,
-                trackingGapMs: Double, trace: Trace? = nil) {
+                trackingGapMs: Double, trace: Trace? = nil, standAt: V3? = nil, freeze: Freeze? = nil) {
+        self.standAt = standAt; self.freeze = freeze
         self.index = index; self.azimuthDeg = azimuthDeg; self.elevationDeg = elevationDeg
         self.distanceM = distanceM; self.position = position; self.spawnT = spawnT; self.grabT = grabT
         self.hand = hand; self.outcome = outcome; self.leanM = leanM; self.trackingGapMs = trackingGapMs
@@ -256,8 +294,11 @@ public struct WallTrial: Codable, Sendable {
     }
 }
 
-/// Color dots. Some dots light up around the participant, then every dot turns grey alongside decoys and the
-/// participant touches only the ones that lit. Dots spread past the field of view, so recall needs head turns.
+/// Spatial Memory (task `color_dots`). Balls of several colors and sizes surround the participant. Select:
+/// touch every ball that fits a rule ("every blue ball"). Then every ball turns grey and recall asks for either
+/// the balls the participant DID touch or the ones they DID NOT. `shown` marks the recall answers, which come
+/// from what was touched in select, not from the rule. Pre-0.4 sessions lit dots instead of a select phase and
+/// leave the select fields nil.
 public struct ColorDotsTrial: Codable, Sendable {
     public var index: Int
     /// Dots that lit during study.
@@ -280,10 +321,25 @@ public struct ColorDotsTrial: Codable, Sendable {
     /// Largest head yaw away from the start direction during recall, degrees.
     public var maxHeadTurnDeg: Double
     public var trackingGapMs: Double
+    /// Select rule, e.g. `color:blue` or `size:large`, and which balls fit it.
+    public var rule: String?
+    public var ruleMatch: [Bool]?
+    /// Ball color names and radii, meters.
+    public var colors: [String]?
+    public var radii: [Double]?
+    /// Balls touched in select, in order, and when. Select starts at `studyStartT`.
+    public var selected: [Int]?
+    public var selectT: [Double]?
+    /// `did` or `didnt`.
+    public var recallMode: String?
 
     public init(index: Int, setSize: Int, dotAzimuthDeg: [Double], dotPositions: [V3], shown: [Bool],
                 touched: [Int], touchT: [Double], studyStartT: Double, recallStartT: Double, endT: Double,
-                hits: Int, falseTaps: Int, misses: Int, maxHeadTurnDeg: Double, trackingGapMs: Double) {
+                hits: Int, falseTaps: Int, misses: Int, maxHeadTurnDeg: Double, trackingGapMs: Double,
+                rule: String? = nil, ruleMatch: [Bool]? = nil, colors: [String]? = nil, radii: [Double]? = nil,
+                selected: [Int]? = nil, selectT: [Double]? = nil, recallMode: String? = nil) {
+        self.rule = rule; self.ruleMatch = ruleMatch; self.colors = colors; self.radii = radii
+        self.selected = selected; self.selectT = selectT; self.recallMode = recallMode
         self.index = index; self.setSize = setSize; self.dotAzimuthDeg = dotAzimuthDeg
         self.dotPositions = dotPositions; self.shown = shown; self.touched = touched; self.touchT = touchT
         self.studyStartT = studyStartT; self.recallStartT = recallStartT; self.endT = endT; self.hits = hits
@@ -365,7 +421,7 @@ public struct HealthKitSnapshot: Codable, Sendable {
 }
 
 public struct Session: Codable, Sendable {
-    public static let schemaVersion = "0.3.0"
+    public static let schemaVersion = "0.4.0"
 
     public var schemaVersion = Session.schemaVersion
     public var sessionId = UUID().uuidString

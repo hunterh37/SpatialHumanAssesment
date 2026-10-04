@@ -1,4 +1,4 @@
-/// Hole in the wall: hold both hands in the cutouts while a wall arrives. Spec: specs/games/wall.md.
+/// Hole in the wall: make the cut-out shape with both hands and hold it while the wall crosses the moat. Spec: specs/games/wall.md.
 public enum WallMetrics: MetricExtractor {
     public static let game = Game.wall
     /// A hand within this distance of its cutout center counts as in the hole.
@@ -23,6 +23,16 @@ public enum WallMetrics: MetricExtractor {
             let cleared = kept.filter { $0.outcome == .cleared }.count
             out.append(MetricValue(.wallClearRate, Double(cleared) / Double(kept.count), n: kept.count,
                                    sem: GateMetrics.binomialSE(cleared, kept.count)))
+        }
+        // Mobility: mean hand error per pose, worst pose. A pose missed every time shows up here.
+        var byPose: [String: [Double]] = [:]
+        for t in kept {
+            let errs = [t.leftErrorM, t.rightErrorM].compactMap { $0 }
+            if let e = Stats.mean(errs) { byPose[t.pose, default: []].append(e * 100) }
+        }
+        let poseMeans = byPose.values.compactMap { Stats.mean($0) }
+        if byPose.count >= 2, let worst = poseMeans.max() {
+            out.append(MetricValue(.wallWorstPoseCm, worst, n: byPose.count))
         }
         return (out, q)
     }

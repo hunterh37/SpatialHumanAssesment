@@ -14,7 +14,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "pattern": "^0\\.[123]\\.\\d+$"
+      "pattern": "^0\\.[1234]\\.\\d+$"
     },
     "session_id": {
       "type": "string"
@@ -209,6 +209,14 @@
         },
         "trace": {
           "$ref": "#/$defs/trace"
+        },
+        "cue": {
+          "type": "string",
+          "enum": [
+            "audio",
+            "light",
+            "both"
+          ]
         }
       },
       "additionalProperties": false
@@ -366,6 +374,15 @@
         },
         "trace": {
           "$ref": "#/$defs/trace"
+        },
+        "stick_index": {
+          "type": "integer"
+        },
+        "eccentricity_deg": {
+          "type": "number"
+        },
+        "gravity_scale": {
+          "type": "number"
         }
       }
     },
@@ -514,6 +531,47 @@
         },
         "trace": {
           "$ref": "#/$defs/trace"
+        },
+        "stand_at": {
+          "$ref": "#/$defs/vec3"
+        },
+        "freeze": {
+          "type": "object",
+          "required": [
+            "start_t",
+            "end_t",
+            "head_sway_cm_s",
+            "head_shift_cm",
+            "held",
+            "tracking_gap_ms"
+          ],
+          "properties": {
+            "start_t": {
+              "type": "number"
+            },
+            "end_t": {
+              "type": "number"
+            },
+            "head_sway_cm_s": {
+              "type": "number"
+            },
+            "hand_drift_cm": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "head_shift_cm": {
+              "type": "number"
+            },
+            "held": {
+              "type": "boolean"
+            },
+            "tracking_gap_ms": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -666,6 +724,46 @@
         },
         "tracking_gap_ms": {
           "type": "number"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "rule_match": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          }
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "radii": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "selected": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "select_t": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "recall_mode": {
+          "type": "string",
+          "enum": [
+            "did",
+            "didnt"
+          ]
         }
       }
     }

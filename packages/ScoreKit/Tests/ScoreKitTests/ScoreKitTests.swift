@@ -118,7 +118,7 @@ final class ScoreTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(a.spatialAge), try XCTUnwrap(b.spatialAge), accuracy: 0.05)
         let json = String(decoding: data, as: UTF8.self)
         XCTAssertTrue(json.contains("\"release_angle_deg\""))
-        XCTAssertTrue(json.contains("\"schema_version\":\"0.3.0\""))
+        XCTAssertTrue(json.contains("\"schema_version\":\"0.4.0\""))
     }
 
     func testDecodesV01Example() throws {

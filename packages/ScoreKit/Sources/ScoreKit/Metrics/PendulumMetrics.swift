@@ -1,4 +1,4 @@
-/// Pendulum: catch a ballistically falling bob. Spec: specs/games/pendulum.md.
+/// Stick Drop: catch a falling leaf from a row hung across the view. Spec: specs/games/pendulum.md.
 public enum PendulumMetrics: MetricExtractor {
     public static let game = Game.pendulum
     /// A grasp closing faster than this after release is a guess, not a reaction.
@@ -7,7 +7,7 @@ public enum PendulumMetrics: MetricExtractor {
 
     public static func extract(_ session: Session) -> (metrics: [MetricValue], quality: TrialQuality) {
         var q = TrialQuality()
-        var latencies: [Double] = [], drops: [Double] = []
+        var latencies: [Double] = [], drops: [Double] = [], ecc: [Double] = [], eccLatency: [Double] = []
         var catches = 0, attempts = 0
         for trial in session.scored(.pendulum).flatMap(\.pendulumTrials) where q.count(gapMs: trial.trackingGapMs) {
             switch trial.outcome {
@@ -19,12 +19,18 @@ public enum PendulumMetrics: MetricExtractor {
                 guard latency >= anticipationS else { continue }
                 attempts += 1; catches += 1
                 latencies.append(latency)
-                if let d = trial.dropM { drops.append(d * 100) }
+                // Ruler-drop equivalent at 1 g. Stick Drop scales gravity, so the observed fall is not comparable.
+                drops.append(rulerDropCm(latency: latency))
+                if let e = trial.eccentricityDeg { ecc.append(e / 90); eccLatency.append(latency) }
             }
         }
         var out: [MetricValue] = []
         if let m = latencies.robustMedian(.catchLatency) { out.append(m) }
         if let m = drops.robustMedian(.catchDropCm) { out.append(m) }
+        // Useful field of view: catch latency on the falling leaf's angle from head forward, per 90 degrees.
+        if ecc.count >= 6, let line = Stats.ols(ecc, eccLatency) {
+            out.append(MetricValue(.catchEccSlope, line.slope, n: ecc.count, sem: line.slopeSE))
+        }
         if attempts > 0 {
             out.append(MetricValue(.catchRate, Double(catches) / Double(attempts), n: attempts,
                                    sem: GateMetrics.binomialSE(catches, attempts)))

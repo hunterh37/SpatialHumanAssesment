@@ -22,6 +22,10 @@ final class HUD {
     var done = 0
     var total = 0
     var visible = false
+    /// Position in the queue, e.g. "2 / 5". Empty for a single game.
+    var step = ""
+    /// Large center text: countdown digits and short praise. Never a number from play.
+    var cue = ""
 }
 
 /// Everything a game needs: clock, hands, recorder, scene layer, interaction kit, and a frame at the user.
@@ -79,9 +83,38 @@ final class GameContext {
     func show(_ game: Game, familiarization: Bool, total: Int) {
         hud.title = game.title
         hud.line = familiarization ? "Practice. \(game.instruction)" : game.instruction
+        if game.isTimed && !familiarization { hud.line += " You are timed." }
         hud.done = 0
         hud.total = total
+        hud.cue = ""
         hud.visible = true
+    }
+
+    /// 3, 2, 1, Go on the HUD, 0.7 s per step, a tock on each digit.
+    func countdown() async {
+        for n in ["3", "2", "1"] where !Task.isCancelled {
+            hud.cue = n
+            Tone.play(.tock, on: layer, gain: -16)
+            await clock.wait(0.7)
+        }
+        hud.cue = "Go"
+        Tone.play(.caught, on: layer, gain: -16)
+        await clock.wait(0.5)
+        if hud.cue == "Go" { hud.cue = "" }
+    }
+
+    static let praise = ["Nice!", "Great job!", "Got it!", "Good!", "Well done!"]
+    private var cueSerial = 0
+
+    /// Short praise on the HUD for `hold` seconds. A newer cue replaces it.
+    func cheer(_ text: String? = nil, hold: Double = 0.8) {
+        cueSerial += 1
+        let serial = cueSerial
+        hud.cue = text ?? Self.praise.randomElement()!
+        Task { @MainActor in
+            await clock.wait(hold)
+            if cueSerial == serial { hud.cue = "" }
+        }
     }
 }
 

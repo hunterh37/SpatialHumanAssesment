@@ -68,7 +68,7 @@ public struct ScoreReport: Codable, Sendable {
 
 /// Session in, `ScoreReport` out. Pure function of the session and the norm table.
 public struct ScoreEngine: Sendable {
-    public static let version = "0.3.0"
+    public static let version = "0.4.0"
     public static let extractors: [any MetricExtractor.Type] = [
         PendulumMetrics.self, SparkMetrics.self, GateMetrics.self, ConstellationMetrics.self, OrbitMetrics.self,
         ReachGrabMetrics.self, WallMetrics.self, ColorDotsMetrics.self,
