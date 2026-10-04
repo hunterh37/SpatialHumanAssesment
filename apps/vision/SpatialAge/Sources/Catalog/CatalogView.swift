@@ -1,10 +1,11 @@
 import ScoreKit
 import SwiftUI
 
-/// Games tab (Dusk spec section 7): centered title and primary "Play all", hand anatomy picker top left, music top right, above a 4 x 2 grid of the eight games.
+/// Games tab (Dusk spec section 7): centered title and primary "Play all", hand anatomy picker top left, replay intro and music top right, above a 4 x 2 grid of the eight games.
 /// A card opens that game's intro.
 struct GamesView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
     let start: ([Game]) -> Void
 
     var body: some View {
@@ -16,12 +17,24 @@ struct GamesView: View {
                 // The one primary action on this screen sits on the center line, under the title.
                 VStack(spacing: 8) {
                     Text(DuskCopy.gamesTitle).font(DuskType.title)
-                    Button("Play all") { start(model.games) }.buttonStyle(.duskPrimary)
+                    // A viewer scene (anatomy, Sky Plank) is already open: the primary action leaves it.
+                    if model.spaceOpen {
+                        Button("Exit", systemImage: "xmark") { exitScene() }.buttonStyle(.duskPrimary)
+                    } else {
+                        Button("Play all") { start(model.games) }.buttonStyle(.duskPrimary)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 // Hand anatomy viewer (X-ray / Muscle) in the top corner, beside the centered title.
                 .overlay(alignment: .topLeading) { AnatomyToggle().frame(width: 300) }
-                .overlay(alignment: .topTrailing) { MusicMiniPlayer(compact: true).frame(width: 300) }
+                .overlay(alignment: .topTrailing) {
+                    HStack(spacing: 12) {
+                        Button("Replay intro", systemImage: "sparkles") { model.replayIntro() }
+                            .buttonStyle(.duskIcon)
+                            .help("Replay intro")
+                        MusicMiniPlayer(compact: true).frame(width: 300)
+                    }
+                }
                 if let notice = model.notice { DuskChip(text: notice) }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Dusk.Layout.spacing), count: 4),
                           spacing: Dusk.Layout.spacing) {
@@ -34,6 +47,13 @@ struct GamesView: View {
             .frame(maxWidth: .infinity)
             .transition(.opacity)
         }
+    }
+
+    /// Switches the viewers off and closes the immersive space.
+    private func exitScene() {
+        model.anatomyMode = .off
+        model.skyPlank = false
+        Task { if model.spaceOpen { await dismissImmersiveSpace() } }
     }
 }
 
