@@ -73,6 +73,11 @@ enum Theme {
 
 /// Dusk theme. Spec: Dusk design spec v1.0. Signal colors (go, nogo, gold, teal) are unchanged.
 enum Dusk {
+    // Results scoreboard grades (from 178c55f). Not in spec v1.0: derived from the Dusk palette, muted to sit next
+    // to peach, and kept clear of nogo #FF7A3D and gold #FFC83D so they never read as game signals. 2D windows only.
+    static let gradeGood = hex(0xA9C79B), gradeMid = hex(0xEEC97E), gradeLow = hex(0xE88A7D)
+    static func color(_ c: UIColor) -> Color { Color(uiColor: c) }
+
     static func hex(_ v: UInt32, _ a: CGFloat = 1) -> UIColor {
         UIColor(red: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255,
                 blue: CGFloat(v & 0xFF) / 255, alpha: a)

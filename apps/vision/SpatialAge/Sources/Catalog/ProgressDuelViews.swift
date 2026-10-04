@@ -95,15 +95,18 @@ struct ProgressTab: View {
         guard history.count > 1, let first = history.first, let last = history.last else {
             return [DuskChip(text: "Two visits are needed to compare")]
         }
-        return Domain.allCases.compactMap { d in
+        // Explicit types: the inferred version times out the Swift 6.2 type checker on some Macs.
+        return Domain.allCases.compactMap { (d: Domain) -> DuskChip? in
             guard let a = first.domains.first(where: { $0.domain == d }),
                   let b = last.domains.first(where: { $0.domain == d }),
                   let ageA = a.age, let ageB = b.age else { return nil }
-            let noise = 1.645 * ((a.ageSD ?? 5) * (a.ageSD ?? 5) + (b.ageSD ?? 5) * (b.ageSD ?? 5)).squareRoot()
-            let drop = ageA - ageB
-            return drop > noise
-                ? DuskChip(text: String(format: "%@ +%.0f improved", d.title, drop), kind: .improved)
-                : DuskChip(text: "\(d.title) within noise")
+            let sdA: Double = a.ageSD ?? 5, sdB: Double = b.ageSD ?? 5
+            let noise: Double = 1.645 * (sdA * sdA + sdB * sdB).squareRoot()
+            let drop: Double = ageA - ageB
+            if drop > noise {
+                return DuskChip(text: String(format: "%@ +%.0f improved", d.title, drop), kind: .improved)
+            }
+            return DuskChip(text: "\(d.title) within noise")
         }
     }
 }
