@@ -10,7 +10,8 @@ packages:
   ScoreKit:
     path: ../../packages/ScoreKit
   RealityHD:
-    path: ../../../RealForge
+    url: https://github.com/hunterh37/RealityHD.git
+    from: 5.0.0
 targets:
   SpatialAge:
     type: application
