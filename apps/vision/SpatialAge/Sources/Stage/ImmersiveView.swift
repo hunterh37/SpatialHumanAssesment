@@ -138,7 +138,7 @@ struct ImmersiveView: View {
         await clock.wait(1.5)
         let ctx = GameContext(clock: clock, tracker: t, recorder: recorder, layer: layer, hud: hud,
                               handedness: model.participant.handedness)
-        await Director(ctx: ctx, practice: model.practiceFirst).run(model.queue)
+        await Director(ctx: ctx, practice: model.practiceFirst) { model.playingGame = $0 }.run(model.queue)
         // Ended early: the window already shows the catalog. Do not score a partial run.
         guard !Task.isCancelled, model.phase == .running else { return }
         await model.finishSession()

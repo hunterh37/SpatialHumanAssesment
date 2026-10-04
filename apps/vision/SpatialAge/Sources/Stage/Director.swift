@@ -7,10 +7,13 @@ final class Director {
     let ctx: GameContext
     /// Run the unscored practice block before each game (Dusk intro toggle "Practice round first").
     let practice: Bool
+    /// Called as each game starts, before its intro. The music bed changes track on it.
+    let onGame: @MainActor (Game) -> Void
 
-    init(ctx: GameContext, practice: Bool = true) {
+    init(ctx: GameContext, practice: Bool = true, onGame: @escaping @MainActor (Game) -> Void = { _ in }) {
         self.ctx = ctx
         self.practice = practice
+        self.onGame = onGame
     }
 
     static func make(_ game: Game, _ ctx: GameContext) -> any Minigame {
@@ -29,6 +32,7 @@ final class Director {
     func run(_ games: [Game]) async {
         var seeds = SeededRNG(seed: Int(ctx.recorder.start * 1000))
         for (index, game) in games.enumerated() where !Task.isCancelled {
+            onGame(game)
             await ctx.recenter()
             ctx.hud.step = games.count > 1 ? "\(index + 1) / \(games.count)" : ""
             let instance = Self.make(game, ctx)
