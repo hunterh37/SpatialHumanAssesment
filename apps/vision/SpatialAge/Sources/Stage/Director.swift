@@ -46,10 +46,10 @@ final class Director {
                         // Full explanation before the first block; one line between practice and scored.
                         let lines = familiarization || !practice ? game.guideLines : [game.guideAgain]
                         await guide.say(lines, action: familiarization ? "Tap to practice" : "Tap to start", rig: ctx.rig)
-                        // Buddy takes off before the first digit, so the countdown starts on a clear view.
-                        await ctx.clock.wait(0.45)
+                        // Short beat for Buddy to take off so the first trial starts on a clear view.
+                        await ctx.clock.wait(0.25)
                     } else {
-                        await ctx.clock.wait(familiarization ? 2.5 : 1.8)
+                        await ctx.clock.wait(familiarization ? 0.8 : 0.5)
                     }
                     await ctx.countdown()
                     ctx.hud.ambient = false
@@ -61,8 +61,8 @@ final class Director {
                     if familiarization { ctx.guide?.arrive(ctx.rig) }
                     ctx.recorder.append(block)
                     ctx.celebrateBlock(scored: !familiarization)
-                    ctx.cheer(familiarization ? "Practice done." : "Done!", hold: 1.4)
-                    await ctx.clock.wait(1.4)
+                    ctx.cheer(familiarization ? "Practice done." : "Done!", hold: 0.8)
+                    await ctx.clock.wait(0.6)
                 }
             }
             ctx.hud.skip = { current.cancel() }
@@ -72,7 +72,7 @@ final class Director {
             ctx.guide?.leave()
             instance.teardown()
             ctx.hud.visible = false
-            await ctx.clock.wait(1.0)
+            await ctx.clock.wait(0.4)
         }
     }
 }

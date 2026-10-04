@@ -48,7 +48,7 @@ final class OrbitGame: Minigame {
                           .random(in: 0..<6.283, using: &rng)))
             out.append(.pursuit(await run(index: i, path: path, duration: familiarization ? 6 : Self.duration)))
             ctx.hud.done = i + 1
-            await ctx.clock.wait(1.0)
+            await ctx.clock.wait(0.5)
         }
         return Block(task: .pursuit, familiarization: familiarization, seed: seed, trials: out)
     }

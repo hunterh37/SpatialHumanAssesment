@@ -128,7 +128,10 @@ struct ImmersiveView: View {
             let g = Task { await play(recorder, t) }
             game = g
             await g.value
-        } else if model.phase == .intro, let bird {
+        } else if model.phase == .intro {
+            // The RealityView make closure builds the bird; this task can start before it finishes.
+            while bird == nil, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(50)) }
+            guard let bird else { return }
             introActive = true
             model.introRunning = true
             let g = Task { @MainActor in
@@ -144,7 +147,7 @@ struct ImmersiveView: View {
 
     private func play(_ recorder: SessionRecorder, _ t: HandTracker) async {
         // Let tracking settle and the eyes adapt to the dark before the first stimulus.
-        await clock.wait(1.5)
+        await clock.wait(0.8)
         let ctx = GameContext(clock: clock, tracker: t, recorder: recorder, layer: layer, hud: hud,
                               handedness: model.participant.handedness)
         if let bird, stage.isEnabled { ctx.guide = BirdGuide(bird: bird, bubble: bubble, clock: clock) }

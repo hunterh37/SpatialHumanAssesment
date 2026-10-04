@@ -16,13 +16,28 @@ Full immersion. Ink sky dome (#0B0F17), a faint horizon band at eye level, a 6 m
 
 | State | Behavior |
 |---|---|
-| Wander (ambient) | bounding finch flight, 0.5 s of flaps at 12 Hz then a 0.35 s tucked bound, loops 2.6 to 4.8 m out and 1.7 to 3.1 m up; a flight call every 5 to 10 s |
+| Wander (ambient) | bounding finch flight, 0.5 s of flaps at 12 Hz then a 0.35 s tucked bound, loops 2.6 to 4.8 m out and 1.7 to 3.1 m up inside a 54 degree half-arc around where the head faces; a flight call every 5 to 10 s |
+| Stay in front | facing is the head yaw smoothed at 1.5/s. Out of the arc by more than 11 degrees (the participant turned), the bird flies up to 57 degrees further round the circle on the side it is on, at 1.6x speed, until it is back in view; it never cuts across or behind the participant |
 | Called | a hand held out (over 28 cm from the head, horizontally), open, palm up, above eye height minus 75 cm and still (palm under 0.4 m/s) for 0.3 s; the bird answers with a call and flies to a point 0.7 m beyond the hand, then in |
 | Land | 0.32 s flare: pitched up, 15 Hz hover beats, tail spread, legs out |
 | Perch | rides the palm, faces the participant, body nose-up 14 degrees; breathes, blinks every 1.8 to 5 s, saccadic head turns with curious tilts, hops and turns every 4 to 8 s, tail flicks, calls every 2.5 to 6 s with the bill opening; wings flutter for balance when the hand moves over 0.35 m/s |
 | Petted | the other hand's fingertip within 5 cm of the head or back: eyes squint, feathers puff, head leans toward the finger, a trill; a fast poke (over 0.9 m/s) makes it hop with an alarm call |
 | Leave | the offer lapses for 0.3 s (palm turned down, hand closed, lowered or untracked): calm takeoff with a wing whirr; palm over 1.7 m/s: startled takeoff with an alarm call; 1 to 2 s before it can be called again |
-| Trials (ambient false) | leaves the hand at the countdown, no sound, bounding loops 13 to 17 m out and 6 to 8.5 m up (about 0.9 degrees of visual angle) |
+| Trials (ambient false) | leaves the hand at the countdown, no sound, bounding loops 13 to 17 m out and 6 to 8.5 m up (about 0.9 degrees of visual angle) inside a 40 degree half-arc in front |
+
+## Guide
+
+`Stage/BirdGuide.swift`. Before each block Buddy explains the game. A twig (bark #6A5249, sage leaves #9DAE8C) grows in with a spring at 1.2 m ahead, 0.34 m right and 0.13 m below the eyes, past arm's reach and below the HUD. The bird flies in from its front arc (up to 7 m/s from the far ring), comes in from beyond the twig and lands. A speech bubble on strong Dusk glass sits to its left at eye height, 1.25 m out, its tail pointing at the bird.
+
+| Step | Behavior |
+|---|---|
+| Line | one idea per bubble, about two seconds to read (`Game.guideLines`, two bubbles per game). Types at 55 characters per second; the full line is laid out from the start so the bubble never resizes. Each word plays one soft syllable (`.peep`, -27 dB) with the bill opening and a small head tilt. Reduce Motion shows the line whole |
+| Tap | the whole bubble is one button (gaze highlight, press squash). A tap while typing completes the line; the next tap plays `.bubble` and moves on. The action chip shows once the line is typed: "Tap to continue" with a nudging chevron, then "Tap to practice" or "Tap to start" on an accent chip with a play glyph |
+| Attentive | while guiding, the perched bird looks at the participant 85 percent of the time and hops rarely |
+| Leave | after the last tap the bird flies off forward, the twig shrinks once it is gone, and the countdown starts 0.45 s later |
+| Practice to scored | the bird is called back during the "Practice done." cheer; one bubble (`Game.guideAgain`), then "Tap to start" |
+
+Skip, exit or a closed space hides the bubble and sends the bird off. Without practice the full explanation ends in "Tap to start". The intro sequence lands Buddy on the same twig.
 
 Bird calls are swept sines (`Tone.Cue.chirp`, `.trill`, `.alarm`) at -20 to -26 dB. Bird yellow (#FBDAB4 brand swatch 1, belly #FDEBD5) is scenery and carries no meaning. Debug launch argument `-birdpreview YES` opens the stage with the bird perched in front.
 

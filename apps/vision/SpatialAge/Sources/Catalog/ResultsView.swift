@@ -52,7 +52,7 @@ struct AgeReveal: View {
     /// Time from first number to landing, and how long the landed number holds before the scoreboard.
     static let tumble = 3.6
     /// Product name for the headline age (team decision, overrides "movement age" in Dusk spec v1.0).
-    static let ageLabel = "BetterYears Age"
+    static let ageLabel = "Better Years Age"
     static let hold = 2.6
 
     var body: some View {
