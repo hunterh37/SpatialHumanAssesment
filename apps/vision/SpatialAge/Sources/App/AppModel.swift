@@ -41,6 +41,10 @@ final class AppModel {
     var introRunning = false
     /// First game after the intro sequence. Stick Drop: catch the falling leaf.
     static let firstGame: Game = .pendulum
+    /// Leaves in the intro demo of the first game: one short block, no practice round.
+    static let demoTrials = 6
+    /// Set while the intro demo runs. The Director caps the block at `demoTrials` and skips practice.
+    var demo = false
     private static let introSeenKey = "introSeen"
     var tab: Tab = .games
     /// Game whose intro screen is open on the Games tab.
@@ -124,8 +128,9 @@ final class AppModel {
         phase = .onboarding
     }
 
-    func start(_ games: [Game]) {
+    func start(_ games: [Game], demo: Bool = false) {
         skyPlank = false
+        self.demo = demo
         queue = games
         var player = participant
         if let profile, profile.participant.code == player.code { player = profile.sessionParticipant }

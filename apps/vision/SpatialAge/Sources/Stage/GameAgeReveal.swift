@@ -2,7 +2,7 @@ import RealityKit
 import ScoreKit
 import UIKit
 
-/// Estimated age from one game's scored block, shown by `AgeReveal` and read out by Buddy.
+/// Estimated age from one game's scored block, shown by `GameAgeReveal` and read out by Buddy.
 struct GameAge {
     let game: Game
     /// Whole years, clamped to the model range.
@@ -45,7 +45,7 @@ struct GameAge {
 /// sparks, a shockwave and the fanfare. Then the number lifts so Buddy can land and talk, and finally bursts
 /// into sparks. Everything sits 1.6 m ahead, past arm's reach. Reduce Motion: fades only, no spin or roll.
 @MainActor
-final class AgeReveal {
+final class GameAgeReveal {
     private let clock: FrameClock
     private let juice: Juice
     private let parent: Entity
@@ -70,7 +70,7 @@ final class AgeReveal {
         self.juice = juice
         self.parent = parent
         var m = UnlitMaterial(color: Theme.ink)
-        m.blending = .transparent(opacity: 1)
+        m.blending = .transparent(opacity: .init(floatLiteral: 1))
         m.faceCulling = .front
         dim = ModelEntity(mesh: .generateSphere(radius: 2.6), materials: [m])
         dim.components.set(OpacityComponent(opacity: 0))
@@ -260,7 +260,7 @@ final class AgeReveal {
         rays.components.set(OpacityComponent(opacity: 0))
         rays.scale = .init(repeating: 1e-3)
         var ray = UnlitMaterial(color: Theme.gold)
-        ray.blending = .transparent(opacity: 0.16)
+        ray.blending = .transparent(opacity: .init(floatLiteral: 0.16))
         ray.faceCulling = .none
         let count = 16
         for k in 0..<count {
@@ -274,7 +274,7 @@ final class AgeReveal {
         }
         if let mesh = Meshes.ellipse(width: 1.1, height: 0.8) {
             var m = UnlitMaterial(color: Theme.gold)
-            m.blending = .transparent(opacity: 1)
+            m.blending = .transparent(opacity: .init(floatLiteral: 1))
             m.faceCulling = .none
             let d = ModelEntity(mesh: mesh, materials: [m])
             d.position = [0, 0, -0.15]
@@ -288,7 +288,7 @@ final class AgeReveal {
     private func shockwave() {
         guard let mesh = Meshes.ellipse(width: 1, height: 1) else { return }
         var m = UnlitMaterial(color: Theme.paper)
-        m.blending = .transparent(opacity: 1)
+        m.blending = .transparent(opacity: .init(floatLiteral: 1))
         m.faceCulling = .none
         let wave = ModelEntity(mesh: mesh, materials: [m])
         wave.position = [0, 0, -0.05]
