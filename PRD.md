@@ -20,7 +20,7 @@ Status: hackathon draft, v0.2 (4 October 2026), updated with the 12:27 to 12:37 
 **Result (target).** Two Vision Pros duel side by side. Each player sees their current movement age, and levelling up trains reaction, memory and balance, abilities linked to falls and mortality, moving them toward a younger movement age.
 
 - **Card line (draft):** How old do you move? Two players, two Vision Pros, one 6-minute duel that scores your movement age against published norms.
-- **Adds to v0.1:** the 12:00 brainstorm (head-to-head play, levelling up) and the 12:37 split: Hunter builds the catch game and a hand x-ray, Wilson builds the memory and balance games.
+- **Adds to v0.1:** the 12:00 brainstorm (head-to-head play, levelling up) and the 12:37 split: Hunter and Jason build the reaction game and a hand x-ray; Wilson, Alex and Franco build the memory and balance games; Jess owns the business use case, name and UI/UX; Ben owns the data set.
 - **Movement age** is the player-facing name for the spec's `functional_age` field.
 - **Team:** Jason and Hunter (idea leads; it is their Vision Pro work), with Jess, Wilson, Ben, Alex and Franco.
 
@@ -50,7 +50,7 @@ You play. The headset watches. We compare you with people of every age. The pict
 
 ## Answers to the team to-do list
 
-Proposed answers from the 12:27 to 12:37 team discussion, for the team to confirm.
+Proposed answers from the 12:27 to 12:37 team discussion. Jess owns the name, business use case and UI/UX, so these are starting points for her.
 
 | Question | Proposed answer | Why |
 |---|---|---|
@@ -60,6 +60,20 @@ Proposed answers from the 12:27 to 12:37 team discussion, for the team to confir
 | Business use case | Free to play for everyone, with the duel bringing players back. An optional clinic edition offers waiting-room assessment as a per-clinic subscription | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
 | Final design | Four games in about 6 minutes: Catch the knives (reaction, Hunter), Color dots (memory and decisions, Wilson), Reach and grab plus Hole in the wall (reach and balance in the Wii Fit U style, Wilson, from alex's ideas). Bonus: hand x-ray (Hunter). The result screen shows movement age per game and overall, then level up | It matches the 12:37 split and the ELI5 loop above |
 | Metrics (data) | Catch: reaction and movement time (ms), misses. Color dots: hits, false taps, misses, decision time (ms), head turn (degrees). Reach and grab: furthest object grabbed and head travel (cm). Hole in the wall: pose match, hand drift and head sway during each hold (cm), walls cleared. Per session: movement age per game and overall, valid trial rate | These fields go into the session schema; norm sources are in the Movement Age engine table |
+
+## Team and ownership
+
+Jason and Hunter lead the idea; it is their Vision Pro work.
+
+| Person | Role | Owns |
+|---|---|---|
+| Jason | Idea lead | Works with Hunter: reaction game, the `mini-catalog` app shell, hand x-ray |
+| Hunter | Idea lead | Reaction game, the `mini-catalog` app shell, hand x-ray, with Jason |
+| Jess | Team | Business use case, name, UI/UX |
+| Wilson | Team | Memory and balance games, PRD and research |
+| Alex | Team | Memory and balance games; designed Reach and grab and Hole in the wall |
+| Franco | Team | Memory and balance games |
+| Ben | Team | The data set |
 
 ## Problem
 
@@ -115,14 +129,14 @@ A duel is a set of short games in mixed reality. Both players run the same games
 | Game | Metric | What players do | What the headset measures | Owner |
 |---|---|---|---|---|
 | Warm-up | None | One unscored practice pass per game | Nothing scored | Each game's owner |
-| Catch the knives | Reaction | Catch knives as they fall | Movement onset and catch time, using the [simple reaction](specs/tasks/simple-reaction.md) timing rules | Hunter |
-| Color dots | Memory and decisions | Colored dots appear around the room; tap the ones you were shown and skip the rest | Taps and skips, decision time, how far you look around | Wilson |
-| Reach and grab | Reach and mobility | Feet planted, reach out and tap to pick up virtual objects placed farther and farther away; leaning is fine, stepping is not | Furthest object grabbed and head travel, in cm. Reaching farther means moving more freely | Wilson |
-| Hole in the wall | Balance and stability | A wall with a cutout moves toward you; strike the pose and hold it still until the wall passes; move and you hit the wall | Pose match, hand drift and head sway during each hold, walls cleared | Wilson |
-| Hand x-ray | Demo | A separate app that shows an x-ray view of your own hand | Hand skeleton from hand tracking | Hunter |
+| Catch the knives | Reaction | Catch knives as they fall | Movement onset and catch time, using the [simple reaction](specs/tasks/simple-reaction.md) timing rules | Hunter, Jason |
+| Color dots | Memory and decisions | Colored dots appear around the room; tap the ones you were shown and skip the rest | Taps and skips, decision time, how far you look around | Wilson, Alex, Franco |
+| Reach and grab | Reach and mobility | Feet planted, reach out and tap to pick up virtual objects placed farther and farther away; leaning is fine, stepping is not | Furthest object grabbed and head travel, in cm. Reaching farther means moving more freely | Wilson, Alex, Franco |
+| Hole in the wall | Balance and stability | A wall with a cutout moves toward you; strike the pose and hold it still until the wall passes; move and you hit the wall | Pose match, hand drift and head sway during each hold, walls cleared | Wilson, Alex, Franco |
+| Hand x-ray | Demo | A separate app that shows an x-ray view of your own hand | Hand skeleton from hand tracking | Hunter, Jason |
 | Chair sprint, one-leg hold | Strength, balance | Not built today | Reps from head height; hold time | Unassigned |
 
-- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. Wilson's Color dots, Reach and grab and Hole in the wall games land on it as PRs. Reach and grab and Hole in the wall are alex's ideas, and his Freeze idea (move and you get caught) becomes the hold rule inside Hole in the wall.
+- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. The Color dots, Reach and grab and Hole in the wall games (Wilson, Alex and Franco) land on it as PRs. Reach and grab and Hole in the wall are alex's ideas, and his Freeze idea (move and you get caught) becomes the hold rule inside Hole in the wall.
 - **Head-to-head:** two headsets in sync, or one headset taken in turns (open question). The same hardware for both players cancels device latency between them.
 - **Levelling:** each duel earns XP. Each metric shows change against the player's own first session, and only changes larger than test-retest noise count.
 - **Safe balance:** both balance games keep both feet on the floor, so players find their limits before a fall. The design reference is the [Wii Fit U balance games](https://www.youtube.com/watch?v=ybKOF1_yLZg): players steer by shifting their weight. With no balance board, the headset's head position stands in for the center of balance; head position and force-plate sway agree only moderately to well, so the game calibrates on this headset.
@@ -225,8 +239,10 @@ Data flow is in `specs/architecture.md`: each headset posts one session file to 
 
 | Area | Path | Spec | Owner (proposed) |
 |---|---|---|---|
-| App shell (`mini-catalog`), catch game, hand x-ray, two-player sync | `apps/vision` | `specs/tasks/*`, `specs/architecture.md` | Hunter |
-| Color dots, Reach and grab, Hole in the wall | `apps/vision` | New specs needed | Wilson |
+| App shell (`mini-catalog`), reaction game, hand x-ray, two-player sync | `apps/vision` | `specs/tasks/*`, `specs/architecture.md` | Hunter, Jason |
+| Color dots, Reach and grab, Hole in the wall | `apps/vision` | `specs/games/` | Wilson, Alex, Franco |
+| Name, business use case, UI/UX | `apps/vision/SpatialAge/Sources/Catalog`, `Design` | `specs/games/design.md` | Jess |
+| Data set | `data/` | `specs/age-model.md` | Ben |
 | Session contract | `packages/schema` | `specs/session-schema.md` | Shared |
 | Features, cited norms, movement age | `ml` | `specs/features.md`, `specs/age-model.md` | Wilson |
 | Ingest service | `services/ingest` | `specs/architecture.md` | Open |
