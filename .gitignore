@@ -10,3 +10,7 @@ build/
 DerivedData/
 xcuserdata/
 *.xcuserstate
+.build/
+.swiftpm/
+Package.resolved
+concept/build/
