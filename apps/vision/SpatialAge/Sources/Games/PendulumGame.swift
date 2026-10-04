@@ -3,190 +3,184 @@ import RealityKit
 import ScoreKit
 import simd
 
-/// Pendulum. A gold weight swings on a cord. The cord lets go at a random moment and the weight
-/// falls under real gravity. Pinch it out of the air. Spec: specs/games/pendulum.md.
+/// Stick Drop (task `pendulum`). A row of gold leaves hangs from a branch across the view, in a forest clearing.
+/// One leaf lets go at a random moment and falls; touch it with any part of a hand before it reaches the ground. Leaves sit from 60 degrees
+/// left to 60 degrees right, so the drop can come from the edge of vision, and the fall speeds up over the block.
+/// Spec: specs/games/pendulum.md (Games Ideas deck, "Stick Drop").
 ///
-/// The swing and the fall are computed analytically every frame (no physics engine), so the release
-/// state in the log is the exact start of the trajectory the participant saw.
+/// The fall is analytic, `p0 - g s tau^2 / 2` with gravity scale `s`, so the logged release state is the exact
+/// start of the trajectory the participant saw.
 @MainActor
 final class PendulumGame: Minigame {
     static let game = Game.pendulum
     static let g: Float = 9.81
-    /// Catch: grasp point (thumb-index midpoint) within this of the bob center, with the pinch closed.
-    static let graspRadius: Float = 0.07
-    static let closedAperture: Float = 0.045
-    /// A drop is called once the bob has fallen this far, or reaches the floor.
-    static let maxFall: Float = 1.0
+    /// Catch: any hand joint or bone within this of the leaf center. No pinch needed.
+    static let contactRadius: Float = 0.065
+    /// Leaf azimuths from head forward, degrees. Fixed, so every session tests the same field.
+    static let azimuths: [Float] = [-60, -40, -20, 0, 20, 40, 60]
+    /// Horizontal distance from the head to each stem, and stem height above the eyes, meters.
+    static let reach: Float = 0.52
+    static let stemAboveEye: Float = 0.12
+    static let leafLength: Float = 0.11
+    /// Gravity scale ramps from slow to real over the scored block. Practice stays slow.
+    static let slowest = 0.25, fastest = 1.0, practiceScale = 0.25
+    /// Wait between the last leaf settling and the next release, seconds.
+    static let foreperiod: ClosedRange<Double> = 1.0...3.0
 
     let ctx: GameContext
-    private var ruler: Entity?
-    private var pivot: SIMD3<Float> = .zero
+    private var scenery: Entity?
+    private var branch: Entity?
+    private var leaves: [ModelEntity?] = []
+    private var stems: [SIMD3<Float>] = []
 
     init(_ ctx: GameContext) { self.ctx = ctx }
 
     func play(familiarization: Bool, trials: Int, seed: Int) async -> Block {
         var rng = SeededRNG(seed: seed)
-        let rig = ctx.rig
-        pivot = rig.world([0, rig.eye + 0.4, -0.48])
-        if ruler == nil {
-            let r = Self.makeRuler(height: 1.2)
-            r.position = rig.world([0, rig.eye + 0.4 - 1.2, -0.62])
-            r.orientation = rig.rotation
-            ctx.layer.addChild(r)
-            ruler = r
-        }
+        if scenery == nil { build() }
+        // Each leaf falls equally often: shuffled passes over the row.
+        var order: [Int] = []
+        while order.count < trials { order += Array(Self.azimuths.indices).shuffled(using: &rng) }
+
         var out: [Trial] = []
         for i in 0..<trials where !Task.isCancelled {
-            let trial = await swing(index: i, rng: &rng)
+            let scale = familiarization ? Self.practiceScale
+                : Self.slowest + (Self.fastest - Self.slowest) * Double(i) / Double(max(trials - 1, 1))
+            await ctx.clock.wait(Double.random(in: Self.foreperiod, using: &rng))
+            guard let trial = await drop(index: i, leaf: order[i], scale: scale) else { break }
             out.append(.pendulum(trial))
             ctx.hud.done = i + 1
-            await ctx.clock.wait(0.8)
+            regrow(order[i])
+            await ctx.clock.wait(0.4)
         }
         return Block(task: .pendulum, familiarization: familiarization, seed: seed, trials: out)
     }
 
-    func teardown() { ruler?.removeFromParent(); ruler = nil }
+    func teardown() {
+        scenery?.removeFromParent(); scenery = nil
+        branch?.removeFromParent(); branch = nil
+        leaves.forEach { $0?.removeFromParent() }
+        leaves = []
+    }
 
-    private func swing(index: Int, rng: inout SeededRNG) async -> PendulumTrial {
-        let length = Float.random(in: 0.55...0.85, using: &rng)
-        let amp = Float.random(in: 22...34, using: &rng) * .pi / 180
-        let swingT = Double.random(in: 1.5...4.0, using: &rng)
-        let omega = (Self.g / length).squareRoot()
-        let lateral = ctx.rig.rotation.act([1, 0, 0])
+    /// Forest, branch arc and one leaf per stem.
+    private func build() {
+        let rig = ctx.rig
+        let forest = Scenery.forest(rig: rig)
+        ctx.layer.addChild(forest)
+        scenery = forest
 
-        let bob = Micro.orb(Theme.gold, radius: Theme.Size.bob)
-        let cord = ModelEntity(mesh: .generateCylinder(height: 1, radius: 0.0015), materials: [Look.flat(Theme.paper)])
-        ctx.layer.addChild(cord)
-        ctx.layer.addChild(bob)
-
-        func place(theta: Float) -> SIMD3<Float> {
-            let p = pivot + lateral * (length * sin(theta)) + SIMD3<Float>(0, -length * cos(theta), 0)
-            bob.position = p
-            cord.position = (pivot + p) / 2
-            cord.scale = [1, length, 1]
-            cord.orientation = simd_quatf(from: [0, 1, 0], to: simd_normalize(pivot - p))
-            return p
+        let y = rig.eye + Self.stemAboveEye
+        stems = Self.azimuths.map { az in
+            let a = az * .pi / 180
+            return rig.world([sin(a) * Self.reach, y, -cos(a) * Self.reach])
         }
-        _ = place(theta: amp)
-        ctx.micro.appear(bob)
-
-        // Swing until release. Glow tells the hand it is close; it never predicts the release.
-        var t = 0.0
-        while t < swingT, !Task.isCancelled {
-            t += await ctx.clock.next()
-            let p = place(theta: amp * cos(omega * Float(t)))
-            if let near = nearestGrasp(to: p) { ctx.micro.glow(bob, color: Theme.gold, distance: near.distance) }
+        // Branch: one bark segment between neighboring stems, overhanging both ends.
+        let b = Entity()
+        let ends = [stems[0] + (stems[0] - stems[1]) * 0.4] + stems + [stems[stems.count - 1] + (stems[stems.count - 1] - stems[stems.count - 2]) * 0.4]
+        for k in 1..<ends.count {
+            let a = ends[k - 1] + [0, 0.012, 0], c = ends[k] + [0, 0.012, 0]
+            let seg = ModelEntity(mesh: .generateCylinder(height: simd_distance(a, c), radius: 0.012),
+                                  materials: [Look.flat(Theme.bark)])
+            seg.position = (a + c) / 2
+            seg.orientation = simd_quatf(from: [0, 1, 0], to: simd_normalize(c - a))
+            b.addChild(seg)
         }
-        let theta = amp * cos(omega * Float(swingT))
-        let thetaDot = -amp * omega * sin(omega * Float(swingT))
-        let p0 = place(theta: theta)
-        let v0 = lateral * (length * cos(theta) * thetaDot) + SIMD3<Float>(0, length * sin(theta) * thetaDot, 0)
-        ctx.micro.snap(cord, pivot: pivot)
+        ctx.layer.addChild(b)
+        branch = b
+        leaves = stems.indices.map { _ in nil }
+        for i in stems.indices { regrow(i) }
+    }
+
+    /// Hangs a fresh leaf at stem `i`, facing the participant.
+    private func regrow(_ i: Int) {
+        guard leaves.indices.contains(i) else { return }
+        let leaf = Scenery.leaf(Theme.gold, length: Self.leafLength)
+        leaf.position = stems[i]
+        leaf.orientation = faceRig(at: stems[i])
+        ctx.layer.addChild(leaf)
+        ctx.micro.appear(leaf)
+        leaves[i] = leaf
+    }
+
+    private func faceRig(at p: SIMD3<Float>) -> simd_quatf {
+        let o = ctx.rig.origin
+        return simd_quatf(angle: atan2(o.x - p.x, o.z - p.z), axis: [0, 1, 0])
+    }
+
+    /// Releases leaf `index` and watches for hand contact until it lands. Nil if the run is cancelled.
+    private func drop(index: Int, leaf i: Int, scale: Double) async -> PendulumTrial? {
+        guard let leaf = leaves[i] else { return nil }
+        let half = Self.leafLength / 2
+        let p0 = stems[i] - [0, half, 0]
+        let gs = Self.g * Float(scale)
+        // Release: the stem snaps with a tock; the first falling frame is the release time.
+        Tone.play(.tock, on: leaf, gain: -8)
+        _ = await ctx.clock.next()
         let release = ctx.now
+        let ecc = ctx.eccentricity(of: p0)
         let apertureRelease = ctx.tracker.state(ctx.dominant)?.aperture
+        let spin = Float.random(in: 1.5...3.0) * (Bool.random() ? 1 : -1)
+        let face = leaf.orientation
 
-        // Ballistic fall: p(tau) = p0 + v0 tau - g tau^2 / 2.
         var caught: (Hand, Double, SIMD3<Float>, Float)?
         var p = p0
         while caught == nil, !Task.isCancelled {
             _ = await ctx.clock.next()
             let tau = Float(ctx.now - release)
-            p = p0 + v0 * tau + SIMD3<Float>(0, -0.5 * Self.g * tau * tau, 0)
-            bob.position = p
-            if p0.y - p.y > Self.maxFall || p.y < Theme.Size.bob { break }
-            for (hand, s) in ctx.tracker.trackedHands
-            where simd_distance(s.grasp, p) < Self.graspRadius && s.aperture < Self.closedAperture {
-                caught = (hand, s.t, p, s.aperture)
+            p = p0 + SIMD3<Float>(0, -0.5 * gs * tau * tau, 0)
+            if p.y - half < 0.01 { break }
+            leaf.position = p + [0, half, 0]
+            // A slow turn as it falls. Visual only: contact uses the analytic center.
+            leaf.orientation = simd_quatf(angle: spin * tau, axis: [0, 1, 0]) * face
+            if let near = nearestHand(to: p) {
+                ctx.micro.glow(leaf, color: Theme.gold, distance: near.distance)
+                if near.distance < Self.contactRadius, let s = ctx.tracker.state(near.hand) {
+                    caught = (near.hand, s.t, p, s.aperture)
+                }
             }
         }
+        leaves[i] = nil
+        guard !Task.isCancelled else { leaf.removeFromParent(); return nil }
 
-        let gap = ctx.tracker.buffer.maxGapMs(caught?.0, release, caught?.1 ?? release + 0.6)
+        let releaseAngle = Double(Self.azimuths[i])
+        let gap = ctx.tracker.buffer.maxGapMs(caught?.0, release, caught?.1 ?? ctx.now)
         guard let (hand, tCatch, pCatch, aperture) = caught else {
-            await fallToFloor(bob, from: p, velocity: v0 + SIMD3<Float>(0, -Self.g * Float(ctx.now - release), 0))
-            return PendulumTrial(index: index, lengthM: Double(length), amplitudeDeg: Double(amp * 180 / .pi),
-                                 releaseT: release, releaseAngleDeg: Double(theta * 180 / .pi),
-                                 releasePosition: p0.v3, releaseVelocity: v0.v3, catchT: nil, catchPosition: nil,
-                                 hand: nil, outcome: .drop, trackingGapMs: gap,
-                                 apertureReleaseM: apertureRelease.map(Double.init))
+            leaf.position.y = 0.012
+            ctx.micro.sink(leaf)
+            return PendulumTrial(index: index, lengthM: 0, amplitudeDeg: 0, releaseT: release,
+                                 releaseAngleDeg: releaseAngle, releasePosition: p0.v3, releaseVelocity: .zero,
+                                 catchT: nil, catchPosition: nil, hand: nil, outcome: .drop, trackingGapMs: gap,
+                                 apertureReleaseM: apertureRelease.map(Double.init), stickIndex: i,
+                                 eccentricityDeg: ecc, gravityScale: scale)
         }
         let latency = tCatch - release
         let outcome: PendulumTrial.Outcome = latency < PendulumMetrics.anticipationS ? .anticipation : .catch
-        await celebrate(bob, hand: hand, at: pCatch, dropM: p0.y - pCatch.y)
-        return PendulumTrial(index: index, lengthM: Double(length), amplitudeDeg: Double(amp * 180 / .pi),
-                             releaseT: release, releaseAngleDeg: Double(theta * 180 / .pi),
-                             releasePosition: p0.v3, releaseVelocity: v0.v3, catchT: tCatch,
-                             catchPosition: pCatch.v3, hand: hand, outcome: outcome, trackingGapMs: gap,
-                             apertureReleaseM: apertureRelease.map(Double.init), apertureCatchM: Double(aperture),
-                             trace: ctx.tracker.buffer.trace(hand, release - 0.35, tCatch))
+        await celebrate(leaf, hand: hand, at: pCatch)
+        return PendulumTrial(index: index, lengthM: 0, amplitudeDeg: 0, releaseT: release,
+                             releaseAngleDeg: releaseAngle, releasePosition: p0.v3, releaseVelocity: .zero,
+                             catchT: tCatch, catchPosition: pCatch.v3, hand: hand, outcome: outcome,
+                             trackingGapMs: gap, apertureReleaseM: apertureRelease.map(Double.init),
+                             apertureCatchM: Double(aperture),
+                             trace: ctx.tracker.buffer.trace(hand, release - 0.35, tCatch),
+                             stickIndex: i, eccentricityDeg: ecc, gravityScale: scale)
     }
 
-    private func nearestGrasp(to p: SIMD3<Float>) -> (hand: Hand, distance: Float)? {
-        ctx.tracker.trackedHands.map { ($0.0, simd_distance($0.1.grasp, p)) }.min { $0.1 < $1.1 }
+    private func nearestHand(to p: SIMD3<Float>) -> (hand: Hand, distance: Float)? {
+        ctx.tracker.trackedHands.map { ($0.0, $0.1.contactDistance(to: p)) }.min { $0.1 < $1.1 }
     }
 
-    /// Caught: the weight rides in the hand for a beat, a gold tick marks the height on the ruler.
-    private func celebrate(_ bob: ModelEntity, hand: Hand, at p: SIMD3<Float>, dropM: Float) async {
-        Tone.play(.caught, on: bob, gain: -10)
-        ctx.micro.ring(at: p, color: Theme.gold, radius: Theme.Size.bob * 2)
-        markRuler(height: p.y, dropCm: dropM * 100)
+    /// Caught: the leaf rides in the hand for a beat with a gold ring, then fades.
+    private func celebrate(_ leaf: ModelEntity, hand: Hand, at p: SIMD3<Float>) async {
+        Tone.play(.caught, on: leaf, gain: -10)
+        ctx.micro.ring(at: p, color: Theme.gold, radius: Self.leafLength)
+        ctx.cheer()
+        let half = Self.leafLength / 2
         var t = 0.0
         while t < 0.45 {
             t += await ctx.clock.next()
-            if let s = ctx.tracker.state(hand) { bob.position = s.grasp }
+            if let s = ctx.tracker.state(hand) { leaf.position = s.grasp + [0, half, 0] }
         }
-        ctx.micro.dissolve(bob)
-    }
-
-    private func fallToFloor(_ bob: ModelEntity, from p: SIMD3<Float>, velocity: SIMD3<Float>) async {
-        var pos = p, v = velocity
-        while pos.y > Theme.Size.bob {
-            let dt = Float(await ctx.clock.next())
-            v.y -= Self.g * dt
-            pos += v * dt
-            bob.position = pos
-        }
-        bob.position.y = Theme.Size.bob
-        ctx.micro.sink(bob)
-    }
-
-    private func markRuler(height: Float, dropCm: Float) {
-        guard let ruler else { return }
-        let tick = ModelEntity(mesh: .generateBox(width: 0.09, height: 0.004, depth: 0.006), materials: [Look.flat(Theme.gold)])
-        tick.position = [0, height - ruler.position.y, 0.004]
-        ruler.addChild(tick)
-        if let mesh = try? MeshResource.generateText(String(format: "%.0f cm", dropCm),
-                                                     extrusionDepth: 0.001, font: .systemFont(ofSize: 0.025, weight: .semibold)) {
-            let micro = ctx.micro
-        let label = ModelEntity(mesh: mesh, materials: [Look.flat(Theme.gold)])
-            label.position = [0.055, height - ruler.position.y - 0.01, 0.004]
-            ruler.addChild(label)
-            ctx.clock.animate(1.6, { _ in }, done: { [weak label] in label.map(micro.dissolve) })
-        }
-        let fade = ctx.micro
-        ctx.clock.animate(2.4, { p in tick.scale.x = Float(1 - 0.5 * p) }, done: { [weak tick] in tick.map(fade.dissolve) })
-    }
-
-    /// Life-size centimeter ruler. Zero at the top, the way a dropped ruler reads.
-    static func makeRuler(height: Float) -> Entity {
-        let root = Entity()
-        let face = ModelEntity(mesh: .generateBox(width: 0.07, height: height, depth: 0.004),
-                               materials: [Look.flat(Theme.inkLift)])
-        face.position.y = height / 2
-        root.addChild(face)
-        let ink = Look.flat(Theme.grid)
-        for cm in 0...Int(height * 100) {
-            let major = cm % 10 == 0, mid = cm % 5 == 0
-            let w: Float = major ? 0.035 : mid ? 0.022 : 0.012
-            let tick = ModelEntity(mesh: .generateBox(width: w, height: 0.0012, depth: 0.001), materials: [ink])
-            tick.position = [-0.035 + w / 2, height - Float(cm) / 100, 0.0025]
-            root.addChild(tick)
-            if major, cm > 0, let mesh = try? MeshResource.generateText("\(cm)", extrusionDepth: 0.0005,
-                                                                        font: .systemFont(ofSize: 0.014)) {
-        let label = ModelEntity(mesh: mesh, materials: [ink])
-                label.position = [0.004, height - Float(cm) / 100 - 0.005, 0.0025]
-                root.addChild(label)
-            }
-        }
-        return root
+        ctx.micro.dissolve(leaf)
     }
 }

@@ -3,8 +3,9 @@ import RealityKit
 import ScoreKit
 import simd
 
-/// Hole in the Wall. A translucent wall with two hand holes glides toward you. Fit both hands into the
-/// holes and hold still until it arrives. Spec: specs/games/wall.md.
+/// Hole in the Wall. The participant stands on a stone island ringed by a moat. A wall with a body-shaped
+/// cut-out glides across the water toward them; they make the shape (both hands in the hand holes) and hold it
+/// until the wall reaches the island. Spec: specs/games/wall.md (Games Ideas deck, "Hole in the Wall").
 ///
 /// The wall moves along the forward axis of the participant frame (origin on the floor under the head at
 /// game start, -z forward), so the logged cutout centers are exactly where the holes stop. Head and hands
@@ -24,7 +25,9 @@ final class WallGame: Minigame {
     static let pause = 1.0
     static let wallWidth: Float = 1.6
     static let wallHeight: Float = 2.0
-    static let panelOpacity: Float = 0.22
+    static let panelOpacity: Float = 0.7
+    /// Pale rim around the cut-out silhouette, meters.
+    static let rimWidth: Float = 0.012
     static let holeRadius: Float = 0.10
     static let ringTube: Float = 0.010
 
@@ -56,16 +59,27 @@ final class WallGame: Minigame {
 
     let ctx: GameContext
     private var current: Entity?
+    private var scenery: Entity?
 
     init(_ ctx: GameContext) { self.ctx = ctx }
 
     func play(familiarization: Bool, trials: Int, seed: Int) async -> Block {
         var rng = SeededRNG(seed: seed)
+        // Re-anchor after the intro and countdown, so the island is under the participant where they now
+        // stand, and the walls come straight at them.
+        await ctx.recenter()
+        scenery?.removeFromParent()
+        let moat = Scenery.moat(rig: ctx.rig)
+        ctx.layer.addChild(moat)
+        scenery = moat
         // One shuffle of the six poses, cycled, so every pose appears before any repeats.
         let cycle = Pose.allCases.shuffled(using: &rng)
         var out: [WallTrial] = []
         for i in 0..<trials where !Task.isCancelled {
-            let pose = familiarization ? Pose.armsOut : cycle[i % cycle.count]
+            var pose = familiarization ? Pose.armsOut : cycle[i % cycle.count]
+            #if DEBUG
+            if let p = ProcessInfo.processInfo.environment["SA_WALL_POSE"].flatMap(Pose.init) { pose = p }
+            #endif
             guard let trial = await run(index: i, pose: pose) else { break }
             out.append(trial)
             ctx.hud.done = i + 1
@@ -74,7 +88,10 @@ final class WallGame: Minigame {
         return Block(task: .wall, familiarization: familiarization, seed: seed, trials: out.map(Trial.wall))
     }
 
-    func teardown() { current?.removeFromParent(); current = nil }
+    func teardown() {
+        current?.removeFromParent(); current = nil
+        scenery?.removeFromParent(); scenery = nil
+    }
 
     /// Plays one wall. Nil if the run is cancelled before the wall arrives.
     private func run(index: Int, pose: Pose) async -> WallTrial? {
@@ -85,10 +102,18 @@ final class WallGame: Minigame {
         let leftTarget = rig.world([l.x, l.y, stopZ]), rightTarget = rig.world([r.x, r.y, stopZ])
         let targets = [leftTarget, rightTarget]
 
-        let (wall, panel, rings) = makeWall(rig: rig, cutouts: [l, r])
+        let (wall, panel, rings) = makeWall(rig: rig, cutouts: [l, r], eye: rig.eye)
         current = wall
         ctx.layer.addChild(wall)
         ctx.micro.appear(wall)
+        #if DEBUG
+        // Screenshot hook: SA_WALL_FREEZE=<z> holds the wall at rig-local z for good.
+        if let z = ProcessInfo.processInfo.environment["SA_WALL_FREEZE"].flatMap(Float.init) {
+            wall.position = rig.world([0, 0, z])
+            while !Task.isCancelled { _ = await ctx.clock.next() }
+            return nil
+        }
+        #endif
 
         // The wall hangs at the far end for a moment, rings breathing, so the pose can be read.
         var life = 0.0
@@ -160,18 +185,19 @@ final class WallGame: Minigame {
 
     /// Wall root at the far end, standing on the floor with its face toward the participant: one panel and
     /// one ring per cutout. The root sits at floor level, so children use rig-local x and y directly.
-    private func makeWall(rig: Rig, cutouts: [SIMD2<Float>]) -> (root: Entity, panel: ModelEntity, rings: [ModelEntity]) {
+    private func makeWall(rig: Rig, cutouts: [SIMD2<Float>], eye: Float) -> (root: Entity, panel: ModelEntity, rings: [ModelEntity]) {
         let root = Entity()
         root.orientation = rig.rotation
         root.position = rig.world([0, 0, Self.startZ])
-        // Tall enough that the highest hole keeps 35 cm of wall above its center.
-        let height = max(Self.wallHeight, (cutouts.map { $0.y }.max() ?? 0) + Self.holeRadius + 0.25)
+        // Tall enough that the highest hole keeps 25 cm of wall above its center.
+        let height = max(Self.wallHeight, (cutouts.map { $0.y }.max() ?? 0) + Self.holeRadius + 0.25, eye + 0.4)
         let panel = ModelEntity(mesh: .generateBox(width: Self.wallWidth, height: height, depth: 0.02),
-                                materials: [Look.flat(Theme.mute)])
-        // Just behind the ring plane, so the rings sit on the face.
+                                materials: [Look.flat(Theme.stone)])
+        // Just behind the ring plane, so the rings and the cut-out sit on the face.
         panel.position = [0, height / 2, -0.012]
         panel.components.set(OpacityComponent(opacity: Self.panelOpacity))
         root.addChild(panel)
+        root.addChild(silhouette(cutouts: cutouts, eye: eye))
         var rings: [ModelEntity] = []
         for c in cutouts {
             let ring = Self.makeRing()
@@ -180,6 +206,21 @@ final class WallGame: Minigame {
             rings.append(ring)
         }
         return (root, panel, rings)
+    }
+
+    /// The body-shaped cut-out, drawn in ink on the wall face with a pale rim: a standing figure whose hands
+    /// sit in the two holes (`BodySilhouette`). It reads as a hole because it is the darkest thing on the wall.
+    private func silhouette(cutouts: [SIMD2<Float>], eye: Float) -> Entity {
+        let root = Entity()
+        let sh = eye - 0.25
+        // Rim behind, figure in front, both just proud of the panel face (z = -0.002).
+        for (inflate, z, color) in [(Self.rimWidth, Float(0.001), Theme.paper.withAlphaComponent(0.85)),
+                                    (0, Float(0.002), Theme.ink)] {
+            let body = BodySilhouette(eye: eye, shoulderY: sh, left: cutouts[0], right: cutouts[1], inflate: inflate)
+            guard let mesh = Meshes.flat(body.pieces, z: z) else { continue }
+            root.addChild(ModelEntity(mesh: mesh, materials: [Look.flat(color)]))
+        }
+        return root
     }
 
     /// Blue ring that can glow, breathe, pop and sink like a Micro orb. Faces +z, toward the participant.

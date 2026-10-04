@@ -13,6 +13,10 @@ enum Tone {
         case tock
         case miss
         case caught
+        /// Spatial Tracking warning: a short leaf rustle, played from where the leaf will fall.
+        case rustle
+        /// Scary Balance creature: a low hum with a slow wobble, about 2 s.
+        case creature
     }
 
     private static var cache: [Cue: AudioFileResource] = [:]
@@ -26,8 +30,9 @@ enum Tone {
 
     static func resource(_ cue: Cue) -> AudioFileResource? {
         if let r = cache[cue] { return r }
-        let partials: [(Double, Double)]
-        let duration: Double
+        var partials: [(Double, Double)]
+        var duration: Double
+        var noise = 0.0, sustain = false
         switch cue {
         case .pop(let step):
             let f = 660 * pow(2, Double(min(max(step, 0), 6)) / 6)
@@ -39,10 +44,12 @@ enum Tone {
         case .tock: partials = [(170, 1), (340, 0.3)]; duration = 0.12
         case .miss: partials = [(220, 0.6)]; duration = 0.18
         case .caught: partials = [(784, 1), (1176, 0.5)]; duration = 0.35
+        case .rustle: partials = [(2400, 0.08)]; duration = 0.45; noise = 1
+        case .creature: partials = [(73, 1), (110, 0.6), (146, 0.25)]; duration = 2.2; sustain = true
         }
         let url = FileManager.default.temporaryDirectory.appending(path: "tone-\(abs(cue.hashValue)).wav")
         do {
-            try wav(partials: partials, duration: duration).write(to: url)
+            try wav(partials: partials, duration: duration, noise: noise, sustain: sustain).write(to: url)
             let r = try AudioFileResource.load(contentsOf: url)
             cache[cue] = r
             return r
@@ -51,16 +58,30 @@ enum Tone {
         }
     }
 
-    /// 16-bit mono 44.1 kHz PCM. 2 ms attack, decay to -60 dB at `duration`.
-    static func wav(partials: [(Double, Double)], duration: Double) -> Data {
+    /// 16-bit mono 44.1 kHz PCM. 2 ms attack, decay to -60 dB at `duration`. `noise` mixes in band-limited
+    /// noise with a fast flutter (a rustle). `sustain` holds level with a 3 Hz wobble and fades at both ends.
+    static func wav(partials: [(Double, Double)], duration: Double, noise: Double = 0, sustain: Bool = false) -> Data {
         let rate = 44_100.0
         let n = Int(rate * duration)
-        let norm = partials.reduce(0) { $0 + $1.1 }
+        let norm = partials.reduce(0) { $0 + $1.1 } + noise
         var pcm = Data(capacity: n * 2)
+        var rng = SeededRNG(seed: 7)
+        var low = 0.0, prev = 0.0
         for i in 0..<n {
             let t = Double(i) / rate
-            let env = min(t / 0.002, 1) * exp(-6.9 * t / duration)
-            let s = partials.reduce(0) { $0 + sin(2 * .pi * $1.0 * t) * $1.1 } / norm * env * 0.8
+            let env = sustain
+                ? min(t / 0.25, 1) * min((duration - t) / 0.4, 1) * (0.75 + 0.25 * sin(2 * .pi * 3 * t))
+                : min(t / 0.002, 1) * exp(-6.9 * t / duration)
+            // Noise: white, one-pole low-passed, then high-passed by differencing, gated by a 22 Hz flutter.
+            var hiss = 0.0
+            if noise > 0 {
+                let white = Double(rng.next() >> 11) / Double(1 << 53) * 2 - 1
+                low += 0.35 * (white - low)
+                hiss = (low - prev) * 3 * (0.55 + 0.45 * sin(2 * .pi * 22 * t)) * noise
+                prev = low
+            }
+            let tone = partials.reduce(0) { $0 + sin(2 * .pi * $1.0 * t) * $1.1 }
+            let s = (tone + hiss) / norm * env * 0.8
             var v = Int16(max(-1, min(1, s)) * Double(Int16.max)).littleEndian
             withUnsafeBytes(of: &v) { pcm.append(contentsOf: $0) }
         }

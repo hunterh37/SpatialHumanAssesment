@@ -2,14 +2,19 @@
 
 Code: `Games/WallGame.swift`. Metrics: `ScoreKit/Metrics/WallMetrics.swift`. Task: `wall`.
 
-A balance and stability game after Wii Fit U. A translucent wall with two hand holes glides toward the participant, who fits both hands into the holes and holds still until the wall arrives. Feet stay on the floor. Nothing asks for a step, a lunge or a lean.
+Deck: the participant stands on a platform surrounded by a moat. A wall with a cut-out comes at them and they hold that position. Tests mobility: how far the arms move to fit the shape, and whether a pose is consistently out of reach. Feet stay on the island. Nothing asks for a step, a lunge or a lean.
+
+## Island
+
+`Scenery.moat`: the forest clearing with a stone island (0.6 m radius, pale rim) under the participant and water out to 2.6 m. The wall starts beyond the water.
 
 ## Layout
 
-Everything is placed in the participant frame: origin on the floor under the head when the game began, x right, y up, -z forward (`Rig`). The cutout centers are logged in world space.
+Everything is placed in the participant frame: origin on the floor under the head when each block begins (after the countdown, once world tracking reports a tracked head), x right, y up, -z forward (`Rig`). The cutout centers are logged in world space.
 
-- Wall: a box 1.6 m wide, 2.0 m tall and 2 cm thick, standing on the floor with its face toward the participant. Grey (`Theme.mute`) at 22 percent opacity. It is taller than 2.0 m only when that is needed to keep the highest hole center 35 cm below the top edge.
-- Holes: two blue (`Theme.go`) rings of 10 cm radius and 1 cm tube in the wall plane. They are rings, not real cutouts, so the panel stays one plain mesh.
+- Wall: a box 1.6 m wide, at least 2.0 m and eye + 0.4 m tall, 2 cm thick, standing on the floor with its face toward the participant. Stone (`Theme.stone`) at 70 percent opacity. Taller only when needed to keep 25 cm of wall above the highest hole center.
+- Cut-out: a standing human figure in ink on the face with a 12 mm pale rim (`BodySilhouette`): head, neck, trunk, legs and feet in proportions of stature H = eye / 0.936, and each arm solved as two bones (upper arm 0.186 H, forearm 0.146 H) from the shoulder joint to its hand hole, elbow bent down and outboard. A hand closer to the shoulder than the arm's length is drawn foreshortened (the arm also reaches toward the viewer); a strongly foreshortened arm, as in `forward`, shows an open palm, fingers up. Each hand is centered in its hole. The panel stays one plain mesh.
+- Holes: two blue (`Theme.go`) rings of 10 cm radius and 1 cm tube at the ends of the arms.
 - Motion: the wall starts 3.0 m ahead (z = -3.0) and moves at constant speed to z = -0.30 over 5.0 s, about 0.54 m/s. The hand targets sit in the wall plane, so they arrive at z = -0.30 too. For the `forward` pose they stop at z = -0.55, still after 5.0 s, so the wall is a little slower (about 0.49 m/s) and the hold window is the same length.
 
 With eye height `e` and shoulder height `sh = e - 0.25` (the estimate `GameContext.shoulder` uses), the six poses place the cutout centers at these rig-local (x, y), in meters:
@@ -59,6 +64,8 @@ Logged per wall:
 - `tracking_gap_ms`: the larger of the left and right hand's longest gap from `hold_start_t` to `pass_t`, so a trial needs both hands tracked.
 
 ## Metrics
+
+- `wall_worst_pose_cm`: mean hand error per pose (both hands), the worst pose, cm, from 2 poses up. Display only; it flags a pose the participant cannot reach.
 
 Scored blocks only. Trials with a tracking gap over 100 ms drop. A metric with no data is omitted.
 

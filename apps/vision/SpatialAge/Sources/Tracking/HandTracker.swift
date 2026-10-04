@@ -15,9 +15,39 @@ final class HandTracker {
         var indexTip: SIMD3<Float>
         var thumbTip: SIMD3<Float>
         var wrist: SIMD3<Float>
+        /// All skeleton joints in world space, `jointOrder`. Used for whole-hand contact.
+        var joints: [SIMD3<Float>] = []
         /// Midpoint of thumb and index tips. The point that closes on an object in a pinch grasp.
         var grasp: SIMD3<Float> { (indexTip + thumbTip) / 2 }
         var aperture: Float { simd_distance(indexTip, thumbTip) }
+        /// Distance from `p` to the nearest joint or bone segment (wrist to tips). Falls back to tips and wrist.
+        func contactDistance(to p: SIMD3<Float>) -> Float {
+            guard joints.count >= 25 else {
+                return [indexTip, thumbTip, wrist, grasp].map { simd_distance($0, p) }.min()!
+            }
+            // Chains per jointOrder: thumb 1-4, fingers 5-9, 10-14, 15-19, 20-24, each from the wrist (0).
+            let chains = [Array(1...4), Array(5...9), Array(10...14), Array(15...19), Array(20...24)]
+            var best = simd_distance(joints[0], p)
+            for chain in chains {
+                var a = joints[0]
+                for i in chain {
+                    let b = joints[i]
+                    let ab = b - a
+                    let len2 = simd_length_squared(ab)
+                    let k = len2 > 0 ? simd_clamp(simd_dot(p - a, ab) / len2, 0, 1) : 0
+                    best = min(best, simd_distance(a + k * ab, p))
+                    a = b
+                }
+            }
+            // Palm: knuckle-to-knuckle span between index and little.
+            for (i, j) in [(6, 11), (11, 16), (16, 21)] {
+                let a = joints[i], ab = joints[j] - a
+                let len2 = simd_length_squared(ab)
+                let k = len2 > 0 ? simd_clamp(simd_dot(p - a, ab) / len2, 0, 1) : 0
+                best = min(best, simd_distance(a + k * ab, p))
+            }
+            return best
+        }
     }
 
     private let session = ARKitSession()
@@ -49,18 +79,38 @@ final class HandTracker {
 
     /// Head pose in world space. Identity at 1.5 m when world tracking is unavailable (simulator).
     func head() -> simd_float4x4 {
-        if let anchor = world.queryDeviceAnchor(atTimestamp: CACurrentMediaTime()), anchor.isTracked {
-            return anchor.originFromAnchorTransform
-        }
+        if let m = trackedHead() { return m }
         var m = matrix_identity_float4x4
         m.columns.3 = [0, 1.5, 0, 1]
         return m
     }
 
+    /// Head pose in world space, nil until world tracking reports a tracked device anchor.
+    func trackedHead() -> simd_float4x4? {
+        guard world.state == .running,
+              let anchor = world.queryDeviceAnchor(atTimestamp: CACurrentMediaTime()), anchor.isTracked else { return nil }
+        return anchor.originFromAnchorTransform
+    }
+
+    /// Waits up to `timeout` seconds for a tracked head. False when it never came (simulator, tracking lost).
+    func waitForHead(timeout: Double = 3) async -> Bool {
+        let end = CACurrentMediaTime() + timeout
+        while trackedHead() == nil {
+            guard CACurrentMediaTime() < end, !Task.isCancelled else { return false }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        return true
+    }
+
     /// Full skeleton of a hand, nil when stale or untracked.
     func skeleton(_ hand: Hand) -> HandPose? {
-        guard let s = skeletons[hand], now - s.t < Self.staleS else { return nil }
-        return s.pose
+        skeletonSample(hand)?.pose
+    }
+
+    /// Latest skeleton with its sample time, nil when older than `maxAge` seconds.
+    func skeletonSample(_ hand: Hand, maxAge: Double = staleS) -> (t: Double, pose: HandPose)? {
+        guard let s = skeletons[hand], now - s.t < maxAge else { return nil }
+        return s
     }
 
     static let jointOrder: [HandSkeleton.JointName] = [
@@ -92,8 +142,10 @@ final class HandTracker {
                 let m = anchor.originFromAnchorTransform * skeleton.joint(name).anchorFromJointTransform
                 return SIMD3(m.columns.3.x, m.columns.3.y, m.columns.3.z)
             }
-            let s = HandState(t: t, indexTip: joint(.indexFingerTip), thumbTip: joint(.thumbTip), wrist: joint(.wrist))
-            skeletons[hand] = (t, HandPose(chirality: hand == .left ? .left : .right, positions: Self.jointOrder.map(joint)))
+            let joints = Self.jointOrder.map(joint)
+            let s = HandState(t: t, indexTip: joint(.indexFingerTip), thumbTip: joint(.thumbTip), wrist: joint(.wrist),
+                              joints: joints)
+            skeletons[hand] = (t, HandPose(chirality: hand == .left ? .left : .right, positions: joints))
             if hand == .left { left = s } else { right = s }
             buffer.append(hand, s)
         }

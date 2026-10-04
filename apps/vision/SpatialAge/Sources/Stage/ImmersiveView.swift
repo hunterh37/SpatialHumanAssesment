@@ -7,6 +7,7 @@ import SwiftUI
 struct ImmersiveView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+    @Environment(\.openWindow) private var openWindow
     @State private var clock = FrameClock()
     @State private var hud = HUD()
     @State private var layer = Entity()
@@ -24,18 +25,23 @@ struct ImmersiveView: View {
             content.add(stage)
             content.add(layer)
             content.add(anatomy.root)
-            if let panel = attachments.entity(for: "hud") {
-                panel.position = [0, 1.75, -1.2]
+            // HUD and exit sit low, past arm's reach. GameContext moves them in front of the participant
+            // at each game start (hud.anchor); until then they wait at a seated default.
+            let panel = attachments.entity(for: "hud")
+            if let panel {
+                panel.position = [0, 0.7, -Theme.Layout.distance]
                 panel.components.set(BillboardComponent())
                 content.add(panel)
             }
-            if let exit = attachments.entity(for: "exit") {
-                // Low and close, below the play area, so a reach never hits it by accident.
-                exit.position = [0, 0.95, -0.75]
+            let exit = attachments.entity(for: "exit")
+            if let exit {
+                exit.position = [0, 0.4, -Theme.Layout.distance]
                 exit.components.set(BillboardComponent())
                 content.add(exit)
             }
             updates = content.subscribe(to: SceneEvents.Update.self) { event in
+                if let a = hud.anchor, panel?.position != a { panel?.position = a }
+                if let a = hud.exitAnchor, exit?.position != a { exit?.position = a }
                 clock.tick(event.deltaTime)
                 anatomy.update(tracker: tracker, dt: event.deltaTime)
             }
@@ -52,6 +58,9 @@ struct ImmersiveView: View {
         .onAppear { model.spaceOpen = true }
         .onDisappear {
             halt()
+            // Closed by the Digital Crown or the system mid-session: end it and bring the window back.
+            if model.phase == .running { model.abortSession() }
+            showWindow()
             updates?.cancel()
             updates = nil
             model.spaceOpen = false
@@ -61,6 +70,7 @@ struct ImmersiveView: View {
             // With the anatomy overlay on, stay open in passthrough; otherwise close the space.
             guard phase != .running else { return }
             halt()
+            showWindow()
             if model.anatomyMode == .off { close() } else { model.passthrough = true }
         }
         .task { await anatomy.prepare() }
@@ -106,6 +116,11 @@ struct ImmersiveView: View {
         layer.children.removeAll()
     }
 
+    /// Reopens the main window, which was dismissed while the games ran.
+    private func showWindow() {
+        if !model.windowOpen { openWindow(id: AppModel.windowID) }
+    }
+
     private func close() {
         guard !closing else { return }
         closing = true
@@ -120,16 +135,16 @@ struct HUDView: View {
     var body: some View {
         VStack(spacing: 10) {
             Text(hud.title.uppercased())
-                .font(.system(size: 13, weight: .semibold)).tracking(3)
+                .font(.system(size: 15, weight: .semibold)).tracking(3)
                 .foregroundStyle(Theme.color(Theme.mute))
             Text(hud.line)
-                .font(.system(size: 26, weight: .medium))
+                .font(.system(size: 30, weight: .medium))
                 .foregroundStyle(Theme.color(Theme.paper))
                 .multilineTextAlignment(.center)
             Text(hud.cue)
-                .font(.system(size: 44, weight: .bold)).monospacedDigit()
+                .font(.system(size: 52, weight: .bold)).monospacedDigit()
                 .foregroundStyle(Theme.color(Theme.go))
-                .frame(height: 54)
+                .frame(height: 62)
                 .contentTransition(.numericText())
             HStack(spacing: 6) {
                 ForEach(0..<max(hud.total, 0), id: \.self) { i in
@@ -139,7 +154,8 @@ struct HUDView: View {
                 }
             }
         }
-        .frame(width: 560)
+        .frame(width: 640)
+        .shadow(color: .black.opacity(0.55), radius: 8)
         .overlay(alignment: .topTrailing) {
             if !hud.step.isEmpty {
                 Text(hud.step).font(.system(size: 13, weight: .semibold)).monospacedDigit()

@@ -15,6 +15,18 @@ enum Theme {
     static let gold = UIColor(red: 1.000, green: 0.784, blue: 0.239, alpha: 1)      // #FFC83D
     static let teal = UIColor(red: 0.078, green: 0.722, blue: 0.651, alpha: 1)      // #14B8A6
 
+    /// Nature scenery (Stick Drop, Spatial Tracking, Hole in the Wall). Muted and still, so the game colors
+    /// above stay the only saturated things in view.
+    static let sky = UIColor(red: 0.596, green: 0.690, blue: 0.741, alpha: 1)       // #98B0BD
+    static let grass = UIColor(red: 0.231, green: 0.302, blue: 0.204, alpha: 1)     // #3B4D34
+    static let bark = UIColor(red: 0.243, green: 0.192, blue: 0.157, alpha: 1)      // #3E3128
+    static let canopy = UIColor(red: 0.176, green: 0.259, blue: 0.180, alpha: 1)    // #2D422E
+    static let canopyFar = UIColor(red: 0.341, green: 0.427, blue: 0.408, alpha: 1) // #576D68
+    static let water = UIColor(red: 0.149, green: 0.341, blue: 0.459, alpha: 1)     // #265775
+    static let stone = UIColor(red: 0.620, green: 0.596, blue: 0.549, alpha: 1)     // #9E988C
+    /// Creature in Scary Balance.
+    static let creature = UIColor(red: 0.373, green: 0.243, blue: 0.541, alpha: 1)  // #5F3E8A
+
     static func color(_ c: UIColor) -> Color { Color(uiColor: c) }
 
     /// Sizes in meters. Life scale: everything sits where an arm can reach it.
@@ -25,6 +37,18 @@ enum Theme {
         static let bob: Float = 0.04
         static let floorRadius: Float = 6
         static let skyRadius: Float = 40
+    }
+
+    /// Where the HUD and the exit button sit, relative to the participant at the start of each game.
+    /// Low and beyond arm's reach (0.9 m): reach targets and falling leaves pass in front of the text,
+    /// and the text stays out of the eye-level band where the games happen.
+    enum Layout {
+        /// Forward distance of the HUD and exit button, meters.
+        static let distance: Float = 1.4
+        /// HUD center below eye height, meters (about 20 degrees down at 1.4 m).
+        static let hudDrop: Float = 0.5
+        /// Exit button below eye height, meters (about 30 degrees down).
+        static let exitDrop: Float = 0.8
     }
 
     /// Micro-interaction timing, seconds. Five primitives, used everywhere.

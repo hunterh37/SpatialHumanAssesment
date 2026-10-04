@@ -1,21 +1,25 @@
-# Pendulum
+# Stick Drop
 
-Code: `Games/PendulumGame.swift`. Metrics: `ScoreKit/Metrics/PendulumMetrics.swift`.
+Code: `Games/PendulumGame.swift`. Metrics: `ScoreKit/Metrics/PendulumMetrics.swift`. Task: `pendulum` (name kept from the earlier pendulum game).
 
-A gold bob (8 cm) hangs on a cord from a pivot 0.4 m above eye level and 0.48 m ahead. It swings in the frontal plane at 22 to 34 degrees, cord length 0.55 to 0.85 m. After 1.5 to 4.0 s, picked at random, the cord releases and the bob falls ballistically from its release state at 9.81 m/s^2. The participant pinches it out of the air.
+Deck: a set of objects hangs in view, a random one falls, and the participant grabs it before it hits the ground. Nature backdrop. Leaves fall at different speeds, faster over time. Tests visual to action reaction time and useful field of view.
 
-Swing and fall are analytic (`theta = A cos(w t)`, then `p0 + v0 t - g t^2 / 2`), so the logged release state is the exact start of the trajectory shown.
+## Layout
 
-## Catch
-
-Grasp point (midpoint of thumb and index tips) within 7 cm of the bob center with aperture under 4.5 cm. Catch time is the hand sample time. Under 100 ms after release is `anticipation`. A fall past 1 m or to the floor is `drop`.
-
-A life-size cm ruler stands behind the swing plane, zero at the top. On a catch a gold tick and the drop in cm mark the height.
+Forest clearing (`Scenery.forest`). A bark branch runs in an arc in front of the participant. Seven gold leaves (11 cm) hang from it at azimuth -60, -40, -20, 0, 20, 40, 60 degrees from the start direction, 0.52 m from the head horizontally, stems 12 cm above the eyes. The azimuths are fixed so every session tests the same field.
 
 ## Flow
 
-3 familiarization trials, 12 scored.
+3 familiarization, 16 scored. Each trial waits 1.0 to 3.0 s, then one leaf lets go with a tock. Leaves fall in shuffled passes over the row, so each position falls equally often.
+
+The fall is analytic, `p0 - g s tau^2 / 2`, from rest. Gravity scale `s` ramps linearly from 0.25 to 1.0 across the scored block; practice stays at 0.25. The leaf turns slowly as it falls (visual only). A fresh leaf grows back on the stem after each trial.
+
+## Catch
+
+Any hand joint or bone segment (wrist to fingertips, knuckle span) within 6.5 cm of the leaf center. No pinch required; aperture is still logged. Catch time is the hand sample time. Under 100 ms after release is `anticipation`. Reaching the ground is `drop`. A catch plays the caught tone, a gold ring and a praise cue; the leaf rides in the hand for 0.45 s.
+
+Logged per trial: `release_t` (first falling frame), `release_position` (leaf center), `release_velocity` zero, `release_angle_deg` and `stick_index` (which leaf), `eccentricity_deg` (angle from head forward at release), `gravity_scale`. `length_m` and `amplitude_deg` are 0.
 
 ## Metrics
 
-`catch_latency` (median, s), `catch_drop_cm` (median vertical fall, display, the ruler drop equivalent d = g t^2 / 2), `catch_rate`.
+`catch_latency` (median, s), `catch_drop_cm` (display, the 1 g ruler drop equivalent of each latency, d = g t^2 / 2, so the gravity ramp does not change it), `catch_rate`, `catch_ecc_slope` (catch latency per 90 degrees of eccentricity, the field of view cost, from 6 catches up).

@@ -26,6 +26,9 @@ final class HUD {
     var step = ""
     /// Large center text: countdown digits and short praise. Never a number from play.
     var cue = ""
+    /// World positions of the HUD panel and the exit button. Set at each recenter.
+    var anchor: SIMD3<Float>?
+    var exitAnchor: SIMD3<Float>?
 }
 
 /// Everything a game needs: clock, hands, recorder, scene layer, interaction kit, and a frame at the user.
@@ -46,12 +49,26 @@ final class GameContext {
         self.handedness = handedness
         micro = Micro(clock: clock, root: layer)
         rig = Rig(head: tracker.head())
+        placeHUD()
     }
 
     var now: Double { recorder.now }
 
-    /// Re-anchor to where the participant now faces. Called at the start of each game.
-    func recenter() { rig = Rig(head: tracker.head()) }
+    /// Re-anchor to where the participant now stands and faces. Called at the start of each game.
+    /// Waits for a tracked head first: a frame taken before world tracking runs falls back to the space
+    /// origin, which can be meters from the participant, and every game object would be placed around it.
+    func recenter() async {
+        _ = await tracker.waitForHead()
+        rig = Rig(head: tracker.head())
+        placeHUD()
+    }
+
+    /// HUD and exit button low in front of the participant. Spec: specs/games/design.md, HUD.
+    private func placeHUD() {
+        let d = Theme.Layout.distance
+        hud.anchor = rig.world([0, rig.eye - Theme.Layout.hudDrop, -d])
+        hud.exitAnchor = rig.world([0, rig.eye - Theme.Layout.exitDrop, -d])
+    }
 
     var dominant: Hand { handedness == .left ? .left : .right }
 

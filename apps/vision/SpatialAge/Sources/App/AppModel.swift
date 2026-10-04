@@ -7,12 +7,13 @@ import ScoreKit
 @Observable
 final class AppModel {
     static let immersiveID = "Tasks"
+    static let windowID = "Main"
 
     enum Phase { case consent, participant, catalog, running, results }
 
     var phase: Phase = .consent
     var participant = Participant(code: Participant.randomCode(), ageYears: 30)
-    var queue: [Game] = Game.allCases
+    var queue: [Game] = Game.catalog
     var recorder: SessionRecorder?
     var ingestURL = URL(string: "http://192.168.1.10:8787")!
     var report: ScoreReport?
@@ -23,6 +24,8 @@ final class AppModel {
     var anatomyMode: RealHandAnatomy.Mode = .off
     /// True while the immersive space is open (set by ImmersiveView).
     var spaceOpen = false
+    /// True while the main window is on screen. The window closes while games run so it never covers the stage.
+    var windowOpen = false
     /// Games run fully immersive; the anatomy viewer alone runs in passthrough.
     var passthrough = false
     /// Shown on the catalog after a session was ended before the last game.

@@ -12,8 +12,9 @@ public enum ColorDotsMetrics: MetricExtractor {
         var out: [MetricValue] = []
 
         // Span: the largest set recalled perfectly, every lit dot touched and nothing else.
+        // Spatial Memory sessions size the trial by the rule's targets; a DID NOT recall has more answers than that.
         let perfect = kept.filter { $0.hits == $0.setSize && $0.falseTaps == 0 }
-        if let span = perfect.map(\.setSize).max() {
+        if let span = perfect.map({ t in t.ruleMatch.map { $0.filter { $0 }.count } ?? t.setSize }).max() {
             out.append(MetricValue(.dotsSpan, Double(span), n: kept.count, sem: 0.5))
         }
 
