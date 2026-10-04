@@ -22,7 +22,32 @@ KDM needs each biomarker's curve and residual SD from a reference sample. Until 
 | `corsi_span` | Constellation | Facchin 2024 |
 | `pursuit_rms_cm` | Orbit | direction only, placeholder magnitude |
 
-`python -m sha_biomarkers.kdm table.csv` prints estimates for a CSV with biomarker columns and an optional `age` column.
+### Pipeline
+
+Raw sessions are the record; metrics are recomputed from them, so an extractor fix reaches every past session.
+
+```
+data/sessions/*.json     ingest saves every uploaded session (schema 0.5)
+  -> make kdm-matrix     scorekit matrix: data/kdm/matrix.csv, one row per session
+  -> make kdm            python -m sha_biomarkers.kdm: data/kdm/ages.csv
+```
+
+`matrix.csv` columns: `session_id`, `code`, `started_at`, `age`, `sex`, `handedness`, `height_cm`, `weight_kg`, `posture`, `mode`, `prior_sessions`, `calibration`, `usable`, `device_id`, `device_model`, `app_version`, `schema_version`, then one column per ScoreKit metric id. Empty means the session did not produce that metric.
+
+`calibration` is 1 for the first usable Play-all session of each participant code. Fit norms and validate on those rows only (`--calibration-only`): repeat plays carry practice, duels and single games are partial.
+
+`ages.csv` gives `kdm_age` (biomarkers only, BA_E) and `kdm_age_prior` (with the chronological prior, BA_EC), each with a standard error. Validate `kdm_age` against `age`; the prior version contains the answer.
+
+### Data the model depends on
+
+| Field | Why |
+|---|---|
+| `participant.age_years` | Target for calibration and validation. Setup cannot continue on the default age. |
+| `mode`, `prior_sessions` | Select first full sessions; practice makes repeat scores look younger. |
+| `device.device_id`, `device.model` | Check for offsets between headsets before pooling them. |
+| `participant.height_cm`, `posture` | Reach and lean scale with body size; seated play skips the standing games. |
+| `gravity_scale` (Stick Drop) | Catch latency uses trials at 0.75 g or faster, with drops ranked slowest. |
+| `cue` (Spatial Tracking) | Balanced by design; kept so reaction time can be split by cue. |
 
 ## v1, fitted on hackathon data
 

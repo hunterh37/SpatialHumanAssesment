@@ -5,4 +5,4 @@ Feature extraction and age model. Specs: `specs/features.md`, `specs/age-model.m
 `sha_biomarkers/kdm.py` Klemera-Doubal age from a biomarker matrix; literature parameters in `kdm_params.json`.
 `sha_biomarkers/synth.py` synthetic sessions for development. Not for reporting accuracy.
 
-Run from repo root: `make sample features test`.
+Run from repo root: `make sample features test`. KDM ages from collected sessions: `make kdm` (see `specs/age-model.md`).

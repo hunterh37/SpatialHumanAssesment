@@ -90,7 +90,11 @@ final class AppModel {
     func start(_ games: [Game]) {
         skyPlank = false
         queue = games
-        recorder = SessionRecorder(participant: participant)
+        var player = participant
+        if let profile, profile.participant.code == player.code { player = profile.sessionParticipant }
+        let mode: PlayMode = duel != nil ? .duel : (Set(games) == Set(self.games) ? .full : .single)
+        let prior = SessionStore.all().filter { $0.participant.code == player.code }.count
+        recorder = SessionRecorder(participant: player, mode: mode, priorSessions: prior)
         report = nil
         pace = nil
         uploadStatus = nil
