@@ -1,4 +1,6 @@
-# Spatial Human Assessment PRD
+# BetterYears Age PRD
+
+Product name: **BetterYears Age**, chosen on Oct 4. The repo (`SpatialHumanAssesment`) and code name (`SpatialAge`) stay as they are.
 
 Status: hackathon draft, v0.2 (4 October 2026), updated with the 12:27 to 12:37 team decisions. Builds on v0.1; its outputs, stretch goals, privacy rules, risks and workstreams are kept below. Concept deck: `concept/SpatialReactionMemory_Concept.pdf`.
 
@@ -54,26 +56,26 @@ Proposed answers from the 12:27 to 12:37 team discussion. Jess owns the name, bu
 
 | Question | Proposed answer | Why |
 |---|---|---|
-| Name | **SpatialAge**; alternatives: Movement Age, AgeDuel | It is already the app target in `apps/vision/SpatialAge`, so there is no rename. Check the App Store and trademarks before any launch |
+| Name | **BetterYears Age** (decided Oct 4; Jess's label on the results screen). SpatialAge stays the code name | The app's display name and the dashboard title use it (PR #21); code identifiers stay `SpatialAge`. Check the App Store and trademarks before any launch |
 | Branding | The concept deck look: warm paper, navy ink, blue for go targets, orange for no-go, Helvetica. Hook line: **How old do you move?** | It matches the figures already in the repo, and a question makes no health claim |
 | Target audience | **Everyone:** anyone with a Vision Pro can play and duel friends. Clinics can also offer it, for example to patients in the waiting room | Open to every player, with clinics as an optional channel the team already knows; one clinic headset serves many patients |
 | Business use case | Free to play for everyone, with the duel bringing players back. An optional clinic edition offers waiting-room assessment as a per-clinic subscription | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
-| Final design | Four games in about 6 minutes: Catch the knives (reaction, Hunter), Color dots (memory and decisions, Wilson), Reach and grab plus Hole in the wall (reach and balance in the Wii Fit U style, Wilson, from alex's ideas). Bonus: hand x-ray (Hunter). The result screen shows movement age per game and overall, then level up | It matches the 12:37 split and the ELI5 loop above |
-| Metrics (data) | Catch: reaction and movement time (ms), misses. Color dots: hits, false taps, misses, decision time (ms), head turn (degrees). Reach and grab: furthest object grabbed and head travel (cm). Hole in the wall: pose match, hand drift and head sway during each hold (cm), walls cleared. Per session: movement age per game and overall, valid trial rate | These fields go into the session schema; norm sources are in the Movement Age engine table |
+| Final design | Alex's five deck games, built: Stick Drop and Spatial Tracking (reaction, Hunter and Jason), plus Spatial Memory (memory and decisions), Scary Balance (reach and holding still) and Hole in the Wall (mobility and holds) from Wilson, Alex and Franco. Bonus: hand x-ray (Hunter). The result screen shows movement age per game and overall, then level up | It matches the 12:37 split and the ELI5 loop above |
+| Metrics (data) | Stick Drop: reaction and movement time (ms), misses. Spatial Memory: hits, false taps, misses, decision time (ms), head turn (degrees). Scary Balance: furthest grab and lean (cm), sway during freezes. Hole in the Wall: pose match, hand drift and head sway during each hold (cm), walls cleared. Per session: movement age per game and overall, valid trial rate | These fields go into the session schema; norm sources are in the Movement Age engine table |
 
 ## Team and ownership
 
-Jason and Hunter lead the idea; it is their Vision Pro work.
+Jason and Hunter lead the idea and work as a pair. Each brought a Vision Pro, and those two headsets are what make the head-to-head duel possible. Contributions below come from the repo's merged and open PRs.
 
-| Person | Role | Owns | LinkedIn |
+| Person | Role | Contributions | LinkedIn |
 |---|---|---|---|
-| Jason Morris | Idea lead | Works with Hunter: reaction games, the app shell, hand x-ray | [Medical Technology Specialist](https://www.linkedin.com/in/jason-morris-a803294/) |
-| Hunter Harris | Idea lead | Reaction games, the app shell, hand x-ray, with Jason | [Featured iOS / visionOS Engineer - ARKit, RealityKit, SharePlay. 10+ Vision Pro Apps](https://www.linkedin.com/in/hunt3r-harris/) |
-| Jessica Myles | Team | Business use case, name, UI/UX | [MBA Candidate at Harvard Business School · Ex-Doordash, Accenture](https://www.linkedin.com/in/jessica-myles/) |
-| Wilson Wu | Team | Memory and balance games, PRD and research | [Building with AI · Founder, Dubbs Capital · CRO at Snappy · MSCS @ Georgia Tech](https://www.linkedin.com/in/wilson1wu/) |
-| Alex Fu | Team | Memory and balance games; designed Scary Balance and Hole in the Wall; branding and the Games Ideas deck | [Non-Invasive Devices · BU Mechanical Engineering Student, focusing on Human-Machine Interaction and MedTech](https://www.linkedin.com/in/alex-fu-bu/) |
-| Franco | Team | Memory and balance games | To add |
-| Ben | Team | The data set; Vision Pro landscape research | To add |
+| Jason Morris | Idea lead, with Hunter | Brought one of the two Vision Pros. Builds the app with Hunter: reaction games, the app shell, hand x-ray. Added the spatial sound cue when a target appears (#9) | [Medical Technology Specialist](https://www.linkedin.com/in/jason-morris-a803294/) |
+| Hunter Harris | Idea lead, with Jason | Brought the other Vision Pro. Builds the app with Jason: minigame catalog, ScoreKit and the showcase (#2), timed-game cues and the hand anatomy overlay (#8), the Dusk theme, Sky Plank and onboarding (#12), and the five deck games as built | [Featured iOS / visionOS Engineer - ARKit, RealityKit, SharePlay. 10+ Vision Pro Apps](https://www.linkedin.com/in/hunt3r-harris/) |
+| Jessica Myles | Team | Business use case, the name (BetterYears Age) and UI/UX. Built the clickable first-run setup prototype (#11), the BetterYears Age results reveal and Detailed Score board (#13), and the Dusk grade colors | [MBA Candidate at Harvard Business School · Ex-Doordash, Accenture](https://www.linkedin.com/in/jessica-myles/) |
+| Alex Fu | Team | The look and the games: the Games Ideas deck (the five games now in the app), the branding deck, the Dusk design spec v1.0 the app follows, and the Dusk Meadow 3D environment. Designed Scary Balance and Hole in the Wall | [Non-Invasive Devices · BU Mechanical Engineering Student, focusing on Human-Machine Interaction and MedTech](https://www.linkedin.com/in/alex-fu-bu/) |
+| Franco Miguel Valencia | Team | The age engine: the Klemera-Doubal age model with literature parameters (#10), then the KDM age pipeline that collects session data, refits on collected sessions and retries uploads (#20, after #14, #15 and #18). GitHub Funkey08 | [Data Science @ Harvard University \| I love experiencing things I know nothing about](https://www.linkedin.com/in/franco-miguel-valencia-6a650b219/) |
+| Ben Weisburd | Team | The Vision Pro health, exercise and games landscape and gap analysis, with prices, two-player games, learning apps and popularity (#3, #4, #7); the five age-norm references behind the age model; the hidden-objects memory game idea. GitHub bw2 | [Computational Scientist II](https://www.linkedin.com/in/ben-weisburd-abb4336/) |
+| Wilson Wu | Team | The PRD, ELI5 and research (#1, #6, #17, #19); first builds of the memory and balance games and their scoring (#5); build fixes (#16, #21); Alex's branding in the app (#22, #23) | [Building with AI · Founder, Dubbs Capital · CRO at Snappy · MSCS @ Georgia Tech](https://www.linkedin.com/in/wilson1wu/) |
 
 Headlines are as shown on each LinkedIn profile on 4 October 2026.
 
@@ -126,26 +128,37 @@ Anyone can play: players duel friends wherever they have a Vision Pro. Clinics c
 
 ## Product
 
-**As built (17:00):** the catalog follows Alex's Games Ideas deck: Stick Drop (catch the falling stick), Spatial Memory (the Color dots game), Scary Balance (reach, lean and freeze while a creature watches), Hole in the Wall, and Spatial Tracking (react to sound and light). Gate, Constellation and Orbit still run but are not listed (`specs/games/README.md`). Stick Drop and Spatial Tracking play in a forest clearing, Hole in the Wall on a stone island with a moat, and a yellow canary companion lives in every scene. Ben's idea for a next memory game: hide objects such as a bird, a bottle and a coin in containers, show them for a few seconds, then ask where each one is; it also works with language flashcards.
+**As built (17:00):** the catalog follows Alex's Games Ideas deck: Stick Drop (catch the falling leaf), Spatial Memory (the Color dots game, rebuilt to the deck's rules), Scary Balance (reach, lean and freeze while a creature passes), Hole in the Wall, and Spatial Tracking (react to sound and light). Gate, Constellation and Orbit still run but are not listed (`specs/games/README.md`). Stick Drop and Spatial Tracking play in a forest clearing, Hole in the Wall on a stone island with a moat, and a yellow canary companion lives in every scene. Ben's idea for a next memory game: hide objects such as a bird, a bottle and a coin in containers, show them for a few seconds, then ask where each one is; it also works with language flashcards.
+
+**Alex's Games Ideas deck, as built** (`concept/Games Ideas (2).pdf`; code in `apps/vision/SpatialAge/Sources/Games/`):
+
+| Deck idea | Code | What the player does (in-app text) | What it tests (deck) |
+|---|---|---|---|
+| Stick Drop | `pendulum` | Catch the falling leaf before it hits the ground. | Visual to action reaction time; useful field of view |
+| Spatial Memory | `dots` | Touch the balls you are asked for. Then find the ones you did, or did not, touch. | Decision making time; spatial memory |
+| Scary Balance | `reach` | Walk to the glowing spot and reach for the object. Freeze when the creature passes. | Reach and leaning; holding positions and shaking |
+| Hole in the Wall | `wall` | Stay on the island. Make the shape in the wall and hold it as the wall passes. | Mobility: how far the arms move to fit the pose |
+| Spatial Tracking | `spark` | Listen and look. Point at each falling leaf before it lands. | Audio and visual to action reaction time; locating the cue |
 
 A duel is a set of short games in mixed reality. Both players run the same games, each game awards a point, and the result screen shows both movement ages. The headset sees the head and both hands only, so every game reads through them (`specs/architecture.md`).
 
 | Game | Metric | What players do | What the headset measures | Owner |
 |---|---|---|---|---|
 | Warm-up | None | One unscored practice pass per game | Nothing scored | Each game's owner |
-| Catch the knives | Reaction | Catch knives as they fall | Movement onset and catch time, using the [simple reaction](specs/tasks/simple-reaction.md) timing rules | Hunter, Jason |
-| Color dots | Memory and decisions | Colored dots appear around the room; tap the ones you were shown and skip the rest | Taps and skips, decision time, how far you look around | Wilson, Alex, Franco |
-| Reach and grab | Reach and mobility | Feet planted, reach out and tap to pick up virtual objects placed farther and farther away; leaning is fine, stepping is not | Furthest object grabbed and head travel, in cm. Reaching farther means moving more freely | Wilson, Alex, Franco |
-| Hole in the wall | Balance and stability | A wall with a cutout moves toward you; strike the pose and hold it still until the wall passes; move and you hit the wall | Pose match, hand drift and head sway during each hold, walls cleared | Wilson, Alex, Franco |
+| Stick Drop | Reaction | Catch the falling leaf before it hits the ground | Movement onset and catch time, using the [simple reaction](specs/tasks/simple-reaction.md) timing rules | Hunter, Jason |
+| Spatial Tracking | Reaction | Hear or see a leaf coming, then point at it before it lands | Audio and visual reaction time, and how fast the cue is found | Hunter, Jason |
+| Spatial Memory | Memory and decisions | Colored balls of two sizes surround you; touch the ones the rule names, then the ones you did, or did not, touch | Hits, false taps, misses, decision time, how far you look around | Wilson, Alex, Franco |
+| Scary Balance | Reach and holding still | Walk to a glowing spot, then reach for a cube with feet planted; the farthest ones need a lean. When a friendly creature drifts past, freeze until it is gone | Furthest grab and lean, in cm, plus head sway and hand drift during each freeze | Wilson, Alex, Franco |
+| Hole in the Wall | Mobility and pose holding | Stay on the island; a wall with a cutout moves toward you; make the shape and hold it still as the wall passes | Pose match, hand drift and head sway during each hold, walls cleared | Wilson, Alex, Franco |
 | Hand x-ray | Demo | A separate app that shows an x-ray view of your own hand | Hand skeleton from hand tracking | Hunter, Jason |
 | Chair sprint, one-leg hold | Strength, balance | Not built today | Reps from head height; hold time | Unassigned |
 
-- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. The Color dots, Reach and grab and Hole in the wall games (Wilson, Alex and Franco) land on it as PRs. Reach and grab and Hole in the wall are alex's ideas, and his Freeze idea (move and you get caught) becomes the hold rule inside Hole in the wall.
+- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. Spatial Memory (was Color dots), Scary Balance (was Reach and grab) and Hole in the Wall (Wilson, Alex and Franco) landed on it as PRs. All five deck games are Alex's ideas; his freeze idea is now the creature in Scary Balance and the hold rule in Hole in the Wall.
 - **Head-to-head:** two headsets in sync, or one headset taken in turns (open question). The same hardware for both players cancels device latency between them.
 - **Levelling:** each duel earns XP. Each metric shows change against the player's own first session, and only changes larger than test-retest noise count.
-- **Safe balance:** both balance games keep both feet on the floor, so players find their limits before a fall. The design reference is the [Wii Fit U balance games](https://www.youtube.com/watch?v=ybKOF1_yLZg): players steer by shifting their weight. With no balance board, the headset's head position stands in for the center of balance; head position and force-plate sway agree only moderately to well, so the game calibrates on this headset.
+- **Safe balance:** every reach and hold happens with both feet on the floor, so players find their limits before a fall. Scary Balance players walk only between spots, inside the immersive boundary. The design reference is the [Wii Fit U balance games](https://www.youtube.com/watch?v=ybKOF1_yLZg): players steer by shifting their weight. With no balance board, the headset's head position stands in for the center of balance; head position and force-plate sway agree only moderately to well, so the game calibrates on this headset.
 - **One-leg hold:** left out for safety, although failing a 10-second stand carried mortality HR 1.84 ([Araujo 2022](https://pubmed.ncbi.nlm.nih.gov/35728834/)). It could return later with a spotter.
-- **Strength and mobility:** strength is unassigned. Reach and grab now covers mobility; neck rotation from headset orientation is a validated extra: ICC above 0.95 against motion capture ([source](https://pmc.ncbi.nlm.nih.gov/articles/PMC10747215/)).
+- **Strength and mobility:** strength is unassigned. Hole in the Wall now covers arm mobility and Scary Balance covers reach; neck rotation from headset orientation is a validated extra: ICC above 0.95 against motion capture ([source](https://pmc.ncbi.nlm.nih.gov/articles/PMC10747215/)).
 - **Safety:** passthrough stays on, the floor stays clear, and one tap skips any game.
 
 ## Outputs
@@ -164,15 +177,35 @@ Movement age combines published age slopes with an anchor measured on this heads
 | Metric | Feature | Published norms | Status |
 |---|---|---|---|
 | Strength | 30 s chair-stand reps | [Colombian multicenter 2025](https://pubmed.ncbi.nlm.nih.gov/42183074/): percentiles by sex in six bands from 18-29 to 70-80. Its equation, reps = 26.458 - 0.171 x age - 1.394 x sex, has R2 0.258, so a chair-stand age alone is noisy | Verified |
-| Balance | Hole in the wall: hand drift and head sway during holds | [Posturography sway norms](https://pmc.ncbi.nlm.nih.gov/articles/PMC12926707/): 250 adults in five bands from 25-40 to 76-80. These are force-plate numbers, so the headset needs its own calibration | Pending |
-| Reach | Reach and grab: furthest grab, cm | [Nakhostin-Ansari 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9422043/): functional reach in six bands from 18-29 to 70+ | Verified |
+| Balance | Hole in the Wall and Scary Balance: hand drift and head sway during holds and freezes | [Posturography sway norms](https://pmc.ncbi.nlm.nih.gov/articles/PMC12926707/): 250 adults in five bands from 25-40 to 76-80. These are force-plate numbers, so the headset needs its own calibration | Pending |
+| Reach | Scary Balance: furthest grab, cm | [Nakhostin-Ansari 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9422043/): functional reach in six bands from 18-29 to 70+ | Verified |
 | Reaction | Simple and choice reaction time, decision time | [Tap reaction time on a Wii Balance Board](https://pmc.ncbi.nlm.nih.gov/articles/PMC5747451/): percentiles by sex per decade from 20-29 to 80+, 354 adults. Slopes: choice reaction time rose 2.80 ms a year from 18 to 65 ([1,466 adults](https://pmc.ncbi.nlm.nih.gov/articles/PMC4407573/)); simple reaction time averaged 290, 318 and 354 ms at ages 30, 50 and 69 ([2,196 adults](https://pmc.ncbi.nlm.nih.gov/articles/PMC5608941/)). Use slopes, never lab milliseconds | Verified |
 | Mobility | Arm or neck angle, degrees | [Shoulder range norms](https://pmc.ncbi.nlm.nih.gov/articles/PMC7549223/): flexion, abduction and external rotation by sex in 5-year bands from 20-24 to 85+, 2,404 adults; right flexion fell 43 degrees in men. No headset arm-angle validation found | Pending |
-| Memory | Color-dot recall: hits, false taps, decision time | Not yet searched. Decision time can borrow the choice reaction slope above | Pending |
+| Memory | Spatial Memory recall: hits, false taps, decision time | Not yet searched. Decision time can borrow the choice reaction slope above | Pending |
 
 **Level-up curve:** a metric counts as improved only when it beats the player's own baseline by more than test-retest noise. A Quest 3 reaction task had single-trial ICC 0.80 to 0.88, and mixed and full VR scores differed by up to about 110 ms, so each player is compared in one environment ([source](https://pmc.ncbi.nlm.nih.gov/articles/PMC13568001/)).
 
 **Age model v0.2 (as built):** a Klemera-Doubal estimate in `ml/sha_biomarkers/kdm.py` combines one biomarker per construct, weighted by how strongly each changes with age relative to its noise, with literature priors per entry until event sessions refit them (`specs/age-model.md`). Ben's reference set: Woods 2015 simple reaction time ([PMC4374455](https://pmc.ncbi.nlm.nih.gov/articles/PMC4374455/)), Woods 2015 choice reaction time ([PMC4407573](https://pmc.ncbi.nlm.nih.gov/articles/PMC4407573/)), Deary and Ritchie 2016 processing speed at 70 and 83 ([PMC4796023](https://pmc.ncbi.nlm.nih.gov/articles/PMC4796023/)), Nakhostin-Ansari 2022 functional reach and balance ([PMC9422043](https://pmc.ncbi.nlm.nih.gov/articles/PMC9422043/)), and Chilean functional fitness norms for older adults 2025 ([PMC12209290](https://pmc.ncbi.nlm.nih.gov/articles/PMC12209290/)).
+
+**Age signal per test:** the table shared with Alex's files lists, for 12 published tests, how many years of aging move a score by one person-to-person standard deviation (the spread at a given age divided by the change per year). That ratio is the per-test term in the Klemera-Doubal formula, so a smaller number means one test says more about age. Its [1] to [5] tags are Ben's references above. The choice reaction (2.8 ms a year) and functional reach (0.25 cm a year) slopes match sources this PRD already verified; the other rows are as shared.
+
+| Test | Ages | Years per SD | Ref | Closest game (our mapping) |
+|---|---|---|---|---|
+| Simple reaction time (lab) | 18 to 65 | 49 | [1] | Stick Drop, Spatial Tracking |
+| Choice reaction time | 18 to 65 | 25 | [2] | Gate, Spatial Memory decisions |
+| Simple reaction time | 70 vs 83 | 24 | [3] | Stick Drop, Spatial Tracking |
+| Choice reaction time, 4 choices | 70 vs 83 | 10 | [3] | Gate |
+| Digit Symbol (processing speed) | 70 vs 83 | 11 | [3] | None yet |
+| Inspection time | 70 vs 83 | 16 | [3] | None yet |
+| Functional reach | 20s to 70+ | 30 (women 18) | [4] | Scary Balance |
+| 30 s chair stand | 60s to 80s | 20 to 23 | [5] | Not built |
+| Timed Up and Go | 20 to 65 | 50 | [4] | Not built |
+| Timed Up and Go | 65 to 75 | 7 | [4] | Not built |
+| Timed Up and Go with mental arithmetic | 65 to 75 | 8.5 | [4] | Not built |
+| Single-leg stance | 55 to 75 | 11 | [4] | Left out for safety |
+
+- **Not the app's accuracy:** the same test reads very differently by age window (Timed Up and Go: 50 at 20 to 65, 7 at 65 to 75), and the reaction tests share error, so they do not combine as if independent.
+- **For the demo:** if most players tonight are in their 20s and 30s, single tests are at their weakest there. The card quotes `evidence_age` error against a predict-the-mean baseline, never a number from this table.
 
 ## Requirements and user stories
 
@@ -192,11 +225,11 @@ Movement age combines published age slopes with an anchor measured on this heads
 
 **3. Balance games.** As a player, I want a safe way to see how far I can reach and how still I can hold, long before balance becomes a fall.
 
-- [ ] Reach and grab: virtual objects sit at growing distances and a tap picks each up, feet planted; score = furthest object grabbed, in cm
-- [ ] Hole in the wall: a wall with a cutout moves toward the player; head and hands must match the cutout and hold still until it passes; moving past a sway threshold hits the wall; score = pose match, hand drift, head sway and walls cleared
+- [ ] Scary Balance: walk to a glowing spot, then reach for cubes at growing distances with feet planted, freezing when the creature passes; score = furthest grab, in cm
+- [ ] Hole in the Wall: a wall with a cutout moves toward the player; head and hands must match the cutout and hold still until it passes; moving past a sway threshold hits the wall; score = pose match, hand drift, head sway and walls cleared
 - [ ] One tap skips a game for anyone unsteady
 
-**4. Color-dot memory.** As a player, I want to remember which colored dots appeared around me and tap only those, so one game checks memory, looking around and decisions.
+**4. Spatial Memory.** As a player, I want to touch the balls a rule names, then find the ones I did, or did not, touch, so one game checks memory, looking around and decisions.
 
 - [ ] Dots appear around the room, some behind the player, so finding them takes a head turn
 - [ ] Every dot tapped or skipped is logged: hits, false taps and misses
@@ -246,7 +279,7 @@ Data flow is in `specs/architecture.md`: each headset posts one session file to 
 | Area | Path | Spec | Owner (proposed) |
 |---|---|---|---|
 | App shell (`mini-catalog`), reaction game, hand x-ray, two-player sync | `apps/vision` | `specs/tasks/*`, `specs/architecture.md` | Hunter, Jason |
-| Color dots, Reach and grab, Hole in the wall | `apps/vision` | `specs/games/` | Wilson, Alex, Franco |
+| Spatial Memory, Scary Balance, Hole in the Wall | `apps/vision` | `specs/games/` | Wilson, Alex, Franco |
 | Name, business use case, UI/UX | `apps/vision/SpatialAge/Sources/Catalog`, `Design` | `specs/games/design.md` | Jess |
 | Data set | `data/` | `specs/age-model.md` | Ben |
 | Session contract | `packages/schema` | `specs/session-schema.md` | Shared |
@@ -267,7 +300,7 @@ Open-source code that makes the games look and feel real, checked through the Gi
 | [DicyaninMultiPeer](https://github.com/hunterh37/DicyaninMultiPeer), [DicyaninSharePlay](https://github.com/hunterh37/DicyaninSharePlay) | Game state synced across headsets in one room | Head-to-head duels |
 | [RealityHD](https://github.com/hunterh37/RealityHD), [DicyaninRagdoll](https://github.com/hunterh37/DicyaninRagdoll), [DicyaninSceneReconstruction](https://github.com/hunterh37/DicyaninSceneReconstruction) | Photoreal props and scenes, ragdoll physics, collisions with the real room | Realism |
 | [DicyaninMockHandTracking](https://github.com/hunterh37/DicyaninMockHandTracking), [DicyaninSimulatorInput](https://github.com/hunterh37/DicyaninSimulatorInput) | Simulated hand input | Testing without a headset |
-| [HandVector](https://github.com/XanderXu/HandVector) (202 stars, MIT) | Hand-pose similarity scoring and simulator hand-tracking tests | Hole in the wall pose matching |
+| [HandVector](https://github.com/XanderXu/HandVector) (202 stars, MIT) | Hand-pose similarity scoring and simulator hand-tracking tests | Hole in the Wall pose matching |
 | [HandGesture](https://github.com/johnhaney/HandGesture) (44 stars, MIT) | Semantic gestures from hand tracking | Swings and throws |
 | [visionOS_30Days](https://github.com/satoshi0212/visionOS_30Days) (2,236 stars, MIT) | 30 small visionOS demos: particles, physics, hand tracking | Fast effects |
 | Apple samples: [Happy Beam](https://developer.apple.com/documentation/visionos/happybeam), [Swift Splash](https://developer.apple.com/documentation/visionos/swift-splash), [BOT-anist](https://developer.apple.com/documentation/visionos/bot-anist) | Apple's own visionOS games | Reference patterns |
@@ -279,26 +312,38 @@ Most of the realism comes from RealityKit itself: grounding shadows, image-based
 
 ## Design system
 
-**As built:** Hunter implemented the Dusk theme from the team's design spec (`concept/SpatialAge_Dusk_Design_Spec.pdf`, `specs/games/design.md`): Dusk tokens, glass components, a sunset stage and a dashboard. It replaces the yellow-on-black proposal below. The results screen calls the score the BetterYears Age, so the final name is Jess's call.
+Jess and Alex own the look. Alex's branding deck (`concept/Branding (1).pdf`) is the brief. Alex's Dusk design spec v1.0 (`concept/SpatialAge_Dusk_Design_Spec.pdf`, written after the deck) turns it into rules: charcoal glass with cream text and a peach primary button, never bright white panels. Hunter's Dusk theme (`Theme.swift`, `concept/SpatialAge_Dusk_Design_Spec.pdf`, `specs/games/design.md`) builds it: Dusk tokens, glass components, a sunset stage and a dashboard. Every game takes its colors from `Theme.swift` and its feedback from five shared micro-interactions, so a re-skin is one token edit, not eight game edits. The results screen calls the score the BetterYears Age, so the final name is Jess's call.
 
-Jess and Alex own the look. Every game already takes its colors from `Theme.swift` and its feedback from five shared micro-interactions (`specs/games/design.md`), so re-skinning all eight games is one token edit, not eight game edits.
+**Brand brief (Alex's deck):**
 
-| Token | Meaning | Today | Proposed: yellow on black | Contrast on black |
-|---|---|---|---|---|
-| ink | Sky and background | #0B0F17 | #0A0A0A | n/a |
-| go | Touch it | #2F6BFF (4.3:1 on ink) | #FFD23F yellow | 13.7:1 |
-| nogo | Leave it | #FF7A3D | #FF4D6D red-pink, plus a spiky shape | 6.2:1 |
-| memory | Catch and recall items | #FFC83D | #F6F4EF white glow | 18.0:1 |
-| follow | Moving targets | #14B8A6 | #14B8A6 | 8.0:1 |
-| mute | At rest, missed | #8A8F99 | #8A8F99 | 6.1:1 |
+- **Mood:** "Peaceful, Wellness": a simple UI that suits older players and a calming background. References: Oura, Calm, and other clean meditation and fitness apps.
+- **Premium feel:** clean and minimal, "No AI Slop." Menus glow in the Vision Pro style.
+- **Background:** a 3D nature scene that never competes with the game and feels like a real place as you move.
+- **Simple UI:** large buttons, the most used in the center and the rest at the side; short instructions and an optional practice round before every game.
+- **Music:** calm lofi made with Suno that loops without sounding repetitive; sound effects in the same premium style.
 
+**Palette, measured:** the five swatches on the deck's Colors slide ("Peaceful, serene, restorative, calming, health-focused") match Dusk tokens almost exactly. Swatch colors were sampled from the slide image in code.
+
+| Swatch on the slide | Dusk token | Token hex |
+|---|---|---|
+| #FDDDB7 pale peach | `accent` | #FBDAB4 |
+| #D8AD8D tan | `accentStrong` | #D8AB8B |
+| #9E8C8C mauve grey | `mute` | #A89698 |
+| #4D4B4E charcoal | `hill` | #4E4B51 |
+| #21201E near black | `onAccent` | #252322 |
+
+- **Greens not adopted:** another copy of the deck, with less text, also shows five greens (#D9F8CF, #B4EEA1, #91E177, #6FCD51, #4FB230). The repo copy does not, and Dusk does not use them. As text on white menus all five fail 4.5:1 (1.1 to 2.7:1); on the Dusk background they pass (6.4 to 15.2:1).
+- **Signal colors stay:** go #2F6BFF (touch it), nogo #FF7A3D (leave it, which also changes shape so color is never the only cue), gold #FFC83D (memory items) and teal #14B8A6 (moving targets). Scene lighting must not tint them; targets go unlit or emissive if it does.
 - **One object family:** spheres to touch, rounded cubes to grab, rings to hold, all with the same glowing rim.
-- **Never color alone:** no-go targets also change shape, which keeps yellow and orange-red apart for color-blind players.
-- **One module frame:** every game opens with the same intro card (title, one instruction, a ghost-hands demo from Hunter's DicyaninGestureTipGhostHands) and ends on the same results card with its movement age.
-- **Type:** SF Pro for the HUD, for legibility; Barlow Condensed for titles if the team wants the sports feel UI/UX Pro Max recommends.
-- **Motion:** 150 to 300 ms with spring easing; exits faster than entrances; respect Reduce Motion.
+- **One module frame:** every game opens with the same intro card (title, one instruction, a ghost-hands demo from Hunter's DicyaninGestureTipGhostHands) and an optional practice round, and ends on the same results card.
+- **Type and motion:** SF Pro throughout, which suits the calm brief; 150 to 300 ms spring motion, exits faster than entrances, and Reduce Motion respected.
 
-UI/UX Pro Max recommends an immersive pattern with a vibrant, block-based style: a dark ground, bold high-contrast accents and visible game progress. The yellow-on-black palette fits that and keeps every token above 4.5:1.
+**Environment: Dusk Meadow (Alex, baked 17:27, not yet in the repo).** A stylised forest clearing at dusk, calm and uncluttered rather than photoreal: lavender sky, a low peach sun, soft trees around a level lawn. It answers the brief's background slide.
+
+- **Built for the headset:** everything past 60 m is one baked panorama; only the ground, trees, bushes, pebbles and grass within 60 m are real 3D, about 470k triangles against a 500k budget, with 90 fps still to confirm on device.
+- **One integration:** it replaces the dark sky and floor grid in `Stage.make()`, which every game shares, and the stage still hides in passthrough.
+- **Rules:** signal colors render unchanged, nothing bright or moving within 0.35 to 0.9 m of the player, and no ambient motion during scored trials (the export is static).
+- **Open:** the sun sits 38 degrees left and 7 degrees up, where Spatial Tracking and Gate targets can land, so rotate the scene or re-bake if contrast suffers. A second headset needs its own copy at its own origin.
 
 ## Hack-day plan
 
@@ -335,7 +380,9 @@ No names. A random participant code links sessions. Data stays on the operator l
 | Headset reaction time runs slower than lab tests: 0.48 s in VR against 0.27 s on a PC | Anchor on this device and use published slopes only |
 | Vision Pro hand-tracking latency, about 128 ms on visionOS 1.1.1 | Same hardware for both players; re-measure on visionOS 26 |
 | Hand tracking dropouts | Log tracking state per frame, drop trials with gaps over 100 ms |
-| A player loses balance during the balance games | Both feet on the floor, passthrough on, clear floor, one-tap skip |
+| A player loses balance during the balance games | Feet planted for every reach and hold, walking only between Scary Balance spots inside the immersive boundary, clear floor, one-tap skip |
+| Third-party images in the public repo: the branding and games decks reuse designer mockups (one credited to Marina Minchukova), a PAPERHEARTDESIGN.COM palette photo and a game-show photo | Keep them as internal mood boards, or replace them with our own screenshots before the repo is promoted |
+| Wellness wording reads as a health claim | Every surface that says wellness also says movement age is a game score against published norms, not a medical test |
 | Practice effects inflate repeat scores | Fixed warm-up; level-ups only beyond test-retest noise |
 | A small sample overfits the v1 model | Few features, ridge regression, literature priors, leave-one-out CV |
 | Room too small for placement | Fallback spawn shell 0.4 to 0.7 m around the user |
@@ -344,7 +391,11 @@ No names. A random participant code links sessions. Data stays on the operator l
 
 **Open questions**
 
-- [ ] Confirm the proposed name, branding, audience and business use case above
+- [x] Name: BetterYears Age
+- [x] Menus: charcoal glass with cream text, per Alex's Dusk spec v1.0
+- [ ] Confirm the audience and business use case above
+- [ ] Music: which Suno plan, since the right to use generated tracks depends on the plan
+- [ ] Who integrates Dusk Meadow into `Stage.make()`, and on whose machine it builds
 - [ ] Two headsets in sync through SharePlay, or one headset taken in turns?
 - [ ] Repo access for Jess (GitHub jess-myles)
 - [ ] Who leads the Sundai card, and which real frame becomes the thumbnail?
