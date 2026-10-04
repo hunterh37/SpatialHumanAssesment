@@ -2,18 +2,29 @@ import RealityKit
 import SwiftUI
 import UIKit
 
-/// Design tokens. Spec: specs/games/design.md.
+/// Design tokens. Spec: concept/SpatialAge_Dusk_Design_Spec.pdf (Dusk v1.0), then specs/games/design.md.
 /// Color carries meaning and nothing else: blue = touch, orange = leave, gold = caught, teal = follow.
 enum Theme {
-    static let ink = UIColor(red: 0.043, green: 0.059, blue: 0.090, alpha: 1)       // #0B0F17 sky
-    static let inkLift = UIColor(red: 0.106, green: 0.141, blue: 0.188, alpha: 1)   // #1B2430 horizon, floor
+    /// Dark cut-outs on in-world objects (wall hole, creature pupil). The environment uses `Dusk`.
+    static let ink = UIColor(red: 0.043, green: 0.059, blue: 0.090, alpha: 1)       // #0B0F17
     static let paper = UIColor(red: 0.965, green: 0.957, blue: 0.937, alpha: 1)     // #F6F4EF
-    static let grid = UIColor(red: 0.851, green: 0.831, blue: 0.780, alpha: 1)      // #D9D4C7
     static let mute = UIColor(red: 0.541, green: 0.561, blue: 0.600, alpha: 1)      // #8A8F99
     static let go = UIColor(red: 0.184, green: 0.420, blue: 1.000, alpha: 1)        // #2F6BFF
     static let nogo = UIColor(red: 1.000, green: 0.478, blue: 0.239, alpha: 1)      // #FF7A3D
     static let gold = UIColor(red: 1.000, green: 0.784, blue: 0.239, alpha: 1)      // #FFC83D
     static let teal = UIColor(red: 0.078, green: 0.722, blue: 0.651, alpha: 1)      // #14B8A6
+
+    /// Scenery colors, mapped onto the Dusk environment palette. Muted and still, so the game colors above
+    /// stay the only saturated things in view.
+    static let sky = Dusk.skyTop
+    static let grass = Dusk.grass
+    static let bark = Dusk.tree
+    static let canopy = Dusk.tree
+    static let canopyFar = Dusk.treeDark
+    static let water = Dusk.lake
+    static let stone = UIColor(red: 0.620, green: 0.596, blue: 0.549, alpha: 1)     // #9E988C wall (game object)
+    /// Creature in Scary Balance.
+    static let creature = UIColor(red: 0.373, green: 0.243, blue: 0.541, alpha: 1)  // #5F3E8A
 
     static func color(_ c: UIColor) -> Color { Color(uiColor: c) }
 
@@ -25,6 +36,18 @@ enum Theme {
         static let bob: Float = 0.04
         static let floorRadius: Float = 6
         static let skyRadius: Float = 40
+    }
+
+    /// Where the HUD and the exit button sit, relative to the participant at the start of each game.
+    /// Beyond arm's reach (0.9 m). The HUD capsule sits at the top of the view (Dusk spec section 7),
+    /// above the eye-level band where targets spawn; the exit button sits low.
+    enum Layout {
+        /// Forward distance of the HUD and exit button, meters.
+        static let distance: Float = 1.4
+        /// HUD center above eye height, meters (about 17 degrees up at 1.4 m).
+        static let hudRise: Float = 0.42
+        /// Exit button below eye height, meters (about 30 degrees down).
+        static let exitDrop: Float = 0.8
     }
 
     /// Micro-interaction timing, seconds. Five primitives, used everywhere.
@@ -50,6 +73,11 @@ enum Theme {
 
 /// Dusk theme. Spec: Dusk design spec v1.0. Signal colors (go, nogo, gold, teal) are unchanged.
 enum Dusk {
+    // Results scoreboard grades (from 178c55f). Not in spec v1.0: derived from the Dusk palette, muted to sit next
+    // to peach, and kept clear of nogo #FF7A3D and gold #FFC83D so they never read as game signals. 2D windows only.
+    static let gradeGood = hex(0xA9C79B), gradeMid = hex(0xEEC97E), gradeLow = hex(0xE88A7D)
+    static func color(_ c: UIColor) -> Color { Color(uiColor: c) }
+
     static func hex(_ v: UInt32, _ a: CGFloat = 1) -> UIColor {
         UIColor(red: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255,
                 blue: CGFloat(v & 0xFF) / 255, alpha: a)
@@ -57,22 +85,60 @@ enum Dusk {
     // UI
     static let bg = hex(0x1B191A), surface = hex(0x262324), surface2 = hex(0x2F2B2C)
     static let fg = hex(0xF7E9DA), mute = hex(0xA89698), warn = hex(0xFF9A62)
+    static let line = hex(0xFBDAB4, 0.13)
     static let accent = hex(0xFBDAB4), accentStrong = hex(0xD8AB8B), onAccent = hex(0x252322)
     static let accentSoft = hex(0xD8AB8B, 0.20), accentGlow = hex(0xFBDAB4, 0.45)
     // Glass
     static let glass = hex(0x252322, 0.52), glassStrong = hex(0x252322, 0.80)
-    static let glassEdge = hex(0xFBDAB4, 0.22), glassInk = hex(0xFBEADA)
+    static let glassEdge = hex(0xFBDAB4, 0.22), glassHighlight = hex(0xFBDAB4, 0.18), glassInk = hex(0xFBEADA)
     static let chip = hex(0xFBDAB4, 0.09), chipStrong = hex(0xFBDAB4, 0.20)
+    static let gaze = hex(0xFBDAB4, 0.22), shadow = hex(0x000000, 0.55)
     // Environment
     static let skyTop = hex(0x3A3240), skyHorizon = hex(0xFBD3A6), sun = hex(0xFFE6C4)
     static let cloud = hex(0xE9B9A0), mountainFar = hex(0xA39193), mountainNear = hex(0x6F6470)
     static let hill = hex(0x4E4B51), lake = hex(0xD8AB8B), tree = hex(0x3A363C)
     static let treeDark = hex(0x252322), grass = hex(0x2D2A2C), haze = hex(0xD8AB8B, 0.18)
-    // Results scoreboard grades. Not in spec v1.0: derived from the Dusk palette, muted to sit next to peach,
-    // and kept clear of nogo #FF7A3D and gold #FFC83D so they never read as game signals. 2D windows only.
-    static let gradeGood = hex(0xA9C79B), gradeMid = hex(0xEEC97E), gradeLow = hex(0xE88A7D)
+    static let leaf = hex(0xD8AB8B)
 
-    static func color(_ c: UIColor) -> Color { Color(uiColor: c) }
+    /// Layout, points.
+    enum Layout {
+        static let minHit: CGFloat = 60
+        static let spacing: CGFloat = 16
+        static let windowRadius: CGFloat = 46
+        static let cardRadius: CGFloat = 28
+        static let largeButton: CGFloat = 60
+    }
+
+    /// UI motion: low-bounce springs, 200 to 350 ms.
+    enum Motion {
+        static let spring = Animation.spring(duration: 0.3, bounce: 0.15)
+        static let quick = Animation.spring(duration: 0.2, bounce: 0.15)
+    }
+}
+
+/// SwiftUI mirrors of the Dusk tokens.
+extension Color {
+    static let duskBg = Color(uiColor: Dusk.bg)
+    static let duskSurface = Color(uiColor: Dusk.surface)
+    static let duskSurface2 = Color(uiColor: Dusk.surface2)
+    static let duskFg = Color(uiColor: Dusk.fg)
+    static let duskMute = Color(uiColor: Dusk.mute)
+    static let duskLine = Color(uiColor: Dusk.line)
+    static let duskWarn = Color(uiColor: Dusk.warn)
+    static let duskAccent = Color(uiColor: Dusk.accent)
+    static let duskAccentStrong = Color(uiColor: Dusk.accentStrong)
+    static let duskOnAccent = Color(uiColor: Dusk.onAccent)
+    static let duskAccentSoft = Color(uiColor: Dusk.accentSoft)
+    static let duskAccentGlow = Color(uiColor: Dusk.accentGlow)
+    static let duskGlass = Color(uiColor: Dusk.glass)
+    static let duskGlassStrong = Color(uiColor: Dusk.glassStrong)
+    static let duskGlassEdge = Color(uiColor: Dusk.glassEdge)
+    static let duskGlassHighlight = Color(uiColor: Dusk.glassHighlight)
+    static let duskInk = Color(uiColor: Dusk.glassInk)
+    static let duskChip = Color(uiColor: Dusk.chip)
+    static let duskChipStrong = Color(uiColor: Dusk.chipStrong)
+    static let duskGaze = Color(uiColor: Dusk.gaze)
+    static let duskShadow = Color(uiColor: Dusk.shadow)
 }
 
 /// Material helpers. Lit PBR for objects, unlit for light sources and environment.
@@ -96,4 +162,11 @@ enum Look {
     }
 
     static func flat(_ color: UIColor) -> UnlitMaterial { UnlitMaterial(color: color) }
+
+    /// Unlit and translucent: haze, halo, clouds.
+    static func veil(_ color: UIColor, opacity: Float) -> UnlitMaterial {
+        var m = UnlitMaterial(color: color.withAlphaComponent(1))
+        m.blending = .transparent(opacity: .init(floatLiteral: opacity))
+        return m
+    }
 }
