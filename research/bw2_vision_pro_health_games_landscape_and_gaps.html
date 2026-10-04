@@ -39,6 +39,12 @@ tr:last-child td { border-bottom: none; }
 .tag.no { color: var(--gap); border-color: var(--gap); }
 .tag.yes { color: var(--ok); border-color: var(--ok); }
 .tag.unc { color: var(--warn); border-color: var(--warn); }
+.price { display: inline-block; font-size: 0.76rem; font-weight: 600; padding: 0 6px; border-radius: 4px; white-space: nowrap; color: #fff; }
+.price.free { background: #2e7d4f; }
+.price.fiap { background: #3d7fa6; }
+.price.paid { background: #8a5a14; }
+.price.arcade { background: #6b4fa0; }
+.price.ent { background: #6b7079; }
 ol.gaps > li { margin-bottom: 12px; }
 .muted { color: var(--muted); font-size: 0.9rem; }
 code { font-size: 0.88em; background: var(--th); padding: 1px 4px; border-radius: 4px; }
@@ -62,31 +68,43 @@ That is exactly the space SpatialAge targets. The biggest risk is the platform i
 </div>
 
 <h2>1. What exists, by category</h2>
+<p><strong>Price labels:</strong>
+<span class="price free">Free</span> no purchases at all;
+<span class="price fiap">Free + IAP</span> free to download, with paid in-app purchases (IAP) or a subscription for the full app;
+<span class="price paid">$</span> one-time price;
+<span class="price arcade">Arcade</span> included with Apple Arcade ($6.99/mo or $49.99/yr, <a href="https://www.apple.com/apple-arcade/">apple.com/apple-arcade</a>);
+<span class="price ent">Hospitals only</span> not sold on the public App Store.
+US prices as of October 4, 2026.</p>
 
 <h3>1a. Medical and clinical (mostly for clinicians)</h3>
 <div class="tablewrap"><table>
-<tr><th>App or deployment</th><th>Who</th><th>What it does</th><th>Status</th></tr>
-<tr><td>SportSuite Vision</td><td>Stryker</td><td>Arthroscopy video in the surgeon's view during surgery</td><td><span class="tag yes">FDA De Novo, Jul 17 2026</span> first third-party app authorized by the FDA for use during surgery (<a href="https://vr.org/articles/stryker-sportsuite-vision-den250040-new-fda-device-class-2026">vr.org</a>)</td></tr>
-<tr><td>Prism correction</td><td>Apple</td><td>Applies a prism eyeglass prescription in the display</td><td><span class="tag yes">FDA 510(k)</span> (<a href="https://www.mobihealthnews.com/news/apple-receives-fda-nod-hypertension-notification-feature">MobiHealthNews</a>)</td></tr>
-<tr><td>Medivis, Siemens Cinematic Reality, Visage Ease VP, Falcon Vue, myMako</td><td>Various</td><td>3D medical imaging and surgical planning</td><td>In use; Vision Pro versions not cleared for diagnosis (<a href="https://www.apple.com/newsroom/2024/03/apple-vision-pro-unlocks-new-opportunities-for-health-app-developers/">Apple Newsroom</a>)</td></tr>
-<tr><td>ScopeXR, ClearSphere</td><td>SightMD; Sharp HealthCare</td><td>Cataract surgery with a 3D microscope feed</td><td>Hundreds of cases; Sharp study NCT07301385 (<a href="https://clinicaltrials.gov/study/NCT07301385">ClinicalTrials.gov</a>)</td></tr>
-<tr><td>CyranoHealth, CollaboratOR 3D, Fundamental Surgery, Complete HeartX</td><td>Boston Children's, KARL STORZ, FundamentalVR, Elsevier</td><td>Staff and surgical training, anatomy</td><td>Education, not regulated</td></tr>
-<tr><td>Xaia</td><td>Cedars-Sinai</td><td>AI therapist avatar for patients</td><td>14-patient feasibility study (<a href="https://www.cedars-sinai.org/newsroom/study-mental-health-gets-a-boost-from-artificial-intelligence/">Cedars-Sinai</a>)</td></tr>
-<tr><td>Vision acuity apps (AmblyoPlay, EyeChart, Warby Parker test)</td><td>Various</td><td>Eye charts, amblyopia games</td><td><span class="tag unc">mostly iPad apps in a window</span></td></tr>
-<tr><td>RelieVRx, Penumbra REAL, XRHealth</td><td>AppliedVR, Penumbra, XRHealth</td><td>FDA-registered VR pain and rehab therapy</td><td><span class="tag no">not on Vision Pro</span> (own headset, HTC VIVE, Meta Quest)</td></tr>
+<tr><th>App or deployment</th><th>Who</th><th>Price</th><th>What it does</th><th>Status</th></tr>
+<tr><td>SportSuite Vision</td><td>Stryker</td><td><span class="price ent">Hospitals only</span></td><td>Arthroscopy video in the surgeon's view during surgery</td><td><span class="tag yes">FDA De Novo, Jul 17 2026</span> first third-party app authorized by the FDA for use during surgery (<a href="https://vr.org/articles/stryker-sportsuite-vision-den250040-new-fda-device-class-2026">vr.org</a>)</td></tr>
+<tr><td>Prism correction</td><td>Apple</td><td><span class="price free">Free</span> built in</td><td>Applies a prism eyeglass prescription in the display</td><td><span class="tag yes">FDA 510(k)</span> (<a href="https://www.mobihealthnews.com/news/apple-receives-fda-nod-hypertension-notification-feature">MobiHealthNews</a>)</td></tr>
+<tr><td>Medivis Viewer, Siemens Cinematic Reality, Visage Ease VP, Falcon Mx (formerly Falcon Vue), myMako</td><td>Various</td><td>Medivis, Cinematic Reality, myMako <span class="price free">Free</span>; Visage Ease VP <span class="price free">Free</span> but needs the hospital's Visage server; Falcon Mx <span class="price fiap">Free + IAP</span> $5.99/mo and up</td><td>3D medical imaging and surgical planning</td><td>In use; Vision Pro versions not cleared for diagnosis (<a href="https://www.apple.com/newsroom/2024/03/apple-vision-pro-unlocks-new-opportunities-for-health-app-developers/">Apple Newsroom</a>)</td></tr>
+<tr><td>ScopeXR, ClearSphere</td><td>SightMD; Sharp HealthCare</td><td><span class="price ent">Hospitals only</span></td><td>Cataract surgery with a 3D microscope feed</td><td>Hundreds of cases; Sharp study NCT07301385 (<a href="https://clinicaltrials.gov/study/NCT07301385">ClinicalTrials.gov</a>)</td></tr>
+<tr><td>CyranoHealth, CollaboratOR AVP, Fundamental Surgery, Complete HeartX</td><td>Boston Children's, KARL STORZ, FundamentalVR, Elsevier</td><td>CyranoHealth, Fundamental Surgery <span class="price free">Free</span>; CollaboratOR <span class="price free">Free</span> but needs KARL STORZ OR1 equipment; Complete HeartX <span class="price paid">$49.99</span></td><td>Staff and surgical training, anatomy</td><td>Education, not regulated</td></tr>
+<tr><td>Xaia</td><td>Cedars-Sinai</td><td><span class="price fiap">Free + IAP</span> $19.99</td><td>AI therapist avatar for patients</td><td>14-patient feasibility study (<a href="https://www.cedars-sinai.org/newsroom/study-mental-health-gets-a-boost-from-artificial-intelligence/">Cedars-Sinai</a>)</td></tr>
+<tr><td>Vision acuity apps (AmblyoPlay, EyeChart, Warby Parker test)</td><td>Various</td><td>Warby Parker <span class="price free">Free</span>; EyeChart <span class="price fiap">Free + IAP</span> $0.99; AmblyoPlay <span class="price free">Free</span> download but needs a paid account bought outside the App Store</td><td>Eye charts, amblyopia games</td><td><span class="tag unc">mostly iPad apps in a window</span></td></tr>
+<tr><td>RelieVRx, Penumbra REAL, XRHealth</td><td>AppliedVR, Penumbra, XRHealth</td><td>Prescription or clinic purchase</td><td>FDA-registered VR pain and rehab therapy</td><td><span class="tag no">not on Vision Pro</span> (own headset, HTC VIVE, Meta Quest)</td></tr>
 </table></div>
 <p class="muted">Not found on Vision Pro: any FDA-cleared cognitive, rehab or diagnostic assessment; any test for mild cognitive impairment (MCI) or dementia; balance or fall-risk tests; visual field testing; a shipping telehealth app; a rehab app that measures reach with hand tracking.</p>
 
 <h3>1b. Fitness, exercise and coaching</h3>
 <div class="tablewrap"><table>
-<tr><th>App</th><th>What it does</th><th>Input</th><th>Older-adult fit</th></tr>
-<tr><td>Synth Riders (Apple Arcade)</td><td>Rhythm game, arms follow rails</td><td>Hand tracking</td><td>Has seated, one-handed and no-obstacle modes (<a href="https://www.uploadvr.com/synth-riders-apple-vision-pro/">UploadVR</a>)</td></tr>
-<tr><td>Kung Fu Panda: School of Chi</td><td>Slow tai-chi-style moves copied from Po</td><td>Hands and head</td><td>The most senior-appropriate movement format found (<a href="https://apps.apple.com/us/app/kung-fu-panda-school-of-chi/id6477230272">App Store</a>)</td></tr>
-<tr><td>FunFitLand</td><td>Coached boxing, dance, moving meditation; Apple Watch heart rate in headset</td><td>Hands, PS VR2 controllers</td><td>Seated and standing; logs to Apple Health (<a href="https://apps.apple.com/us/app/funfitland/id6744429139">App Store</a>)</td></tr>
-<tr><td>Boxing Trainer, Beat Punch, Spatial Boxing Pro</td><td>Hand-tracked boxing</td><td>Hands</td><td>Standing; too vigorous</td></tr>
-<tr><td>Pickle Pro, Ping Pong Club</td><td>Racket sports vs AI</td><td>PS VR2 controllers / hands</td><td>Ping Pong Club can be played seated</td></tr>
-<tr><td>Gymaholic, Calisthenics Coachy, Convict Conditioning Vision</td><td>3D exercise demonstrations</td><td>Look and pinch</td><td>Reference only, no tracking of the user</td></tr>
-<tr><td>Reflexy</td><td>Reaction-time challenges, game scores</td><td>Unclear</td><td><span class="tag unc">store link 404, may be delisted</span> (<a href="https://appsforapplevision.com/apps-directory/reflexy">directory</a>)</td></tr>
+<tr><th>App</th><th>Price</th><th>What it does</th><th>Input</th><th>Older-adult fit</th></tr>
+<tr><td>Synth Riders</td><td><span class="price arcade">Arcade</span></td><td>Rhythm game, arms follow rails</td><td>Hand tracking</td><td>Has seated, one-handed and no-obstacle modes (<a href="https://www.uploadvr.com/synth-riders-apple-vision-pro/">UploadVR</a>)</td></tr>
+<tr><td>Kung Fu Panda: School of Chi</td><td><span class="price free">Free</span></td><td>Slow tai-chi-style moves copied from Po</td><td>Hands and head</td><td>The most senior-appropriate movement format found (<a href="https://apps.apple.com/us/app/kung-fu-panda-school-of-chi/id6477230272">App Store</a>)</td></tr>
+<tr><td>FunFitLand</td><td><span class="price fiap">Free + IAP</span> $9.99 to $99.99</td><td>Coached boxing, dance, moving meditation; Apple Watch heart rate in headset</td><td>Hands, PS VR2 controllers</td><td>Seated and standing; logs to Apple Health (<a href="https://apps.apple.com/us/app/funfitland/id6744429139">App Store</a>)</td></tr>
+<tr><td>Boxing Trainer: Punch Master</td><td><span class="price fiap">Free + IAP</span> $9.99 sparring partner</td><td rowspan="3">Hand-tracked boxing</td><td rowspan="3">Hands</td><td rowspan="3">Standing; too vigorous</td></tr>
+<tr><td>Beat Punch</td><td><span class="price fiap">Free + IAP</span> $4.99/mo or $34.99/yr</td></tr>
+<tr><td>Spatial Boxing Pro</td><td><span class="price paid">$2.99</span></td></tr>
+<tr><td>Pickle Pro</td><td><span class="price paid">$7.99</span></td><td>Pickleball vs AI</td><td>PS VR2 controllers ($250 a pair) recommended</td><td>Standing</td></tr>
+<tr><td>Ping Pong Club</td><td><span class="price free">Free</span></td><td>Table tennis vs AI or online</td><td>Hands</td><td>Can be played seated</td></tr>
+<tr><td>Gymaholic</td><td><span class="price fiap">Free + IAP</span> $3.99/mo</td><td rowspan="3">3D exercise demonstrations</td><td rowspan="3">Look and pinch</td><td rowspan="3">Reference only, no tracking of the user</td></tr>
+<tr><td>Calisthenics Coachy</td><td><span class="price fiap">Free + IAP</span> $4.99/mo</td></tr>
+<tr><td>Convict Conditioning Vision</td><td><span class="price paid">$1.99</span></td></tr>
+<tr><td>Reflexy</td><td><span class="price fiap">Free + IAP</span></td><td>Reaction-time challenges, game scores</td><td>Unclear</td><td><span class="tag unc">store link 404, may be delisted</span> (<a href="https://appsforapplevision.com/apps-directory/reflexy">directory</a>)</td></tr>
 </table></div>
 <p>Major workout services are absent from Vision Pro.</p>
 <ul>
@@ -98,28 +116,73 @@ That is exactly the space SpatialAge targets. The biggest risk is the platform i
 
 <h3>1c. Wellness, mental health and social connection</h3>
 <div class="tablewrap"><table>
-<tr><th>Group</th><th>Apps</th><th>Notes</th></tr>
-<tr><td>Meditation and breathing</td><td>Apple Mindfulness, TRIPP Vision, Healium, Lungy: Spaces, Visutate, Endel Realms, Odio, Vibescape, Orbit, mentalOS, Mindway</td><td>The best-covered category. Mindfulness follows your breathing with the headset cameras; Healium reacts to Apple Watch heart rate.</td></tr>
-<tr><td>AI therapist or companion</td><td>Xaia, TRIPP's Kokua companion, Orbit, mentalOS</td><td>Only Xaia has a study (n=14)</td></tr>
-<tr><td>Exposure therapy</td><td>oVRcome, ZeroPhobia, Open Step</td><td>Phone apps running in a window</td></tr>
-<tr><td>Travel and nature</td><td>Explore POV (App of the Year 2025), Apple Immersive Video, Portal Vision</td><td>"Armchair travel" is the most common senior-living VR activity, but nothing here is packaged for it</td></tr>
-<tr><td>Social</td><td>FaceTime with spatial Personas (life-size avatars of up to 5 people), inSpaze, Photos "spatial scenes" (2D photos turned into 3D)</td><td>Personas only work if family also own a Vision Pro. Spatial scenes is the nearest thing to reminiscence therapy.</td></tr>
-<tr><td>Big brands</td><td>Headspace (iPad app in a window); Calm (no native app found)</td><td></td></tr>
+<tr><th>Group</th><th>Apps and price</th><th>Notes</th></tr>
+<tr><td>Meditation and breathing</td><td>Apple Mindfulness <span class="price free">Free</span>, Vibescape <span class="price free">Free</span>, Orbit <span class="price free">Free</span>, Lungy: Spaces <span class="price paid">$4.99</span>, TRIPP Vision <span class="price fiap">Free + IAP</span> $9.99/mo, Healium <span class="price fiap">Free + IAP</span> $29.99 Pro, Visutate <span class="price fiap">Free + IAP</span> $9.99/mo, mentalOS <span class="price fiap">Free trial + IAP</span> $9.99/mo, Endel Realms (inside the Endel app) <span class="price fiap">Free + IAP</span> $19.99/mo, Odio <span class="price fiap">Free + IAP</span> $3.99/mo, Mindway (no longer on the US App Store)</td><td>The best-covered category. Mindfulness follows your breathing with the headset cameras; Healium reacts to Apple Watch heart rate.</td></tr>
+<tr><td>AI therapist or companion</td><td>Xaia <span class="price fiap">Free + IAP</span> $19.99 unlimited, TRIPP's Kokua companion (inside TRIPP), Orbit <span class="price free">Free</span>, mentalOS <span class="price fiap">Free trial + IAP</span></td><td>Only Xaia has a study (n=14)</td></tr>
+<tr><td>Exposure therapy</td><td>oVRcome <span class="price paid">$28.99/mo subscription</span>, ZeroPhobia <span class="price fiap">Free + IAP</span> $9.99, Open Step <span class="price fiap">Free + IAP</span></td><td>Phone apps running in a window</td></tr>
+<tr><td>Travel and nature</td><td>Explore POV (App of the Year 2025) <span class="price fiap">Free + IAP</span> $9.99/mo, Apple Immersive Video <span class="price free">Free</span>, Portal Vision <span class="price paid">$2.99</span></td><td>"Armchair travel" is the most common senior-living VR activity, but nothing here is packaged for it</td></tr>
+<tr><td>Social</td><td>FaceTime with spatial Personas (life-size avatars of up to 5 people) <span class="price free">Free</span>, inSpaze <span class="price free">Free</span>, Photos "spatial scenes" (2D photos turned into 3D) <span class="price free">Free</span></td><td>Personas only work if family also own a Vision Pro. Spatial scenes is the nearest thing to reminiscence therapy.</td></tr>
+<tr><td>Big brands</td><td>Headspace (iPad app in a window) <span class="price fiap">Free + IAP</span> $12.99/mo; Calm (no native app found)</td><td></td></tr>
 </table></div>
 
 <h3>1d. Games</h3>
 <div class="tablewrap"><table>
-<tr><th>Group</th><th>Apps</th><th>Relevance</th></tr>
-<tr><td>Brain training</td><td>Brain Experiment (Myelin FZCO: mazes, sequence memory); Focus (waitlist only, no store listing found)</td><td>Closest to SpatialAge, but training only, with no validation or norms (<a href="https://apps.apple.com/us/app/brain-experiment/id6737743910">App Store</a>)</td></tr>
-<tr><td>Puzzles</td><td>Puzzling Places, Real Puzzler (your own photos), Loóna, Blackbox, Porta Nubi, CONNECTOME, LEGO Builder's Journey, Checkmate Chronicles</td><td>No timing recorded</td></tr>
-<tr><td>Reflex and rhythm</td><td>Synth Riders, Super Fruit Ninja, Beat Punch, DapTap, Thrasher, Proton Pulse</td><td>Use real arm reach; record only scores</td></tr>
-<tr><td>Reaction-time testers</td><td>Reflex Reaction Trainer, Reaction Time &amp; Reflex Games, "Explode or Whack-a-Mole" (claims dementia prevention, no evidence)</td><td>iPad apps in a window: tap latency, not 3D reach</td></tr>
-<tr><td>Social and tabletop</td><td>Game Room (Apple Arcade: chess, cards, mahjong, cross-play with iPhone), Solitaire XR, Demeo, Virtual Pool IRL</td><td>The most senior-friendly group: look-and-pinch only, can be played seated. Game Room keeps per-user stats (<a href="https://apps.apple.com/us/app/game-room/id1642897935?platform=vision">App Store</a>)</td></tr>
-<tr><td>Sports and leisure</td><td>Immersive Bowling, What the Golf?, Silly Golf, Fishing Haven, Vacation Simulator</td><td>Quest favorites for seniors (Walkabout Mini Golf, Real VR Fishing, Eleven Table Tennis) are missing</td></tr>
+<tr><th>Group</th><th>Apps and price</th><th>Relevance</th></tr>
+<tr><td>Brain training</td><td>Brain Experiment (Myelin FZCO: mazes, sequence memory) <span class="price fiap">Free + IAP</span> $29.90 lifetime; Focus - Cognitive Training (reaction time, memory; needs visionOS 26) <span class="price fiap">Free trial + IAP</span> $9.99/mo (<a href="https://apps.apple.com/us/app/focus-cognitive-training/id6753835066">App Store</a>)</td><td>Closest to SpatialAge, but training only, with no validation or norms (<a href="https://apps.apple.com/us/app/brain-experiment/id6737743910">App Store</a>)</td></tr>
+<tr><td>Puzzles</td><td>Puzzling Places <span class="price fiap">Free + IAP</span> $3.99 packs, Real Puzzler (your own photos) <span class="price fiap">Free + IAP</span> $4.99, Loóna <span class="price fiap">Free + IAP</span> $9.99 sub, Blackbox <span class="price paid">$9.99</span>, Porta Nubi <span class="price paid">$4.99</span>, CONNECTOME <span class="price paid">$9.99</span>, LEGO Builder's Journey <span class="price arcade">Arcade</span>, Checkmate Chronicles <span class="price paid">$4.99</span></td><td>No timing recorded</td></tr>
+<tr><td>Reflex and rhythm</td><td>Synth Riders <span class="price arcade">Arcade</span>, Super Fruit Ninja <span class="price arcade">Arcade</span>, Beat Punch <span class="price fiap">Free + IAP</span>, DapTap <span class="price paid">$9.99</span>, Thrasher <span class="price paid">$9.99</span>, Proton Pulse <span class="price paid">$9.99</span></td><td>Use real arm reach; record only scores</td></tr>
+<tr><td>Reaction-time testers</td><td>Reflex Reaction Trainer <span class="price free">Free</span> (with ads), Reaction Time &amp; Reflex Games <span class="price free">Free</span>, "Explode or Whack-a-Mole" <span class="price free">Free</span> (claims dementia prevention, no evidence)</td><td>iPad apps in a window: tap latency, not 3D reach</td></tr>
+<tr><td>Social and tabletop</td><td>Game Room (chess, cards, mahjong, cross-play with iPhone) <span class="price arcade">Arcade</span>, Solitaire XR <span class="price fiap">Free + IAP</span> $7.99, Demeo <span class="price paid">$24.99</span>, Virtual Pool IRL <span class="price paid">$14.99</span></td><td>The most senior-friendly group: look-and-pinch only, can be played seated. Game Room keeps per-user stats (<a href="https://apps.apple.com/us/app/game-room/id1642897935?platform=vision">App Store</a>)</td></tr>
+<tr><td>Sports and leisure</td><td>Immersive Bowling <span class="price paid">$6.99</span>, What the Golf? <span class="price arcade">Arcade</span>, Silly Golf <span class="price paid">$3.99</span>, Fishing Haven <span class="price free">Free</span>, Vacation Simulator <span class="price paid">$19.99</span></td><td>Quest favorites for seniors (Walkabout Mini Golf, Real VR Fishing, Eleven Table Tennis) are missing</td></tr>
 </table></div>
 <p class="muted">Big brain-training brands (Lumosity, Elevate, Peak, BrainHQ) have no Vision Pro apps. There is no spatial whack-a-mole, Simon-style sequence game, 3D Corsi block test or object-location memory game.</p>
 
-<h3>1e. Senior-living VR companies (all on other headsets)</h3>
+<h3>1e. Two-player games</h3>
+<p>For older adults, the question is how a resident plays with a family member or staff member. There are five ways two people can play on Vision Pro:</p>
+<ul>
+<li><strong>Remote:</strong> FaceTime with SharePlay, the other player appearing as a life-size avatar (Persona).</li>
+<li><strong>Same room:</strong> two Vision Pros side by side.</li>
+<li><strong>Cross-play:</strong> the second person plays on an iPhone, iPad or Mac.</li>
+<li><strong>Online:</strong> matched against strangers.</li>
+<li><strong>Pass-and-play:</strong> one device handed back and forth.</li>
+</ul>
+<p>"Likely" below means the app supports SharePlay, which Apple says also works for people in the same room, but the developer doesn't say so.</p>
+<div class="tablewrap"><table>
+<tr><th>Game</th><th>Price</th><th>Type</th><th>Remote (Personas)</th><th>Same room, 2 headsets</th><th>Partner on iPhone / iPad / Mac</th><th>Input</th></tr>
+<tr><td>Game Room (Resolution Games): chess, checkers, cards, mahjong, Sea Battle, word game</td><td><span class="price arcade">Arcade</span></td><td>Turn-based</td><td>Yes</td><td>Likely</td><td><strong>iPhone, iPad</strong></td><td>Look and pinch</td></tr>
+<tr><td>UNO: Arcade Edition</td><td><span class="price arcade">Arcade</span></td><td>Turn-based</td><td>Yes</td><td>Likely</td><td>Likely iPhone, iPad, Mac</td><td>Pinch or controller</td></tr>
+<tr><td>Chess Universe+</td><td><span class="price arcade">Arcade</span></td><td>Turn-based</td><td>No</td><td>No</td><td>iPhone, iPad</td><td>Pinch</td></tr>
+<tr><td>Let's Chess</td><td><span class="price paid">$9.99</span></td><td>Turn-based</td><td>Yes</td><td>Likely</td><td>Mac only</td><td>Pinch</td></tr>
+<tr><td>PersonaChess</td><td><span class="price free">Free</span></td><td>Turn-based</td><td>Yes</td><td><strong>Yes</strong></td><td>No</td><td>Pinch</td></tr>
+<tr><td>PersonasFlip (Reversi)</td><td><span class="price free">Free</span></td><td>Turn-based</td><td>Yes</td><td><strong>Yes</strong></td><td>No</td><td>Pinch</td></tr>
+<tr><td>Topple Tower (Jenga-style, up to 4)</td><td><span class="price free">Free</span></td><td>Take turns, real-time physics</td><td>Yes</td><td>Likely</td><td>No</td><td>Pinch or grab by hand</td></tr>
+<tr><td>Party Games (100+ minigames)</td><td><span class="price fiap">Free + IAP</span> $9.99</td><td>Mixed</td><td>Yes</td><td>Likely</td><td>No</td><td>Hands or controller</td></tr>
+<tr><td>Guess The Word Vision</td><td><span class="price fiap">Free + IAP</span> $1.99</td><td>Real-time</td><td>Yes</td><td>Likely</td><td>No</td><td>Pinch</td></tr>
+<tr><td>Virtual Pool IRL</td><td><span class="price paid">$14.99</span></td><td>Turn-based</td><td>Yes</td><td>Likely</td><td>No</td><td>Hands</td></tr>
+<tr><td>Ping Pong Club</td><td><span class="price free">Free</span></td><td>Real-time</td><td>Yes</td><td>Likely</td><td>No (online vs strangers too)</td><td>Hands or PS VR2 controllers</td></tr>
+<tr><td>Pickle Pro</td><td><span class="price paid">$7.99</span></td><td>Real-time</td><td>Yes</td><td><strong>Yes</strong></td><td>No</td><td>PS VR2 controllers ($250) recommended</td></tr>
+<tr><td>Spatial Rifts (up to 5)</td><td><span class="price paid">$9.99</span></td><td>Real-time</td><td>No</td><td><strong>Yes</strong></td><td>No</td><td>PS VR2 controllers or hands</td></tr>
+<tr><td>Boxing Trainer: Punch Master</td><td><span class="price fiap">Free + IAP</span> $9.99</td><td>Real-time, train together</td><td>Yes</td><td>Likely</td><td>No</td><td>Hands</td></tr>
+<tr><td>Beat Punch</td><td><span class="price fiap">Free + IAP</span> $4.99/mo</td><td>Real-time</td><td>Yes</td><td>Likely</td><td>No</td><td>Hands</td></tr>
+<tr><td>Demeo (co-op dungeon board game)</td><td><span class="price paid">$24.99</span></td><td>Turn-based</td><td>Online rooms</td><td>Online rooms</td><td>iPad, Mac (and Quest, PS VR2, PC)</td><td>Look and pinch</td></tr>
+<tr><td>MONOPOLY</td><td><span class="price paid">$4.99</span> + boards</td><td>Turn-based</td><td>No</td><td>No</td><td>iPhone, iPad, Mac; pass-and-play</td><td>Pinch (likely iPad app in a window)</td></tr>
+<tr><td>Hearts or Spades</td><td><span class="price fiap">Free + IAP</span> $0.99 multiplayer</td><td>Turn-based</td><td>No</td><td>No</td><td>iPhone, iPad, Mac</td><td>Pinch</td></tr>
+<tr><td>Warped Kart Racers (up to 8)</td><td><span class="price arcade">Arcade</span></td><td>Real-time</td><td>No</td><td>No</td><td>iPhone, iPad, Mac</td><td>Game controller</td></tr>
+<tr><td>Crossy Road Castle</td><td><span class="price arcade">Arcade</span></td><td>Real-time</td><td>Yes</td><td>Likely</td><td>Mixed devices</td><td>Game controllers</td></tr>
+<tr><td>Bloons TD 6+ (co-op)</td><td><span class="price arcade">Arcade</span></td><td>Real-time</td><td>No</td><td>No</td><td>iPhone, iPad, Mac</td><td>Pinch</td></tr>
+<tr><td>Glassbreakers</td><td><span class="price arcade">Arcade</span></td><td>Real-time</td><td>No</td><td>Online only</td><td>No (Quest, Steam)</td><td>Pinch</td></tr>
+</table></div>
+<p class="muted">Checked and single-player only on Vision Pro: Super Fruit Ninja, Synth Riders, Gears &amp; Goo, What the Golf?, Solitaire XR, Checkmate Chronicles, Immersive Bowling, Puzzling Places (its multiplayer is Quest and PS VR2 only), Spatial Ops (Vision Pro gets the single-player edition). Air hockey and shuffleboard apps offer only an AI opponent. Walkabout Mini Golf and official Scrabble and Jenga are not on Vision Pro. Prices and modes were checked against the US App Store on October 4, 2026.</p>
+<div class="callout gap"><strong>Two-player gaps.</strong>
+<ul>
+<li><strong>Most games need both players to own a Vision Pro.</strong> Most families won't.</li>
+<li><strong>Game Room is the only clear "resident in the headset, grandchild on a phone" game:</strong> turn-based classics, look and pinch.</li>
+<li><strong>Only four games say they support two headsets in the same room.</strong> These are PersonaChess, PersonasFlip, Pickle Pro and Spatial Rifts, and the two physical ones lean on $250 controllers that frail hands can't easily grip.</li>
+<li><strong>No two-player game is made for older adults or measures thinking or movement.</strong></li>
+</ul>
+An opening for SpatialAge: a Vision Pro side for the resident plus an iPhone or iPad side for the partner over SharePlay, played turn by turn or at a slow pace, with no controllers. It could be, say, a reach-and-recall game in which the grandchild sets the pattern on a phone and the resident reproduces it in 3D. Every round would then also be a measurement.</div>
+
+<h3>1f. Senior-living VR companies (all on other headsets)</h3>
 <div class="tablewrap"><table>
 <tr><th>Company</th><th>Product</th><th>Headset</th><th>Business model</th><th>Vision Pro?</th></tr>
 <tr><td>Rendever</td><td>Group social VR, reminiscence, travel, fitness; family portal</td><td>Pico, Lenovo; AARP's Alcove on Quest</td><td>Facility subscription: 2 to 6+ headsets plus a staff tablet; about 800 communities (<a href="https://fortune.com/2025/12/26/seniors-virtual-reality-vr-headsets-rendever-3d-programs">Fortune</a>)</td><td><span class="tag no">no</span></td></tr>
@@ -185,13 +248,14 @@ That is exactly the space SpatialAge targets. The biggest risk is the platform i
 <ul class="muted">
 <li>A listing that says "Requires visionOS" does not mean the app was built for Vision Pro, because iPhone and iPad apps show the same line. The research files mark each app as native, compatibility mode or uncertain.</li>
 <li>Some App Store pages were rate limited, and a few numbers come from search summaries. Check exact figures before putting them on a slide.</li>
-<li>The App Store has no public full catalog, so this is a broad survey, not a complete census. Uncertain entries: Focus (waitlist only), Reflexy and Spatial Solitaire (404), Calm (no native app), Mindway (2024 coverage only).</li>
+<li>The App Store has no public full catalog, so this is a broad survey, not a complete census. Uncertain entries: Reflexy and Spatial Solitaire (404), Calm (no native app). Mindway has been removed from the US App Store.</li>
+<li>Prices are US App Store prices checked on October 4, 2026, and change often. "Free + IAP" means free to download with paid in-app purchases or a subscription; the price shown is the main one.</li>
 <li>The Vision Pro hardware news comes from press reports, not Apple.</li>
 </ul>
 
 <h2>Detailed source files</h2>
 <p class="muted">Each has full app tables with a link for every claim:
-<code>01_fitness_coaching.md</code> (34 apps), <code>02_medical_clinical.md</code> (32 entries plus studies), <code>03_wellness_mental_health.md</code> (25 apps), <code>04_games.md</code> (38 games), <code>05_senior_care_and_barriers.md</code> (vendors, research, barriers), all in this folder.</p>
+<code>01_fitness_coaching.md</code> (34 apps), <code>02_medical_clinical.md</code> (32 entries plus studies), <code>03_wellness_mental_health.md</code> (25 apps), <code>04_games.md</code> (38 games), <code>05_senior_care_and_barriers.md</code> (vendors, research, barriers), <code>06_two_player_games.md</code> (24 games). These notes are not in this repo yet; ask bw2 for them.</p>
 
 </main>
 </body>
