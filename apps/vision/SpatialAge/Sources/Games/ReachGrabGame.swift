@@ -139,6 +139,7 @@ final class ReachGrabGame: Minigame {
                                   trackingGapMs: buffer.maxGapMs(nil, spawn, ctx.now), standAt: stand, freeze: freeze)
         }
         ctx.micro.pop(cube, color: Theme.paper, speedStep: slot.rung)
+        ctx.cheer()
         return ReachGrabTrial(index: index, azimuthDeg: slot.azimuthDeg, elevationDeg: 0, distanceM: slot.distance,
                               position: p.v3, spawnT: spawn, grabT: grabT, hand: hand, outcome: .grab, leanM: lean,
                               trackingGapMs: buffer.maxGapMs(hand, spawn, grabT),
@@ -165,7 +166,10 @@ final class ReachGrabGame: Minigame {
             t += await ctx.clock.next()
             ctx.micro.breathe(marker, t: t)
             head = ctx.tracker.head().columns.3
-            if simd_distance(SIMD2<Float>(head.x, head.z), SIMD2<Float>(spot.x, spot.z)) < Self.arriveRadius { break }
+            if simd_distance(SIMD2<Float>(head.x, head.z), SIMD2<Float>(spot.x, spot.z)) < Self.arriveRadius {
+                Tone.play(.lock, on: marker, gain: -14)
+                break
+            }
         }
         live.removeAll { $0 === marker }
         ctx.micro.dissolve(marker)
@@ -206,11 +210,14 @@ final class ReachGrabGame: Minigame {
         live.removeAll { $0 === creature }
         ctx.micro.dissolve(creature)
         guard !Task.isCancelled else { return nil }
-        ctx.cheer("Go", hold: 0.6)
         let shiftCm = Double(shift) * 100
+        let held = shiftCm <= ReachGrabMetrics.freezeBreakCm
+        // Held still: the quiet confirm. Moved: the soft wrong cue. Both from the cube, where attention is.
+        ctx.micro.cue(held ? .soft : .wrong, at: cube, gain: held ? -15 : -16)
+        ctx.cheer("Go", hold: 0.6)
         return ReachGrabTrial.Freeze(startT: start, endT: end, headSwayCmS: Self.pathRate(head, end - start),
                                      handDriftCm: Self.rms(tips).map { $0 * 100 }, headShiftCm: shiftCm,
-                                     held: shiftCm <= ReachGrabMetrics.freezeBreakCm,
+                                     held: held,
                                      trackingGapMs: ctx.tracker.buffer.maxGapMs(hand, start, end))
     }
 

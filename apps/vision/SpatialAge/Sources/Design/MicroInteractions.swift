@@ -8,6 +8,14 @@ import UIKit
 struct Micro {
     let clock: FrameClock
     let root: Entity
+    /// Reward layer: burst, 3D word, chime, streak. See `Juice`.
+    let juice: Juice
+
+    init(clock: FrameClock, root: Entity) {
+        self.clock = clock
+        self.root = root
+        juice = Juice(clock: clock, root: root)
+    }
 
     /// Target that can glow, breathe, pop and sink.
     static func orb(_ color: UIColor, radius: Float) -> ModelEntity {
@@ -39,9 +47,20 @@ struct Micro {
     }
 
     /// 3. Contact pop and ring. `speedStep` 0 to 6 sets the tick pitch: faster reach, higher note.
-    func pop(_ e: Entity, color: UIColor, speedStep: Int) {
+    /// `reward`: `.full` adds the success layer (halo, burst, 3D word, chime) and counts toward the streak;
+    /// `.light` adds a small burst for a partial success; `.none` is a wrong touch: it ends the streak and plays
+    /// the soft wrong cue in place of the tick, so a wrong touch never sounds like a right one.
+    enum Reward { case full, light, none }
+
+    func pop(_ e: Entity, color: UIColor, speedStep: Int, reward: Reward = .full) {
         let at = e.position(relativeTo: nil)
-        Tone.play(.pop(step: speedStep), on: e)
+        let tint = color == Theme.paper ? Theme.gold : color
+        switch reward {
+        case .full: juice.success(at: at, color: tint)
+        case .light: juice.tap(at: at, color: tint)
+        case .none: juice.reset()
+        }
+        Tone.play(reward == .none ? .wrong : .pop(step: speedStep), on: e, gain: reward == .none ? -15 : -12)
         clock.animate(Theme.Motion.pop, { p in
             let s = p < 0.33 ? 1 + 0.25 * Float(p / 0.33) : 1.25 * Float(1 - (p - 0.33) / 0.67)
             e.scale = .init(repeating: max(s, 0.001))
@@ -65,6 +84,7 @@ struct Micro {
 
     /// 4. Miss sink. Desaturate, drop 3 cm, fade. Quiet, so a miss never feels like a punishment.
     func sink(_ e: ModelEntity, sound: Bool = true) {
+        juice.reset()
         e.model?.materials = [Look.glow(Theme.mute, intensity: 0.1)]
         if sound { Tone.play(.miss, on: e, gain: -20) }
         let y = e.position.y
@@ -72,6 +92,15 @@ struct Micro {
             e.position.y = y - Theme.Motion.sinkDepth * Float(Ease.out(p))
             e.components[OpacityComponent.self]?.opacity = Float(1 - p)
         }, done: { e.removeFromParent() })
+    }
+
+    /// Plays `cue` from a short-lived anchor at `at`, for sounds whose source entity is about to be removed.
+    func cue(_ cue: Tone.Cue, at: SIMD3<Float>, gain: Double) {
+        let anchor = Entity()
+        anchor.position = at
+        root.addChild(anchor)
+        Tone.play(cue, on: anchor, gain: gain)
+        clock.animate(1.2, { _ in }, done: { anchor.removeFromParent() })
     }
 
     /// Correct no-go: the orange simply fades. No sound, no reward for inaction.

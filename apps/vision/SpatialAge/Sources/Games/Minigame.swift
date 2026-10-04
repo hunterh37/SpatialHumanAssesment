@@ -127,13 +127,18 @@ final class GameContext {
     }
 
     static let praise = ["Nice.", "Got it.", "Good.", "Well done."]
+
+    /// End of a block: confetti and fanfare 1.1 m ahead at eye height, past arm's reach and above the HUD.
+    func celebrateBlock(scored: Bool) {
+        micro.juice.finale(at: rig.world([0, rig.eye + 0.05, -1.1]), big: scored)
+    }
     private var cueSerial = 0
 
     /// Short praise on the HUD for `hold` seconds. A newer cue replaces it.
     func cheer(_ text: String? = nil, hold: Double = 0.8) {
         cueSerial += 1
         let serial = cueSerial
-        hud.cue = text ?? Self.praise.randomElement()!
+        hud.cue = text ?? micro.juice.takeWord() ?? Self.praise.randomElement()!
         Task { @MainActor in
             await clock.wait(hold)
             if cueSerial == serial { hud.cue = "" }

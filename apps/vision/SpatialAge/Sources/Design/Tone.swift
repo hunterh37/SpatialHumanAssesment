@@ -11,7 +11,11 @@ enum Tone {
         /// Constellation star, one pitch per star on a pentatonic scale.
         case star(Int)
         case tock
+        /// Timeout or drop: one soft low mallet note. Quiet, so a miss never reads as punishment.
         case miss
+        /// Wrong touch (orange touched, wrong star, wrong ball, wall hit): two soft mallet notes falling a
+        /// minor third. Warm and short, never a buzzer.
+        case wrong
         case caught
         /// Spatial Tracking warning: a short leaf rustle, played from where the leaf will fall.
         case rustle
@@ -28,7 +32,23 @@ enum Tone {
         /// A target appeared. A noise click over a tone: broadband onsets are what the ear localizes,
         /// so the participant can hear which way to turn before the target is in view.
         case spawn
+        /// Success charm: a rising bell arpeggio. Tier 0 to 3 lifts the register and adds a top note.
+        case chime(Int)
+        /// High glassy twinkles layered over a chime from tier 2.
+        case sparkle
+        /// End of a scored block: arpeggio up to a held major chord, about 1.4 s.
+        case fanfare
+        /// Lock-on: two quick rising mallet notes. Orbit acquisition, Reach and Grab floor spot reached.
+        case lock
+        /// Your turn: a soft rising bell fifth. Constellation and Color Dots response phase begins.
+        case ready
+        /// Quiet confirm for a correct hold-back: Gate no-go left alone, Scary Balance freeze held. One bell
+        /// note with its fifth, no arpeggio.
+        case soft
     }
+
+    /// One bell strike: start (s), frequency (Hz), decay length (s), relative gain.
+    typealias Strike = (start: Double, freq: Double, length: Double, gain: Double)
 
     /// One swept syllable: start and length in seconds, start and end frequency in Hz, relative gain.
     typealias Syllable = (start: Double, length: Double, from: Double, to: Double, gain: Double)
@@ -56,6 +76,8 @@ enum Tone {
 
     static func resource(_ cue: Cue) -> AudioFileResource? {
         if let r = cache[cue] { return r }
+        if let strikes = bells(cue) { return store(cue, Self.bell(strikes)) }
+        if let strikes = mallets(cue) { return store(cue, Self.bell(strikes, partials: Self.mallet)) }
         var partials: [(Double, Double)]
         var duration: Double
         var noise = 0.0, click = 0.0, sustain = false
@@ -73,16 +95,19 @@ enum Tone {
             let f = 392 * pow(2, Double(scale[i % scale.count]) / 12)
             partials = [(f, 1), (f * 3, 0.12)]; duration = 0.5
         case .tock: partials = [(170, 1), (340, 0.3)]; duration = 0.12
-        case .miss: partials = [(220, 0.6)]; duration = 0.18
         case .caught: partials = [(784, 1), (1176, 0.5)]; duration = 0.35
         case .rustle: partials = [(2400, 0.08)]; duration = 0.45; noise = 1
         case .creature: partials = [(73, 1), (110, 0.6), (146, 0.25)]; duration = 2.2; sustain = true
         case .spawn: partials = [(1046, 1), (2093, 0.35), (3136, 0.15)]; duration = 0.16; click = 0.9
+        case .chime, .sparkle, .fanfare, .ready, .soft, .miss, .wrong, .lock: return nil
         }
+        return store(cue, song.map(Self.song)
+            ?? wav(partials: partials, duration: duration, noise: noise, click: click, sustain: sustain))
+    }
+
+    private static func store(_ cue: Cue, _ data: Data) -> AudioFileResource? {
         let url = FileManager.default.temporaryDirectory.appending(path: "tone-\(abs(cue.hashValue)).wav")
         do {
-            let data = song.map(Self.song)
-                ?? wav(partials: partials, duration: duration, noise: noise, click: click, sustain: sustain)
             try data.write(to: url)
             let r = try AudioFileResource.load(contentsOf: url)
             cache[cue] = r
@@ -90,6 +115,78 @@ enum Tone {
         } catch {
             return nil
         }
+    }
+
+    /// Strike lists for the reward cues. Major pentatonic on C6, so every cue sits in one key with `.star`.
+    private static func bells(_ cue: Cue) -> [Strike]? {
+        func hz(_ semis: Double) -> Double { 1046.5 * pow(2, semis / 12) }
+        switch cue {
+        case .chime(let tier):
+            let t = Double(min(max(tier, 0), 3))
+            let root = [0.0, 2, 4, 7][Int(t)]
+            var notes = [0.0, 4, 7, 12].map { root + $0 }
+            if t >= 1 { notes.append(root + 16) }
+            if t >= 3 { notes.append(root + 19) }
+            return notes.enumerated().map { (Double($0.offset) * 0.045, hz($0.element - 12), 0.55, 1 - 0.08 * Double($0.offset)) }
+        case .sparkle:
+            return [(0.02, hz(24), 0.18, 0.5), (0.07, hz(28), 0.16, 0.45), (0.11, hz(31), 0.15, 0.4),
+                    (0.16, hz(36), 0.14, 0.35), (0.22, hz(28), 0.2, 0.3)]
+        case .fanfare:
+            let run = [0.0, 4, 7, 12, 16, 19].enumerated().map { (Double($0.offset) * 0.07, hz($0.element - 12), 0.5, 0.8) }
+            let chord = [0.0, 4, 7, 12].map { (0.48, hz($0 - 12), 1.1, 0.7) }
+            return run + chord + [(0.5, hz(24), 0.8, 0.35)]
+        case .ready:
+            return [(0, hz(-12), 0.45, 0.8), (0.09, hz(-5), 0.55, 0.7)]
+        case .soft:
+            return [(0, hz(-8), 0.5, 0.8), (0.02, hz(-1), 0.4, 0.3)]
+        default:
+            return nil
+        }
+    }
+
+    /// Strike lists for the mallet cues. Same key as the bells, an octave or two lower, so error tones stay
+    /// in tune with the music bed and the chimes.
+    private static func mallets(_ cue: Cue) -> [Strike]? {
+        func hz(_ semis: Double) -> Double { 1046.5 * pow(2, semis / 12) }
+        switch cue {
+        case .miss: return [(0, hz(-27), 0.42, 1)]
+        case .wrong: return [(0, hz(-21), 0.24, 0.85), (0.12, hz(-24), 0.42, 1)]
+        case .lock: return [(0, hz(-5), 0.16, 0.8), (0.06, hz(0), 0.26, 1)]
+        default: return nil
+        }
+    }
+
+    typealias Partial = (ratio: Double, gain: Double, decay: Double)
+    /// Glockenspiel ratios: bright, long ring.
+    static let glock: [Partial] = [(1, 1, 1), (2.76, 0.32, 0.45), (5.40, 0.12, 0.25), (2, 0.18, 0.7)]
+    /// Marimba ratios: a round fundamental, a quiet fourth partial that dies fast. Soft and wooden.
+    static let mallet: [Partial] = [(1, 1, 1), (3.93, 0.10, 0.18), (2, 0.06, 0.4)]
+
+    /// Bell partials with a soft 3 ms attack and exponential decay, summed and normalized.
+    static func bell(_ strikes: [Strike], partials: [Partial] = glock) -> Data {
+        let rate = 44_100.0
+        let duration = (strikes.map { $0.start + $0.length }.max() ?? 0) + 0.02
+        let n = Int(rate * duration)
+        var samples = [Double](repeating: 0, count: n)
+        for s in strikes {
+            let i0 = Int(s.start * rate), count = Int(s.length * rate)
+            for k in 0..<count where i0 + k < n {
+                let t = Double(k) / rate
+                let attack = min(t / 0.003, 1)
+                var v = 0.0
+                for p in partials where s.freq * p.ratio < 16_000 {
+                    v += sin(2 * .pi * s.freq * p.ratio * t) * p.gain * exp(-6.9 * t / (s.length * p.decay))
+                }
+                samples[i0 + k] += v * attack * s.gain
+            }
+        }
+        let peak = max(samples.map(abs).max() ?? 1, 1e-6)
+        var pcm = Data(capacity: n * 2)
+        for x in samples {
+            var v = Int16(max(-1, min(1, x / peak * 0.8)) * Double(Int16.max)).littleEndian
+            withUnsafeBytes(of: &v) { pcm.append(contentsOf: $0) }
+        }
+        return riff(pcm, rate: rate)
     }
 
     /// 16-bit mono 44.1 kHz PCM. 2 ms attack, decay to -60 dB at `duration`. `noise` mixes in band-limited

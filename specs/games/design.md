@@ -42,7 +42,7 @@ Scenery tokens (sky #98B0BD, grass #3B4D34, bark #3E3128, canopy #2D422E, far ca
 
 ## Micro-interactions
 
-Five primitives in `MicroInteractions.swift`. Games use these and nothing else.
+Five primitives in `MicroInteractions.swift`, plus the reward layer below. Games use these and nothing else.
 
 | Primitive | Behavior | Why |
 |---|---|---|
@@ -53,6 +53,22 @@ Five primitives in `MicroInteractions.swift`. Games use these and nothing else.
 | Release snap | cord shortens and fades in 120 ms with a low tock | unused since Stick Drop, which plays the tock alone |
 
 Appearance is 60 ms, so spawn time stays exact to a frame. Spawn time is the first frame the target is in the scene.
+
+## Rewards
+
+`Design/Juice.swift`, owned by `Micro` and fired from the success paths after the outcome is recorded.
+
+| Event | Effect |
+|---|---|
+| Success (go touch, catch, grab, cleared wall, clean recall, correct sequence, pursuit end) | a soft halo that swells to 5 to 8 cm and fades over 0.35 s, a spark burst from the contact (10 sparks plus 4 per tier, 0.6 s, drag and light gravity), an extruded 3D praise word that springs in and rises 10 cm over 0.85 s, a bell arpeggio (`Tone.Cue.chime`) on top of the speed-pitched tick |
+| Partial success (each recalled ball before the last, the second wall ring) | halo and a 6-spark burst; no word, no chime, streak unchanged |
+| Streak | consecutive successes in a block: tiers at 3, 5 and 8 lift the chime register, add sparks and twinkles (`.sparkle`) and pick stronger words. Shown as a word, never a count |
+| Wrong touch, miss, timeout | streak resets; nothing else changes (miss sink keeps its quiet tone) |
+| Correct no-go | no reward, as before |
+| End of block | confetti and burst 1.1 m ahead at eye height; scored blocks add the fanfare (`.fanfare`) |
+| HUD cue | each new cue springs 1.0 to 1.22 to 1.0 with a soft gold glow |
+
+One 3D word is in view at a time; a new word replaces the old one. Safety: effects stay within about 25 cm of the contact, never fill the view, flash once per success and fade over at least 250 ms. Reduce Motion keeps at most 6 still sparks, a word that fades in place and no cue bounce. Rewards never hold the trial loop.
 
 ## Sound
 

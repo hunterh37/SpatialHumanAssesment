@@ -45,11 +45,13 @@ final class Director {
                     await ctx.clock.wait(familiarization ? 2.5 : 1.8)
                     await ctx.countdown()
                     ctx.hud.ambient = false
+                    ctx.micro.juice.reset()
                     let block = await instance.play(familiarization: familiarization, trials: n, seed: blockSeeds[k])
                     ctx.hud.ambient = true
                     guard !Task.isCancelled else { return }
                     ctx.recorder.append(block)
-                    ctx.cheer(familiarization ? "Practice done." : "Done.", hold: 1.4)
+                    ctx.celebrateBlock(scored: !familiarization)
+                    ctx.cheer(familiarization ? "Practice done." : "Done!", hold: 1.4)
                     await ctx.clock.wait(1.4)
                 }
             }

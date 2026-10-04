@@ -86,7 +86,8 @@ final class ConstellationGame: Minigame {
             await ctx.clock.wait(Self.off)
         }
 
-        // Response. All stars breathe: your turn.
+        // Response. All stars breathe and the ready cue sounds: your turn.
+        ctx.micro.cue(.ready, at: ctx.rig.world([0, ctx.rig.eye, -0.5]), gain: -16)
         var response: [Int] = [], taps: [Double] = []
         var armed = Array(repeating: true, count: stars.count)
         let deadline = ctx.now + 8 + Double(span)
@@ -111,8 +112,16 @@ final class ConstellationGame: Minigame {
         let correct = response == ids
         if correct {
             for id in ids { ctx.micro.ring(at: stars[id].position, color: Theme.gold, radius: Theme.Size.star * 2) }
+            if let last = ids.last { ctx.micro.juice.success(at: stars[last].position(relativeTo: nil)) }
+            ctx.cheer()
         } else {
-            Tone.play(.miss, on: stars[response.last ?? ids[0]], gain: -22)
+            ctx.micro.juice.reset()
+            // A wrong star gets the wrong cue from that star; running out of time gets the quiet miss.
+            if let last = response.last, ids[response.count - 1] != last {
+                Tone.play(.wrong, on: stars[last], gain: -15)
+            } else {
+                Tone.play(.miss, on: stars[response.last ?? ids[0]], gain: -20)
+            }
         }
         return CorsiTrial(index: index, span: span, sequence: ids, response: response, correct: correct,
                           startT: start, endT: ctx.now, tapT: taps)

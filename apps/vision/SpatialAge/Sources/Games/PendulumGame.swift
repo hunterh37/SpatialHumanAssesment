@@ -179,6 +179,7 @@ final class PendulumGame: Minigame {
     private func celebrate(_ leaf: ModelEntity, hand: Hand, at p: SIMD3<Float>) async {
         Tone.play(.caught, on: leaf, gain: -10)
         ctx.micro.ring(at: p, color: Theme.gold, radius: Self.leafLength)
+        ctx.micro.juice.success(at: p)
         ctx.cheer()
         let half = Self.leafLength / 2
         var t = 0.0

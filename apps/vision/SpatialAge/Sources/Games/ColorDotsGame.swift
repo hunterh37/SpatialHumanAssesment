@@ -193,7 +193,7 @@ final class ColorDotsGame: Minigame {
             ball.model?.materials = [Look.glow(Theme.mute, intensity: Self.recallGlow)]
         }
         ctx.hud.line = mode == "did" ? "Now touch every ball you DID touch." : "Now touch every ball you DID NOT touch."
-        Tone.play(.tock, on: ctx.layer, gain: -14)
+        ctx.micro.cue(.ready, at: ctx.rig.world([0, ctx.rig.eye - 0.2, -0.6]), gain: -15)
         _ = await ctx.clock.next()
         let recallStart = ctx.now
 
@@ -225,7 +225,10 @@ final class ColorDotsGame: Minigame {
                 touched.append(i); touchT.append(at)
                 if answers[i] {
                     hits += 1
-                    ctx.micro.pop(balls[i], color: Theme.paper, speedStep: Micro.speedStep(reachTime: at - lastT))
+                    // The last hit of a clean recall takes the full reward; earlier hits a small burst.
+                    let clean = hits == setSize && falseTaps == 0
+                    ctx.micro.pop(balls[i], color: Theme.paper, speedStep: Micro.speedStep(reachTime: at - lastT),
+                                  reward: clean ? .full : .light)
                 } else {
                     falseTaps += 1
                     flash(balls[i])
@@ -234,7 +237,7 @@ final class ColorDotsGame: Minigame {
             }
         }
         guard !Task.isCancelled else { clear(); return nil }
-        if setSize > 0, hits == setSize, falseTaps == 0 { ctx.cheer() }
+        if setSize > 0, hits == setSize, falseTaps == 0 { ctx.cheer() } else { ctx.micro.juice.reset() }
 
         let end = ctx.now
         let gap = ctx.tracker.buffer.maxGapMs(nil, selectStart, end)
@@ -254,7 +257,7 @@ final class ColorDotsGame: Minigame {
     private func flash(_ ball: ModelEntity) {
         ball.model?.materials = [Look.glow(Theme.nogo, intensity: 3.5)]
         ball.scale = .init(repeating: 1.2)
-        Tone.play(.miss, on: ball, gain: -18)
+        Tone.play(.wrong, on: ball, gain: -16)
         let micro = ctx.micro
         ctx.clock.animate(0.15, { _ in }, done: { ball.scale = .one; micro.sink(ball, sound: false) })
     }

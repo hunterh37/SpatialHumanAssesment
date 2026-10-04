@@ -61,7 +61,7 @@ struct ReachTrial {
             trace = tr
             moveT = Kinematics(tr)?.onset(after: spawn, before: tContact)
             ctx.micro.pop(orb.entity, color: orb.isGo ? Theme.paper : Theme.nogo,
-                          speedStep: Micro.speedStep(reachTime: tContact - spawn))
+                          speedStep: Micro.speedStep(reachTime: tContact - spawn), reward: orb.isGo ? .full : .none)
             for other in orbs where other.entity !== orb.entity { ctx.micro.dissolve(other.entity) }
             if orb.isGo { ctx.cheer() }
         } else {
@@ -69,7 +69,10 @@ struct ReachTrial {
             for orb in orbs {
                 if orb.isGo { ctx.micro.sink(orb.entity) } else { ctx.micro.dissolve(orb.entity) }
             }
-            if kind == .nogo { ctx.cheer("Good, you left it.") }
+            if kind == .nogo {
+                ctx.micro.cue(.soft, at: scored, gain: -16)
+                ctx.cheer("Good, you left it.")
+            }
         }
         let gap = ctx.tracker.buffer.maxGapMs(hand, spawn, contact ?? spawn + window)
         return ReactionTrial(index: index, kind: kind, hand: hand, spawnT: spawn, moveT: moveT, contactT: contact,

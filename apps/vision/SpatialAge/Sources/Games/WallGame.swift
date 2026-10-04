@@ -245,16 +245,20 @@ final class WallGame: Minigame {
     }
 
     /// Cleared: both rings pop with a paper ring and the wall fades. Hit: the wall flashes orange and sinks with
-    /// the quiet low tone, and the rings take the miss sink.
+    /// the soft wrong cue, and the rings take the miss sink.
     private func feedback(cleared: Bool, panel: ModelEntity, rings: [ModelEntity]) async {
         if cleared {
-            rings.forEach { ctx.micro.pop($0, color: Theme.paper, speedStep: 3) }
+            // One full reward for the wall; the second ring takes the small burst.
+            for (k, ring) in rings.enumerated() { ctx.micro.pop(ring, color: Theme.paper, speedStep: 3, reward: k == 0 ? .full : .light) }
+            ctx.cheer()
             fade(panel, from: Self.panelOpacity, over: 0.3, drop: false)
         } else {
             panel.model?.materials = [Look.flat(Theme.nogo)]
             fade(panel, from: 0.55, over: 0.4, drop: true)
-            // One tone for the whole wall, not one per ring.
-            for (k, ring) in rings.enumerated() { ctx.micro.sink(ring, sound: k == 0) }
+            // One wrong cue for the whole wall, from between the holes, not one tone per ring.
+            let mid = rings.map { $0.position(relativeTo: nil) }.reduce(.zero, +) / Float(max(rings.count, 1))
+            ctx.micro.cue(.wrong, at: mid, gain: -14)
+            for ring in rings { ctx.micro.sink(ring, sound: false) }
         }
         await ctx.clock.wait(0.45)
     }

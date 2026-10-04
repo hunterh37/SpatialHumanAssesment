@@ -2,7 +2,7 @@
 
 Code: `Games/OrbitGame.swift`. Metrics: `ScoreKit/Metrics/OrbitMetrics.swift`. Task: `pursuit`.
 
-A teal orb (4 cm) waits at the path start, breathing, until a fingertip rests inside it for 0.5 s (10 s cap). Then it moves on a 3D Lissajous path centered 0.08 m below eye level and 0.45 m ahead of where the participant faces at the start of each trial (re-anchored per trial, so it never sits behind or low): amplitudes 0.20, 0.08, 0.08 m, frequencies 0.21, 0.29, 0.13 Hz, random phases. Six fading dots show the next 0.3 s of path.
+A teal orb (4 cm) waits at the path start, breathing, until a fingertip rests inside it for 0.5 s (10 s cap). Then it moves on a 3D Lissajous path centered 0.08 m below eye level and 0.45 m ahead of where the participant faces at the start of each trial (re-anchored per trial; during a trial the frame yaw follows the head once gaze leaves a 0.35 rad cone, so the orb stays in front): amplitudes 0.16, 0.07, 0.06 m, frequencies 0.21, 0.29, 0.13 Hz, random phases. Six fading dots show the next 0.3 s of path.
 
 1 familiarization (6 s), 3 scored (12 s). Samples at 30 Hz in the participant frame (origin under the head at game start, -z forward) so the logged path reproduces the target.
 

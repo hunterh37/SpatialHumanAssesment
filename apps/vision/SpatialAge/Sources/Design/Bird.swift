@@ -62,6 +62,7 @@ final class Bird {
     private var tailLift: Float = 0
     private var legsOut: Float = 1
     private var perchTilt: Float = 0
+    private var lastWingPose = SIMD3<Float>(repeating: .nan)
 
     // Hand perch.
     private var hand: Hand?
@@ -442,16 +443,11 @@ final class Bird {
         fold = 1 + (cyc.fold - 1) * flapWeight
         handCurl = -0.35 * sin(2 * .pi * flapPhase) * flapWeight
 
-        for w in wings {
-            let s = w.side
-            w.shoulder.orientation = simd_quatf(angle: s * flap, axis: [0, 0, 1])
-                * simd_quatf(angle: -s * fold * 1.5, axis: [0, 1, 0])
-            w.hand.orientation = simd_quatf(angle: s * handCurl, axis: [0, 0, 1])
-                * simd_quatf(angle: -s * fold * 0.07, axis: [0, 1, 0])
-            for (f, spread) in w.feathers {
-                let a = spread + (s * .pi / 2 - spread) * fold
-                f.orientation = simd_quatf(angle: a, axis: [0, 1, 0]) * simd_quatf(angle: 0.05, axis: [1, 0, 0])
-            }
+        // ~45 wing entities: write transforms only when the wing pose moved (a calm perch holds still).
+        let wingPose = SIMD3<Float>(flap, fold, handCurl)
+        if !(simd_reduce_max(abs(wingPose - lastWingPose)) <= 1e-3) {
+            lastWingPose = wingPose
+            poseWings()
         }
 
         // Legs out for the hand, tucked in flight.
@@ -558,6 +554,22 @@ final class Bird {
             * simd_quatf(angle: headRoll, axis: [0, 0, 1])
     }
 
+    private static let featherPitch = simd_quatf(angle: 0.05, axis: [1, 0, 0])
+
+    private func poseWings() {
+        for w in wings {
+            let s = w.side
+            w.shoulder.orientation = simd_quatf(angle: s * flap, axis: [0, 0, 1])
+                * simd_quatf(angle: -s * fold * 1.5, axis: [0, 1, 0])
+            w.hand.orientation = simd_quatf(angle: s * handCurl, axis: [0, 0, 1])
+                * simd_quatf(angle: -s * fold * 0.07, axis: [0, 1, 0])
+            for (f, spread) in w.feathers {
+                let a = spread + (s * .pi / 2 - spread) * fold
+                f.orientation = simd_quatf(angle: a, axis: [0, 1, 0]) * Self.featherPitch
+            }
+        }
+    }
+
     /// Downstroke over 55% of the beat, wings spread; upstroke flexes the wing.
     private func cycle(_ ph: Float, up: Float, down: Float) -> (flap: Float, fold: Float) {
         if ph < 0.55 {
@@ -592,13 +604,37 @@ final class Bird {
         static let blush = Dusk.hex(0xF4A08A)
     }
 
+    // Shared meshes and materials: one resource per shape and color, built once per process.
+    private static var meshCache: [String: MeshResource] = [:]
+    private static var materialCache: [String: PhysicallyBasedMaterial] = [:]
+
+    private static func cached(_ key: String, _ make: () -> MeshResource?) -> MeshResource? {
+        if let m = meshCache[key] { return m }
+        let m = make()
+        meshCache[key] = m
+        return m
+    }
+
+    private static func blob(_ radii: SIMD3<Float>, taper: Float, rings: Int = 24, segments: Int = 36) -> MeshResource? {
+        cached("blob\(radii)\(taper)\(rings)\(segments)") {
+            Meshes.blob(radii: radii, taper: taper, rings: rings, segments: segments)
+        }
+    }
+
+    private static func feather(length: Float, width: Float, curl: Float) -> MeshResource? {
+        cached("feather\(length),\(width),\(curl)") { Meshes.feather(length: length, width: width, curl: curl) }
+    }
+
     private static func plumage(_ c: UIColor, rough: Float = 0.82) -> PhysicallyBasedMaterial {
+        let key = "\(c.description)\(rough)"
+        if let m = materialCache[key] { return m }
         var m = PhysicallyBasedMaterial()
         m.baseColor = .init(tint: c)
         m.roughness = .init(floatLiteral: rough)
         m.metallic = 0.0
         m.emissiveColor = .init(color: c)
         m.emissiveIntensity = 0.32
+        materialCache[key] = m
         return m
     }
 
@@ -606,17 +642,17 @@ final class Bird {
         poseNode.addChild(body)
 
         // Body, belly, neck.
-        if let m = Meshes.blob(radii: [0.030, 0.033, 0.047], taper: 0.45) {
+        if let m = Self.blob([0.030, 0.033, 0.047], taper: 0.45) {
             let e = ModelEntity(mesh: m, materials: [Self.plumage(Palette.body)])
             e.position = [0, 0.046, 0.004]
             body.addChild(e)
         }
-        if let m = Meshes.blob(radii: [0.025, 0.025, 0.032], taper: 0.2, rings: 28, segments: 44) {
+        if let m = Self.blob([0.025, 0.025, 0.032], taper: 0.2, rings: 28, segments: 44) {
             let e = ModelEntity(mesh: m, materials: [Self.plumage(Palette.belly, rough: 0.9)])
             e.position = [0, 0.036, -0.012]
             body.addChild(e)
         }
-        if let m = Meshes.blob(radii: [0.025, 0.021, 0.025], taper: 0) {
+        if let m = Self.blob([0.025, 0.021, 0.025], taper: 0) {
             let e = ModelEntity(mesh: m, materials: [Self.plumage(Palette.body)])
             e.position = [0, 0.068, -0.020]
             body.addChild(e)
@@ -626,34 +662,40 @@ final class Bird {
         head.position = Self.headPivot
         poseNode.addChild(head)
         let hc = Self.headCenter
-        if let m = Meshes.blob(radii: [0.026, 0.025, 0.027], taper: 0) {
+        if let m = Self.blob([0.026, 0.025, 0.027], taper: 0) {
             let e = ModelEntity(mesh: m, materials: [Self.plumage(Palette.head)])
             e.position = hc
             head.addChild(e)
         }
+        var gloss = PhysicallyBasedMaterial()
+        gloss.baseColor = .init(tint: Palette.eye)
+        gloss.roughness = 0.06
+        gloss.clearcoat = .init(floatLiteral: 1)
+        gloss.clearcoatRoughness = .init(floatLiteral: 0.02)
+        let catchlight = Look.flat(.white)
+        let blush = Look.veil(Palette.blush, opacity: 0.55)
+        let eyeball = Self.cached("eye") { .generateSphere(radius: 0.0068) }
+        let glints = [Self.cached("glint0") { .generateSphere(radius: 0.0019) },
+                      Self.cached("glint1") { .generateSphere(radius: 0.0009) }]
+        let cheek = Self.cached("cheek") { Meshes.ellipse(width: 0.012, height: 0.008) }
         for s in [Float(-1), 1] {
             let dir = simd_normalize(SIMD3<Float>(s * 0.62, 0.22, -0.75))
             let eye = Entity()
             eye.position = hc + dir * 0.0225
             eye.orientation = simd_quatf(from: [0, 0, 1], to: dir)
             head.addChild(eye)
-            var gloss = PhysicallyBasedMaterial()
-            gloss.baseColor = .init(tint: Palette.eye)
-            gloss.roughness = 0.06
-            gloss.clearcoat = .init(floatLiteral: 1)
-            gloss.clearcoatRoughness = .init(floatLiteral: 0.02)
-            eye.addChild(ModelEntity(mesh: .generateSphere(radius: 0.0068), materials: [gloss]))
-            for (off, r) in [(SIMD3<Float>(0.0018 * s, 0.0026, 0.0052), Float(0.0019)),
-                             (SIMD3<Float>(-0.0016 * s, -0.0018, 0.0058), 0.0009)] {
-                let c = ModelEntity(mesh: .generateSphere(radius: r), materials: [Look.flat(.white)])
+            if let eyeball { eye.addChild(ModelEntity(mesh: eyeball, materials: [gloss])) }
+            for (off, mesh) in zip([SIMD3<Float>(0.0018 * s, 0.0026, 0.0052), SIMD3<Float>(-0.0016 * s, -0.0018, 0.0058)], glints) {
+                guard let mesh else { continue }
+                let c = ModelEntity(mesh: mesh, materials: [catchlight])
                 c.position = off
                 eye.addChild(c)
             }
             eyes.append(eye)
 
             let cheekDir = simd_normalize(SIMD3<Float>(s * 0.82, -0.2, -0.45))
-            if let disc = Meshes.ellipse(width: 0.012, height: 0.008) {
-                let c = ModelEntity(mesh: disc, materials: [Look.veil(Palette.blush, opacity: 0.55)])
+            if let disc = cheek {
+                let c = ModelEntity(mesh: disc, materials: [blush])
                 c.position = hc + cheekDir * 0.0264
                 c.orientation = simd_quatf(from: [0, 0, 1], to: cheekDir)
                 head.addChild(c)
@@ -674,7 +716,7 @@ final class Bird {
         lower.position = [0, 0, -0.005]
         lowerBeak.addChild(lower)
         // Crest tuft.
-        if let m = Meshes.feather(length: 0.013, width: 0.006, curl: -0.25) {
+        if let m = Self.feather(length: 0.013, width: 0.006, curl: -0.25) {
             for k in -1...1 {
                 let f = ModelEntity(mesh: m, materials: [Self.plumage(Palette.head)])
                 f.position = hc + [Float(k) * 0.003, 0.023, -0.008]
@@ -689,7 +731,7 @@ final class Bird {
         // Tail.
         tail.position = [0, 0.040, 0.042]
         poseNode.addChild(tail)
-        if let m = Meshes.feather(length: 0.05, width: 0.012, curl: 0.05) {
+        if let m = Self.feather(length: 0.05, width: 0.012, curl: 0.05) {
             for i in 0..<6 {
                 let f = ModelEntity(mesh: m, materials: [Self.plumage(i % 2 == 0 ? Palette.tail : Palette.flightB)])
                 f.position = [0, Float(abs(Float(i) - 2.5)) * -0.0005, 0]
@@ -730,19 +772,19 @@ final class Bird {
         shoulder.addChild(hand)
         var feathers: [(Entity, Float)] = []
 
-        if let arm = Meshes.blob(radii: [0.017, 0.005, 0.007], taper: 0) {
+        if let arm = Self.blob([0.017, 0.005, 0.007], taper: 0) {
             let e = ModelEntity(mesh: arm, materials: [Self.plumage(Palette.covert)])
             e.position = [s * 0.015, 0.001, 0.001]
             shoulder.addChild(e)
         }
-        if let arm = Meshes.blob(radii: [0.015, 0.004, 0.005], taper: 0) {
+        if let arm = Self.blob([0.015, 0.004, 0.005], taper: 0) {
             let e = ModelEntity(mesh: arm, materials: [Self.plumage(Palette.covert)])
             e.position = [s * 0.013, 0.001, 0]
             hand.addChild(e)
         }
         // Secondaries.
         for i in 0..<6 {
-            guard let m = Meshes.feather(length: 0.042 + Float(i) * 0.0015, width: 0.012, curl: 0.06) else { continue }
+            guard let m = Self.feather(length: 0.042 + Float(i) * 0.0015, width: 0.012, curl: 0.06) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(i % 2 == 0 ? Palette.flightA : Palette.flightB)])
             f.position = [s * (0.003 + Float(i) * 0.0048), -0.001 - Float(i) * 0.0003, 0.002]
             shoulder.addChild(f)
@@ -750,7 +792,7 @@ final class Bird {
         }
         // Coverts over the secondaries.
         for i in 0..<5 {
-            guard let m = Meshes.feather(length: 0.022, width: 0.012, curl: 0.04) else { continue }
+            guard let m = Self.feather(length: 0.022, width: 0.012, curl: 0.04) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(Palette.covert)])
             f.position = [s * (0.004 + Float(i) * 0.006), 0.0025, -0.002]
             shoulder.addChild(f)
@@ -759,7 +801,7 @@ final class Bird {
         // Primaries, fanning out to the wing tip.
         for i in 0..<7 {
             let len = 0.05 + 0.014 * sin(Float(i) / 6 * .pi * 0.8)
-            guard let m = Meshes.feather(length: len, width: 0.011, curl: 0.07) else { continue }
+            guard let m = Self.feather(length: len, width: 0.011, curl: 0.07) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(i % 2 == 0 ? Palette.flightB : Palette.flightA)])
             f.position = [s * (0.002 + Float(i) * 0.0042), -0.0015 - Float(i) * 0.0003, 0.001]
             hand.addChild(f)
@@ -767,7 +809,7 @@ final class Bird {
         }
         // Primary coverts.
         for i in 0..<3 {
-            guard let m = Meshes.feather(length: 0.02, width: 0.011, curl: 0.04) else { continue }
+            guard let m = Self.feather(length: 0.02, width: 0.011, curl: 0.04) else { continue }
             let f = ModelEntity(mesh: m, materials: [Self.plumage(Palette.covert)])
             f.position = [s * (0.003 + Float(i) * 0.008), 0.002, -0.001]
             hand.addChild(f)

@@ -18,11 +18,17 @@ final class OrbitGame: Minigame {
     static let tipTrailSteps = 14
     /// Mean per-frame change of the tip-to-orb offset at which the trail is fully dimmed (meters).
     static let jitterFloorM: Float = 0.004
+    /// Share of samples on target for the full success reward at the end of a trial.
+    static let successShare = 0.5
 
     /// Path center below eye level and ahead, meters. The lowest point stays 0.16 m under the eyes.
     static let centerDrop = 0.08
     static let centerAhead = 0.45
-    static let amplitude = V3(0.2, 0.08, 0.08)
+    static let amplitude = V3(0.16, 0.07, 0.06)
+    /// Head-yaw cone (radians) the path center may sit off the gaze before the frame turns to follow.
+    static let followCone: Float = 0.35
+    /// Fraction of the out-of-cone yaw error removed per second.
+    static let followRate: Float = 3
 
     let ctx: GameContext
     /// Participant frame for the current trial. Re-taken from the live head pose before every trial so the
@@ -48,6 +54,20 @@ final class OrbitGame: Minigame {
     }
 
     func teardown() {}
+
+    /// Turns the participant frame toward the live head yaw when the gaze leaves the follow cone, so the orb
+    /// stays in front instead of drifting beside or behind after a body turn. Samples use the same frame, so
+    /// logged target and fingertip stay consistent.
+    private func follow(_ dt: Double) {
+        guard let head = ctx.tracker.trackedHead() else { return }
+        let live = Rig(head: head)
+        var err = live.yaw - frame.yaw
+        err = atan2(sin(err), cos(err))
+        let over = abs(err) - Self.followCone
+        guard over > 0 else { return }
+        frame.yaw += (err > 0 ? 1 : -1) * over * min(1, Self.followRate * Float(dt))
+        frame.origin += (live.origin - frame.origin) * min(1, Self.followRate * Float(dt))
+    }
 
     private func world(_ v: V3) -> SIMD3<Float> { frame.world([Float(v.x), Float(v.y), Float(v.z)]) }
 
@@ -75,19 +95,23 @@ final class OrbitGame: Minigame {
         while inside < 0.5 && waited < 10, !Task.isCancelled {
             let dt = await ctx.clock.next()
             waited += dt
+            follow(dt)
+            orb.position = world(path.position(at: 0))
             ctx.micro.breathe(orb, t: waited)
             let d = ctx.nearestTip(to: orb.position)?.distance ?? .infinity
             ctx.micro.glow(orb, color: Theme.teal, distance: d)
             inside = d <= OrbitMetrics.onTargetM.float ? inside + dt : 0
         }
         orb.scale = .one
+        if inside >= 0.5 { Tone.play(.lock, on: orb, gain: -16) }
 
         let start = ctx.now
         var ts: [Double] = [], targets: [V3] = [], fingers: [V3?] = []
         var nextSample = 0.0
         var used: [Hand: Int] = [:]
         while ctx.now - start < duration, !Task.isCancelled {
-            _ = await ctx.clock.next()
+            let dt = await ctx.clock.next()
+            follow(dt)
             let tau = ctx.now - start
             let target = path.position(at: tau)
             orb.position = world(target)
@@ -109,7 +133,20 @@ final class OrbitGame: Minigame {
                 nextSample += 1 / Self.sampleHz
             }
         }
-        ctx.micro.pop(orb, color: Theme.teal, speedStep: 3)
+        // Pursuit end: the full reward when the tip stayed inside for at least half the trial, else a small
+        // burst, the quiet miss and a streak reset.
+        let onTarget = zip(fingers, targets).filter { f, t in
+            guard let f else { return false }
+            return f.distance(to: t) <= OrbitMetrics.onTargetM
+        }.count
+        if !ts.isEmpty, Double(onTarget) / Double(ts.count) >= Self.successShare {
+            ctx.micro.pop(orb, color: Theme.teal, speedStep: 3)
+            ctx.cheer()
+        } else {
+            Tone.play(.miss, on: orb, gain: -20)
+            ctx.micro.juice.reset()
+            ctx.micro.pop(orb, color: Theme.teal, speedStep: 1, reward: .light)
+        }
         trail.forEach { ctx.micro.dissolve($0) }
         tipTrail.entities.forEach { ctx.micro.dissolve($0) }
         let hand = used.max { $0.value < $1.value }?.key

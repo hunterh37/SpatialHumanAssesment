@@ -14,7 +14,8 @@ struct ImmersiveView: View {
     @State private var stage = Entity()
     @State private var anatomy = AnatomyOverlay()
     @State private var plank = SkyPlank()
-    @State private var bird = Bird()
+    /// Built once in the RealityView make closure; a `@State` default would rebuild the rig on every view init.
+    @State private var bird: Bird?
     @State private var tracker: HandTracker?
     @State private var updates: EventSubscription?
     @State private var game: Task<Void, Never>?
@@ -24,6 +25,8 @@ struct ImmersiveView: View {
         RealityView { content, attachments in
             let s = Stage.make()
             stage.addChild(s)
+            let bird = self.bird ?? Bird()
+            self.bird = bird
             stage.addChild(bird.root)
             #if DEBUG
             if UserDefaults.standard.bool(forKey: "birdpreview") { bird.preview(at: [0.36, 1.42, -0.55]) }
@@ -165,6 +168,7 @@ struct ImmersiveView: View {
 struct HUDView: View {
     let hud: HUD
     @State private var armed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 14) {
@@ -205,8 +209,17 @@ struct HUDView: View {
                 .font(DuskType.hero(56))
                 .foregroundStyle(Color.duskInk)
                 .shadow(color: .duskShadow, radius: 8)
+                .shadow(color: Color(Theme.gold).opacity(hud.cue.isEmpty ? 0 : 0.55), radius: 18)
                 .frame(height: 66)
                 .contentTransition(.numericText())
+                // Each new cue springs in: 1 to 1.22 and back with a small overshoot. Off under Reduce Motion.
+                .keyframeAnimator(initialValue: CGFloat(1), trigger: hud.cue) { view, scale in
+                    view.scaleEffect(reduceMotion ? 1 : scale)
+                } keyframes: { _ in
+                    SpringKeyframe(1.22, duration: 0.12, spring: .snappy)
+                    SpringKeyframe(0.96, duration: 0.12, spring: .smooth)
+                    SpringKeyframe(1, duration: 0.18, spring: .smooth)
+                }
         }
         .opacity(hud.visible ? 1 : 0)
         .animation(.easeOut(duration: 0.3), value: hud.visible)
