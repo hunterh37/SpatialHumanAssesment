@@ -8,3 +8,5 @@ Spec index. Each spec states inputs, outputs and done criteria for one area.
 - `dashboard.md` audience view
 
 Open questions go at the bottom of the relevant spec under "Open".
+
+`games/` one spec per minigame plus `design.md` for the shared design system. `score.md` for ScoreKit.

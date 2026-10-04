@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: sample features test ingest app concept-algo
+.PHONY: sample features test ingest app scorekit-test scorekit-synth scorekit-score concept-algo
 
 sample:
 	cd ml && $(PY) -m sha_biomarkers.synth --out ../data/synthetic --n 30
@@ -29,3 +29,14 @@ concept-algo:
 	$(SCOREKIT) score $(CONCEPT_BUILD)/syn/*.json > $(CONCEPT_BUILD)/reports.json
 	$(SCOREKIT) pace $(CONCEPT_BUILD)/hist/*.json > $(CONCEPT_BUILD)/pace.json
 	$(PY) concept/src/gen_algo.py
+
+SK = cd packages/ScoreKit && swift run -c release scorekit
+
+scorekit-test:
+	cd packages/ScoreKit && swift test
+
+scorekit-synth:
+	$(SK) synth --n 40 --out ../../data/synthetic-minigames
+
+scorekit-score:
+	$(SK) score ../../data/synthetic-minigames/*.json
