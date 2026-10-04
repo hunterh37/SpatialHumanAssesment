@@ -20,30 +20,60 @@ Status: hackathon draft, v0.2 (4 October 2026), updated with the 12:27 to 12:37 
 **Result (target).** Two Vision Pros duel side by side. Each player sees their current movement age, and levelling up trains reaction, memory and balance, abilities linked to falls and mortality, moving them toward a younger movement age.
 
 - **Card line (draft):** How old do you move? Two players, two Vision Pros, one 6-minute duel that scores your movement age against published norms.
-- **Adds to v0.1:** the 12:00 brainstorm (head-to-head play, levelling up) and the 12:37 split: Hunter builds the catch game and a hand x-ray, Wilson builds the memory and balance games.
+- **Adds to v0.1:** the 12:00 brainstorm (head-to-head play, levelling up) and the 12:37 split: Hunter and Jason build the reaction game and a hand x-ray; Wilson, Alex and Franco build the memory and balance games; Jess owns the business use case, name and UI/UX; Ben owns the data set.
 - **Movement age** is the player-facing name for the spec's `functional_age` field.
-- **Team:** skylarwooster (idea lead), Hunter, Jess, bw2, Xelaf, franco, Wilson.
+- **Team:** Jason and Hunter (idea leads; it is their Vision Pro work), with Jess, Wilson, Ben, Alex and Franco.
 
 ## ELI5: how it works
 
-You and a friend play four quick games in Vision Pro. The headset times your reactions, measures how far you reach and how steady you stay, and checks what you remember. We match your scores against published results from people of every age, and the age you match is your movement age. Play again, get better, and watch it drop.
+You play. The headset watches. We compare you with people of every age. The picture explainer is also a page: `docs/eli5/index.html`.
 
-![One loop: play, measure, compare, level up](docs/eli5/movement-age-loop.svg)
+**1. Two players, two headsets.** You and a friend each wear a Vision Pro and play the same games side by side.
+
+![Two players, two headsets](docs/eli5/duel.svg)
+
+**2. Four quick games.** Each game checks one thing your body or brain does every day. Both balance games keep your feet on the floor.
+
+![Four quick games](docs/eli5/games.svg)
+
+**3. The headset watches your head and hands.** That is enough to time you, measure you and check what you remember.
+
+![The headset watches your head and hands](docs/eli5/head-and-hands.svg)
+
+**4. We find the age that matches you.** Scientists measured thousands of people of every age. Where your score lands is your movement age.
 
 ![Your time lands on the age line](docs/eli5/age-curve.svg)
 
+**5. Play again. Get better. Watch it drop.** Each duel saves your movement age, so you can see the number move as you level up.
+
+![One loop: play, measure, compare, level up](docs/eli5/movement-age-loop.svg)
+
 ## Answers to the team to-do list
 
-Proposed answers from the 12:27 to 12:37 team discussion, for the team to confirm.
+Proposed answers from the 12:27 to 12:37 team discussion. Jess owns the name, business use case and UI/UX, so these are starting points for her.
 
 | Question | Proposed answer | Why |
 |---|---|---|
 | Name | **SpatialAge**; alternatives: Movement Age, AgeDuel | It is already the app target in `apps/vision/SpatialAge`, so there is no rename. Check the App Store and trademarks before any launch |
 | Branding | The concept deck look: warm paper, navy ink, blue for go targets, orange for no-go, Helvetica. Hook line: **How old do you move?** | It matches the figures already in the repo, and a question makes no health claim |
-| Target audience | **Clinics first:** patients play in the waiting room and staff see trends between visits. Consumers second, through head-to-head duels | The team already works with clinicians, and one clinic headset serves many patients |
-| Business use case | Waiting-room assessment as a per-clinic subscription, with the duel as the engagement layer that brings patients back | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
+| Target audience | **Everyone:** anyone with a Vision Pro can play and duel friends. Clinics can also offer it, for example to patients in the waiting room | Open to every player, with clinics as an optional channel the team already knows; one clinic headset serves many patients |
+| Business use case | Free to play for everyone, with the duel bringing players back. An optional clinic edition offers waiting-room assessment as a per-clinic subscription | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
 | Final design | Four games in about 6 minutes: Catch the knives (reaction, Hunter), Color dots (memory and decisions, Wilson), Reach and grab plus Hole in the wall (reach and balance in the Wii Fit U style, Wilson, from alex's ideas). Bonus: hand x-ray (Hunter). The result screen shows movement age per game and overall, then level up | It matches the 12:37 split and the ELI5 loop above |
 | Metrics (data) | Catch: reaction and movement time (ms), misses. Color dots: hits, false taps, misses, decision time (ms), head turn (degrees). Reach and grab: furthest object grabbed and head travel (cm). Hole in the wall: pose match, hand drift and head sway during each hold (cm), walls cleared. Per session: movement age per game and overall, valid trial rate | These fields go into the session schema; norm sources are in the Movement Age engine table |
+
+## Team and ownership
+
+Jason and Hunter lead the idea; it is their Vision Pro work.
+
+| Person | Role | Owns |
+|---|---|---|
+| Jason | Idea lead | Works with Hunter: reaction game, the `mini-catalog` app shell, hand x-ray |
+| Hunter | Idea lead | Reaction game, the `mini-catalog` app shell, hand x-ray, with Jason |
+| Jess | Team | Business use case, name, UI/UX |
+| Wilson | Team | Memory and balance games, PRD and research |
+| Alex | Team | Memory and balance games; designed Reach and grab and Hole in the wall |
+| Franco | Team | Memory and balance games |
+| Ben | Team | The data set |
 
 ## Problem
 
@@ -61,13 +91,13 @@ The link is association, not proof: no trial shows that raising these scores low
 
 ## Users and personas
 
-Clinics come first: patients play in the waiting room and staff see trends. Consumers come second, through head-to-head duels at home.
+Anyone can play: players duel friends wherever they have a Vision Pro. Clinics can also offer it to patients if they'd like.
 
 | Persona | Who | Job to be done | What they get |
 |---|---|---|---|
-| Clinic patient (primary) | Adult waiting for an appointment | While I wait, I want a quick game that shows how my reaction, memory and balance are doing | A movement age per game and progress since the last visit |
-| Clinic staff (buyer) | Clinicians and front-desk staff | Get a repeatable movement check without extra appointment time | Trends between visits, never a diagnosis |
-| Player (consumer) | Adult who duels a friend at home | When I play a friend, I want to see whose movement age is younger and keep improving | Round wins, levels, a movement age |
+| Player (primary) | Adult who duels a friend anywhere | When I play a friend, I want to see whose movement age is younger and keep improving | Round wins, levels, a movement age |
+| Clinic patient (optional) | Adult waiting for an appointment | While I wait, I want a quick game that shows how my reaction, memory and balance are doing | A movement age per game and progress since the last visit |
+| Clinic staff (optional buyer) | Clinicians and front-desk staff | Get a repeatable movement check without extra appointment time | Trends between visits, never a diagnosis |
 | Operator (hack day) | Team member running sessions | Start a duel fast and link sessions without names | Participant codes; age, sex and handedness entry; a consent screen |
 | Audience (hack day) | Sundai voters | Follow the duel live | The AirPlay mirror plus the live dashboard |
 
@@ -99,14 +129,14 @@ A duel is a set of short games in mixed reality. Both players run the same games
 | Game | Metric | What players do | What the headset measures | Owner |
 |---|---|---|---|---|
 | Warm-up | None | One unscored practice pass per game | Nothing scored | Each game's owner |
-| Catch the knives | Reaction | Catch knives as they fall | Movement onset and catch time, using the [simple reaction](specs/tasks/simple-reaction.md) timing rules | Hunter |
-| Color dots | Memory and decisions | Colored dots appear around the room; tap the ones you were shown and skip the rest | Taps and skips, decision time, how far you look around | Wilson |
-| Reach and grab | Reach and mobility | Feet planted, reach out and tap to pick up virtual objects placed farther and farther away; leaning is fine, stepping is not | Furthest object grabbed and head travel, in cm. Reaching farther means moving more freely | Wilson |
-| Hole in the wall | Balance and stability | A wall with a cutout moves toward you; strike the pose and hold it still until the wall passes; move and you hit the wall | Pose match, hand drift and head sway during each hold, walls cleared | Wilson |
-| Hand x-ray | Demo | A separate app that shows an x-ray view of your own hand | Hand skeleton from hand tracking | Hunter |
+| Catch the knives | Reaction | Catch knives as they fall | Movement onset and catch time, using the [simple reaction](specs/tasks/simple-reaction.md) timing rules | Hunter, Jason |
+| Color dots | Memory and decisions | Colored dots appear around the room; tap the ones you were shown and skip the rest | Taps and skips, decision time, how far you look around | Wilson, Alex, Franco |
+| Reach and grab | Reach and mobility | Feet planted, reach out and tap to pick up virtual objects placed farther and farther away; leaning is fine, stepping is not | Furthest object grabbed and head travel, in cm. Reaching farther means moving more freely | Wilson, Alex, Franco |
+| Hole in the wall | Balance and stability | A wall with a cutout moves toward you; strike the pose and hold it still until the wall passes; move and you hit the wall | Pose match, hand drift and head sway during each hold, walls cleared | Wilson, Alex, Franco |
+| Hand x-ray | Demo | A separate app that shows an x-ray view of your own hand | Hand skeleton from hand tracking | Hunter, Jason |
 | Chair sprint, one-leg hold | Strength, balance | Not built today | Reps from head height; hold time | Unassigned |
 
-- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. Wilson's Color dots, Reach and grab and Hole in the wall games land on it as PRs. Reach and grab and Hole in the wall are alex's ideas, and his Freeze idea (move and you get caught) becomes the hold rule inside Hole in the wall.
+- **Where the code goes:** Hunter shares a `mini-catalog` branch with the app shell that holds the games. The Color dots, Reach and grab and Hole in the wall games (Wilson, Alex and Franco) land on it as PRs. Reach and grab and Hole in the wall are alex's ideas, and his Freeze idea (move and you get caught) becomes the hold rule inside Hole in the wall.
 - **Head-to-head:** two headsets in sync, or one headset taken in turns (open question). The same hardware for both players cancels device latency between them.
 - **Levelling:** each duel earns XP. Each metric shows change against the player's own first session, and only changes larger than test-retest noise count.
 - **Safe balance:** both balance games keep both feet on the floor, so players find their limits before a fall. The design reference is the [Wii Fit U balance games](https://www.youtube.com/watch?v=ybKOF1_yLZg): players steer by shifting their weight. With no balance board, the headset's head position stands in for the center of balance; head position and force-plate sway agree only moderately to well, so the game calibrates on this headset.
@@ -203,12 +233,16 @@ Movement age is a game score against published norms. It is not a biological age
 
 ## Architecture and ownership
 
-Data flow is in `specs/architecture.md`: each headset posts one session file to the ingest service on the laptop (port 8787), which scores it with `ml` and streams results to the dashboard. Whether the two headsets sync through SharePlay is an open question. Owners are proposed until the team confirms them.
+Data flow is in `specs/architecture.md`: each headset posts one session file to the ingest service on the laptop (port 8787), which scores it with `ml` and streams results to the dashboard. Whether the two headsets sync through SharePlay is an open question. Owners are proposed until the team confirms them. Hunter's merged catalog already holds Pendulum, Spark, Gate, Constellation and Orbit (`specs/games/`).
+
+![Each headset sends one session file; the laptop scores it and drives the dashboard](docs/prd/architecture.png)
 
 | Area | Path | Spec | Owner (proposed) |
 |---|---|---|---|
-| App shell (`mini-catalog`), catch game, hand x-ray, two-player sync | `apps/vision` | `specs/tasks/*`, `specs/architecture.md` | Hunter |
-| Color dots, Reach and grab, Hole in the wall | `apps/vision` | New specs needed | Wilson |
+| App shell (`mini-catalog`), reaction game, hand x-ray, two-player sync | `apps/vision` | `specs/tasks/*`, `specs/architecture.md` | Hunter, Jason |
+| Color dots, Reach and grab, Hole in the wall | `apps/vision` | `specs/games/` | Wilson, Alex, Franco |
+| Name, business use case, UI/UX | `apps/vision/SpatialAge/Sources/Catalog`, `Design` | `specs/games/design.md` | Jess |
+| Data set | `data/` | `specs/age-model.md` | Ben |
 | Session contract | `packages/schema` | `specs/session-schema.md` | Shared |
 | Features, cited norms, movement age | `ml` | `specs/features.md`, `specs/age-model.md` | Wilson |
 | Ingest service | `services/ingest` | `specs/architecture.md` | Open |
@@ -216,9 +250,53 @@ Data flow is in `specs/architecture.md`: each headset posts one session file to 
 
 The schema is the contract between all areas. Changing it needs a version bump and a note in `specs/session-schema.md`.
 
+## Build resources
+
+Open-source code that makes the games look and feel real, checked through the GitHub API on 4 October 2026. Rebuild Wii Sports-style mechanics from scratch; never copy Nintendo's assets or code.
+
+| Resource | What it gives us | Use it for |
+|---|---|---|
+| [Dicyanin packages](https://github.com/hunterh37/DicyaninPackages) (Hunter, about 40, mostly MIT) | Hunter's visionOS toolkit | Everything below; ask Hunter what is already in the app |
+| [DicyaninHandTracking](https://github.com/hunterh37/DicyaninHandTracking), [DicyaninHandGesture](https://github.com/hunterh37/DicyaninHandGesture), [DicyaninGrabbableObject](https://github.com/hunterh37/DicyaninGrabbableObject) | Hand tracking, gesture detection, grabbable objects | Reach and grab, Catch |
+| [DicyaninMultiPeer](https://github.com/hunterh37/DicyaninMultiPeer), [DicyaninSharePlay](https://github.com/hunterh37/DicyaninSharePlay) | Game state synced across headsets in one room | Head-to-head duels |
+| [RealityHD](https://github.com/hunterh37/RealityHD), [DicyaninRagdoll](https://github.com/hunterh37/DicyaninRagdoll), [DicyaninSceneReconstruction](https://github.com/hunterh37/DicyaninSceneReconstruction) | Photoreal props and scenes, ragdoll physics, collisions with the real room | Realism |
+| [DicyaninMockHandTracking](https://github.com/hunterh37/DicyaninMockHandTracking), [DicyaninSimulatorInput](https://github.com/hunterh37/DicyaninSimulatorInput) | Simulated hand input | Testing without a headset |
+| [HandVector](https://github.com/XanderXu/HandVector) (202 stars, MIT) | Hand-pose similarity scoring and simulator hand-tracking tests | Hole in the wall pose matching |
+| [HandGesture](https://github.com/johnhaney/HandGesture) (44 stars, MIT) | Semantic gestures from hand tracking | Swings and throws |
+| [visionOS_30Days](https://github.com/satoshi0212/visionOS_30Days) (2,236 stars, MIT) | 30 small visionOS demos: particles, physics, hand tracking | Fast effects |
+| Apple samples: [Happy Beam](https://developer.apple.com/documentation/visionos/happybeam), [Swift Splash](https://developer.apple.com/documentation/visionos/swift-splash), [BOT-anist](https://developer.apple.com/documentation/visionos/bot-anist) | Apple's own visionOS games | Reference patterns |
+| [awesome-visionOS](https://github.com/tomkrikorian/awesome-visionOS) (377 stars, updated June 2026) | Maintained resource list | Anything else |
+
+Most of the realism comes from RealityKit itself: grounding shadows, image-based lighting, physics bodies and spatial audio.
+
+**From Ben's landscape** (`research/bw2_vision_pro_health_games_landscape_and_gaps.html`): none of the apps listed are open source, so none can be forked. Spatial Boxing Pro is Hunter's own (Veep LLC), so its code is ours to reuse. The one forkable base is Stanford's [ResearchKit](https://github.com/StanfordBDHG/ResearchKit) under a BSD-style license: its core runs on visionOS for consent and surveys, while its active tasks (reaction time, range of motion, the nine-hole peg test) are iOS-only, so we port their protocols, not their code.
+
+## Design system
+
+Jess and Alex own the look. Every game already takes its colors from `Theme.swift` and its feedback from five shared micro-interactions (`specs/games/design.md`), so re-skinning all eight games is one token edit, not eight game edits.
+
+| Token | Meaning | Today | Proposed: yellow on black | Contrast on black |
+|---|---|---|---|---|
+| ink | Sky and background | #0B0F17 | #0A0A0A | n/a |
+| go | Touch it | #2F6BFF (4.3:1 on ink) | #FFD23F yellow | 13.7:1 |
+| nogo | Leave it | #FF7A3D | #FF4D6D red-pink, plus a spiky shape | 6.2:1 |
+| memory | Catch and recall items | #FFC83D | #F6F4EF white glow | 18.0:1 |
+| follow | Moving targets | #14B8A6 | #14B8A6 | 8.0:1 |
+| mute | At rest, missed | #8A8F99 | #8A8F99 | 6.1:1 |
+
+- **One object family:** spheres to touch, rounded cubes to grab, rings to hold, all with the same glowing rim.
+- **Never color alone:** no-go targets also change shape, which keeps yellow and orange-red apart for color-blind players.
+- **One module frame:** every game opens with the same intro card (title, one instruction, a ghost-hands demo from Hunter's DicyaninGestureTipGhostHands) and ends on the same results card with its movement age.
+- **Type:** SF Pro for the HUD, for legibility; Barlow Condensed for titles if the team wants the sports feel UI/UX Pro Max recommends.
+- **Motion:** 150 to 300 ms with spring easing; exits faster than entrances; respect Reduce Motion.
+
+UI/UX Pro Max recommends an immersive pattern with a vibrant, block-based style: a dark ground, bold high-contrast accents and visible game progress. The yellow-on-black palette fits that and keeps every token above 4.5:1.
+
 ## Hack-day plan
 
 Times are Boston time and stay targets until the team confirms them.
+
+![The card goes live at 19:45, after 20 or more sessions are collected](docs/prd/timeline.png)
 
 | Time | Milestone |
 |---|---|

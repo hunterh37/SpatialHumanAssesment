@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" role="img" aria-labelledby="eli5-duel-title eli5-duel-desc" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <title id="eli5-duel-title">Two players, two headsets</title>
+  <desc id="eli5-duel-desc">Two players in Vision Pro headsets reach for floating targets between them.</desc>
+  <rect width="1200" height="640" fill="#f6f4ef"/>
+  <text x="48" y="64" font-size="14" fill="#8a8f99" font-weight="700" letter-spacing="3">ELI5 · STEP 1</text>
+  <text x="48" y="100" font-size="32" fill="#1b2430" font-weight="700">Two players, two headsets</text>
+  <text x="48" y="132" font-size="16" fill="#8a8f99">You and a friend each wear a Vision Pro and play the same games side by side.</text>
+  <rect x="48" y="160" width="1104" height="440" rx="16" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+  <svg x="120" y="180" width="960" height="400" viewBox="0 0 600 220">
+        <g fill="none" stroke="#1b2430" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M56 212 Q56 148 120 148 Q184 148 184 212"/>
+          <circle cx="120" cy="92" r="36"/>
+          <path d="M416 212 Q416 148 480 148 Q544 148 544 212"/>
+          <circle cx="480" cy="92" r="36"/>
+          <path d="M172 176 L244 132"/>
+          <path d="M428 176 L356 148"/>
+        </g>
+        <rect x="104" y="76" width="56" height="24" rx="12" fill="#1b2430"/>
+        <rect x="440" y="76" width="56" height="24" rx="12" fill="#1b2430"/>
+        <circle cx="248" cy="130" r="8" fill="#1b2430"/>
+        <circle cx="352" cy="148" r="8" fill="#1b2430"/>
+        <circle cx="300" cy="72" r="20" fill="#2f6bff"/>
+        <circle cx="262" cy="128" r="14" fill="#2f6bff" opacity="0.85"/>
+        <circle cx="338" cy="150" r="14" fill="#ff7a3d"/>
+        <g stroke="#2f6bff" stroke-width="3" stroke-linecap="round" fill="none">
+          <path d="M300 36 V44"/><path d="M332 48 L326 54"/><path d="M268 48 L274 54"/>
+        </g>
+      </svg>
+</svg>
