@@ -83,7 +83,7 @@ final class ReachGrabGame: Minigame {
         cube.orientation = simd_quatf(angle: ctx.rig.yaw - Float(azimuth * .pi / 180), axis: [0, 1, 0])
         ctx.layer.addChild(cube)
         live = cube
-        ctx.micro.appear(cube)
+        ctx.micro.appear(cube, announce: true)
         // Spawn time: the first frame the cube is in the scene.
         _ = await ctx.clock.next()
         let spawn = ctx.now
