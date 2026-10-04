@@ -13,7 +13,7 @@ public enum OrbitMetrics: MetricExtractor {
 
     struct TrialResult { var rms, onTarget, lag, gain: Double; var n: Int }
 
-    public static func extract(_ session: Session) -> (metrics: [Measurement], quality: TrialQuality) {
+    public static func extract(_ session: Session) -> (metrics: [MetricValue], quality: TrialQuality) {
         var q = TrialQuality()
         var results: [TrialResult] = []
         for trial in session.scored(.pursuit).flatMap(\.pursuitTrials) where q.count(gapMs: trial.trackingGapMs, limit: maxGapMs) {
@@ -21,10 +21,10 @@ public enum OrbitMetrics: MetricExtractor {
         }
         guard !results.isEmpty else { return ([], q) }
         let n = results.reduce(0) { $0 + $1.n }
-        func pooled(_ id: MetricID, _ f: (TrialResult) -> Double) -> Measurement {
+        func pooled(_ id: MetricID, _ f: (TrialResult) -> Double) -> MetricValue {
             let xs = results.map(f)
             let sem = Stats.sd(xs).map { $0 / Double(xs.count).squareRoot() }
-            return Measurement(id, Stats.mean(xs)!, n: n, sem: sem)
+            return MetricValue(id, Stats.mean(xs)!, n: n, sem: sem)
         }
         return ([
             pooled(.pursuitRMS) { $0.rms * 100 },

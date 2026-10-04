@@ -2,7 +2,7 @@
 public enum ConstellationMetrics: MetricExtractor {
     public static let game = Game.constellation
 
-    public static func extract(_ session: Session) -> (metrics: [Measurement], quality: TrialQuality) {
+    public static func extract(_ session: Session) -> (metrics: [MetricValue], quality: TrialQuality) {
         var q = TrialQuality()
         let trials = session.scored(.corsi).flatMap(\.corsiTrials)
         for _ in trials { _ = q.count(gapMs: 0) }
@@ -11,9 +11,9 @@ public enum ConstellationMetrics: MetricExtractor {
         let correct = trials.filter(\.correct)
         let span = correct.map(\.span).max() ?? 0
         var out = [
-            Measurement(.corsiSpan, Double(span), n: trials.count, sem: 0.5),
+            MetricValue(.corsiSpan, Double(span), n: trials.count, sem: 0.5),
             // Total score = span x number of correct sequences (Kessels et al. 2008).
-            Measurement(.corsiTotal, Double(span * correct.count), n: trials.count),
+            MetricValue(.corsiTotal, Double(span * correct.count), n: trials.count),
         ]
         let gaps = correct.flatMap { t -> [Double] in
             guard let taps = t.tapT, taps.count > 1 else { return [] }

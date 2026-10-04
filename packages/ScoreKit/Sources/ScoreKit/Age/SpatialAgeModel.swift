@@ -33,7 +33,7 @@ public struct SpatialAgeModel: Sendable {
         public var estimate: Estimate
     }
 
-    public func metricAge(_ m: Measurement) -> MetricAge? {
+    public func metricAge(_ m: MetricValue) -> MetricAge? {
         guard let norm = norms[m.id], let domain = norm.domain, norm.tauYears <= maxTauYears else { return nil }
         let age = norm.age(for: m.value, range: ageRange)
         let rate = abs(norm.rate(at: age))
@@ -63,7 +63,7 @@ public struct SpatialAgeModel: Sendable {
         public var spatialAge: Estimate?
     }
 
-    public func estimate(_ metrics: [Measurement], chronologicalAge: Double?) -> Result {
+    public func estimate(_ metrics: [MetricValue], chronologicalAge: Double?) -> Result {
         let ages = metrics.compactMap(metricAge)
         var domains: [Domain: Estimate] = [:]
         for d in Domain.allCases {

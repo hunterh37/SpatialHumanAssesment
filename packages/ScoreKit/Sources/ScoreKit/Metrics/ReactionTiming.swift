@@ -22,9 +22,9 @@ struct ReactionTiming {
 
 extension Array where Element == Double {
     /// Median of the outlier-trimmed values with its standard error.
-    func robustMedian(_ id: MetricID) -> Measurement? {
+    func robustMedian(_ id: MetricID) -> MetricValue? {
         let kept = Stats.trimOutliers(self)
         guard let m = Stats.median(kept) else { return nil }
-        return Measurement(id, m, n: kept.count, sem: Stats.semMedian(kept))
+        return MetricValue(id, m, n: kept.count, sem: Stats.semMedian(kept))
     }
 }

@@ -78,8 +78,8 @@ public struct ScoreEngine: Sendable {
     public var model: SpatialAgeModel
     public init(norms: NormTable = .provisional) { model = SpatialAgeModel(norms: norms) }
 
-    public func measure(_ session: Session) -> (metrics: [Measurement], quality: [Game: TrialQuality]) {
-        var metrics: [Measurement] = []
+    public func measure(_ session: Session) -> (metrics: [MetricValue], quality: [Game: TrialQuality]) {
+        var metrics: [MetricValue] = []
         var quality: [Game: TrialQuality] = [:]
         for ex in Self.extractors {
             let (m, q) = ex.extract(session)
@@ -89,7 +89,7 @@ public struct ScoreEngine: Sendable {
         // Cross-game: decision time = choice RT - simple RT.
         if let c = metrics[.choiceRT], let s = metrics[.reachRT] {
             let sem = (c.sem ?? 0) * (c.sem ?? 0) + (s.sem ?? 0) * (s.sem ?? 0)
-            metrics.append(Measurement(.decisionTime, c.value - s.value, n: min(c.n, s.n),
+            metrics.append(MetricValue(.decisionTime, c.value - s.value, n: min(c.n, s.n),
                                        sem: sem > 0 ? sem.squareRoot() : nil))
         }
         return (metrics.sorted { $0.id < $1.id }, quality)

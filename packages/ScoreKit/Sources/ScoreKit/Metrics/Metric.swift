@@ -85,7 +85,7 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
 }
 
 /// One measured value with the evidence behind it.
-public struct Measurement: Codable, Sendable {
+public struct MetricValue: Codable, Sendable {
     public var id: MetricID
     public var value: Double
     /// Trials that contributed.
@@ -127,9 +127,9 @@ public struct TrialQuality: Codable, Sendable {
 /// A per-game extractor turns scored blocks into measurements.
 public protocol MetricExtractor {
     static var game: Game { get }
-    static func extract(_ session: Session) -> (metrics: [Measurement], quality: TrialQuality)
+    static func extract(_ session: Session) -> (metrics: [MetricValue], quality: TrialQuality)
 }
 
-public extension Array where Element == Measurement {
-    subscript(_ id: MetricID) -> Measurement? { first { $0.id == id } }
+public extension Array where Element == MetricValue {
+    subscript(_ id: MetricID) -> MetricValue? { first { $0.id == id } }
 }

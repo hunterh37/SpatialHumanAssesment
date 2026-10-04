@@ -5,7 +5,7 @@ public enum PendulumMetrics: MetricExtractor {
     public static let anticipationS = 0.10
     public static let g = 9.81
 
-    public static func extract(_ session: Session) -> (metrics: [Measurement], quality: TrialQuality) {
+    public static func extract(_ session: Session) -> (metrics: [MetricValue], quality: TrialQuality) {
         var q = TrialQuality()
         var latencies: [Double] = [], drops: [Double] = []
         var catches = 0, attempts = 0
@@ -22,11 +22,11 @@ public enum PendulumMetrics: MetricExtractor {
                 if let d = trial.dropM { drops.append(d * 100) }
             }
         }
-        var out: [Measurement] = []
+        var out: [MetricValue] = []
         if let m = latencies.robustMedian(.catchLatency) { out.append(m) }
         if let m = drops.robustMedian(.catchDropCm) { out.append(m) }
         if attempts > 0 {
-            out.append(Measurement(.catchRate, Double(catches) / Double(attempts), n: attempts,
+            out.append(MetricValue(.catchRate, Double(catches) / Double(attempts), n: attempts,
                                    sem: GateMetrics.binomialSE(catches, attempts)))
         }
         return (out, q)
