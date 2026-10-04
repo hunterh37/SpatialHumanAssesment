@@ -22,7 +22,7 @@ Status: hackathon draft, v0.2 (4 October 2026), updated with the 12:27 to 12:37 
 - **Card line (draft):** How old do you move? Two players, two Vision Pros, one 6-minute duel that scores your movement age against published norms.
 - **Adds to v0.1:** the 12:00 brainstorm (head-to-head play, levelling up) and the 12:37 split: Hunter builds the catch game and a hand x-ray, Wilson builds the memory and balance games.
 - **Movement age** is the player-facing name for the spec's `functional_age` field.
-- **Team:** skylarwooster (Wilson), Hunter, Jess, bw2, Xelaf, franco.
+- **Team:** Jason and Hunter (idea leads; it is their Vision Pro work), with Jess, Wilson, Ben, Alex and Franco.
 
 ## ELI5: how it works
 
@@ -56,8 +56,8 @@ Proposed answers from the 12:27 to 12:37 team discussion, for the team to confir
 |---|---|---|
 | Name | **SpatialAge**; alternatives: Movement Age, AgeDuel | It is already the app target in `apps/vision/SpatialAge`, so there is no rename. Check the App Store and trademarks before any launch |
 | Branding | The concept deck look: warm paper, navy ink, blue for go targets, orange for no-go, Helvetica. Hook line: **How old do you move?** | It matches the figures already in the repo, and a question makes no health claim |
-| Target audience | **Clinics first:** patients play in the waiting room and staff see trends between visits. Consumers second, through head-to-head duels | The team already works with clinicians, and one clinic headset serves many patients |
-| Business use case | Waiting-room assessment as a per-clinic subscription, with the duel as the engagement layer that brings patients back | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
+| Target audience | **Everyone:** anyone with a Vision Pro can play and duel friends. Clinics can also offer it, for example to patients in the waiting room | Open to every player, with clinics as an optional channel the team already knows; one clinic headset serves many patients |
+| Business use case | Free to play for everyone, with the duel bringing players back. An optional clinic edition offers waiting-room assessment as a per-clinic subscription | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
 | Final design | Four games in about 6 minutes: Catch the knives (reaction, Hunter), Color dots (memory and decisions, Wilson), Reach and grab plus Hole in the wall (reach and balance in the Wii Fit U style, Wilson, from alex's ideas). Bonus: hand x-ray (Hunter). The result screen shows movement age per game and overall, then level up | It matches the 12:37 split and the ELI5 loop above |
 | Metrics (data) | Catch: reaction and movement time (ms), misses. Color dots: hits, false taps, misses, decision time (ms), head turn (degrees). Reach and grab: furthest object grabbed and head travel (cm). Hole in the wall: pose match, hand drift and head sway during each hold (cm), walls cleared. Per session: movement age per game and overall, valid trial rate | These fields go into the session schema; norm sources are in the Movement Age engine table |
 
@@ -77,13 +77,13 @@ The link is association, not proof: no trial shows that raising these scores low
 
 ## Users and personas
 
-Clinics come first: patients play in the waiting room and staff see trends. Consumers come second, through head-to-head duels at home.
+Anyone can play: players duel friends wherever they have a Vision Pro. Clinics can also offer it to patients if they'd like.
 
 | Persona | Who | Job to be done | What they get |
 |---|---|---|---|
-| Clinic patient (primary) | Adult waiting for an appointment | While I wait, I want a quick game that shows how my reaction, memory and balance are doing | A movement age per game and progress since the last visit |
-| Clinic staff (buyer) | Clinicians and front-desk staff | Get a repeatable movement check without extra appointment time | Trends between visits, never a diagnosis |
-| Player (consumer) | Adult who duels a friend at home | When I play a friend, I want to see whose movement age is younger and keep improving | Round wins, levels, a movement age |
+| Player (primary) | Adult who duels a friend anywhere | When I play a friend, I want to see whose movement age is younger and keep improving | Round wins, levels, a movement age |
+| Clinic patient (optional) | Adult waiting for an appointment | While I wait, I want a quick game that shows how my reaction, memory and balance are doing | A movement age per game and progress since the last visit |
+| Clinic staff (optional buyer) | Clinicians and front-desk staff | Get a repeatable movement check without extra appointment time | Trends between visits, never a diagnosis |
 | Operator (hack day) | Team member running sessions | Start a duel fast and link sessions without names | Participant codes; age, sex and handedness entry; a consent screen |
 | Audience (hack day) | Sundai voters | Follow the duel live | The AirPlay mirror plus the live dashboard |
 

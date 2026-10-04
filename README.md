@@ -26,6 +26,8 @@ Five Vision Pro minigames (Pendulum, Spark, Gate, Constellation, Orbit) that mea
 **Action.** A shared session schema, the visionOS minigame catalog, ScoreKit for scoring, and research-backed norms, built by PR on this repo.
 **Result (target).** Two Vision Pros duel side by side; each player sees a movement age and can level up toward a younger one.
 
+**Team:** Jason and Hunter (idea leads), with Jess, Wilson, Ben, Alex and Franco.
+
 The full plan, sources and guardrails are in [PRD.md](PRD.md); the picture explainer is `docs/eli5/index.html`.
 
 ## Repo layout
