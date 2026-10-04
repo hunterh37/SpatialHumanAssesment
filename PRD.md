@@ -1,4 +1,6 @@
-# Spatial Human Assessment PRD
+# BetterYears Age PRD
+
+Product name: **BetterYears Age**, chosen on Oct 4. The repo (`SpatialHumanAssesment`) and code name (`SpatialAge`) stay as they are.
 
 Status: hackathon draft, v0.2 (4 October 2026), updated with the 12:27 to 12:37 team decisions. Builds on v0.1; its outputs, stretch goals, privacy rules, risks and workstreams are kept below. Concept deck: `concept/SpatialReactionMemory_Concept.pdf`.
 
@@ -54,7 +56,7 @@ Proposed answers from the 12:27 to 12:37 team discussion. Jess owns the name, bu
 
 | Question | Proposed answer | Why |
 |---|---|---|
-| Name | **SpatialAge**; alternatives: Movement Age, AgeDuel | It is already the app target in `apps/vision/SpatialAge`, so there is no rename. Check the App Store and trademarks before any launch |
+| Name | **BetterYears Age** (decided Oct 4; Jess's label on the results screen). SpatialAge stays the code name | The app's display name and the dashboard title use it (PR #21); code identifiers stay `SpatialAge`. Check the App Store and trademarks before any launch |
 | Branding | The concept deck look: warm paper, navy ink, blue for go targets, orange for no-go, Helvetica. Hook line: **How old do you move?** | It matches the figures already in the repo, and a question makes no health claim |
 | Target audience | **Everyone:** anyone with a Vision Pro can play and duel friends. Clinics can also offer it, for example to patients in the waiting room | Open to every player, with clinics as an optional channel the team already knows; one clinic headset serves many patients |
 | Business use case | Free to play for everyone, with the duel bringing players back. An optional clinic edition offers waiting-room assessment as a per-clinic subscription | Repeat visits give the trend that one test cannot. If clinicians use scores for care decisions, the product moves toward FDA device rules, so keep it framed as wellness and check with counsel |
@@ -310,7 +312,7 @@ Most of the realism comes from RealityKit itself: grounding shadows, image-based
 
 ## Design system
 
-Jess and Alex own the look. Alex's branding deck (`concept/Branding (1).pdf`) is the brief, and Hunter's Dusk theme (`Theme.swift`, `concept/SpatialAge_Dusk_Design_Spec.pdf`, `specs/games/design.md`) builds it: Dusk tokens, glass components, a sunset stage and a dashboard. Every game takes its colors from `Theme.swift` and its feedback from five shared micro-interactions, so a re-skin is one token edit, not eight game edits. The results screen calls the score the BetterYears Age, so the final name is Jess's call.
+Jess and Alex own the look. Alex's branding deck (`concept/Branding (1).pdf`) is the brief. Alex's Dusk design spec v1.0 (`concept/SpatialAge_Dusk_Design_Spec.pdf`, written after the deck) turns it into rules: charcoal glass with cream text and a peach primary button, never bright white panels. Hunter's Dusk theme (`Theme.swift`, `concept/SpatialAge_Dusk_Design_Spec.pdf`, `specs/games/design.md`) builds it: Dusk tokens, glass components, a sunset stage and a dashboard. Every game takes its colors from `Theme.swift` and its feedback from five shared micro-interactions, so a re-skin is one token edit, not eight game edits. The results screen calls the score the BetterYears Age, so the final name is Jess's call.
 
 **Brand brief (Alex's deck):**
 
@@ -389,8 +391,9 @@ No names. A random participant code links sessions. Data stays on the operator l
 
 **Open questions**
 
-- [ ] Confirm the proposed name, branding, audience and business use case above
-- [ ] Menus: the brief says white with black text, while Dusk ships dark glass with light text. Jess and Alex pick one
+- [x] Name: BetterYears Age
+- [x] Menus: charcoal glass with cream text, per Alex's Dusk spec v1.0
+- [ ] Confirm the audience and business use case above
 - [ ] Music: which Suno plan, since the right to use generated tracks depends on the plan
 - [ ] Who integrates Dusk Meadow into `Stage.make()`, and on whose machine it builds
 - [ ] Two headsets in sync through SharePlay, or one headset taken in turns?
