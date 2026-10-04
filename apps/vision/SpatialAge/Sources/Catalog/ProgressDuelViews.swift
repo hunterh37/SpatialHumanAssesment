@@ -146,7 +146,7 @@ struct DuelView: View {
             }
             HStack(spacing: Dusk.Layout.spacing) {
                 panel(title: "Player 1", code: model.participant.code) {
-                    Text("Age \(Int(model.participant.ageYears))").duskSecondary()
+                    Text("Age \(Int(model.participant.ageYears))").monospacedDigit().duskSecondary()
                 }
                 panel(title: "Player 2", code: second.code) {
                     AgeStepper(age: $second.ageYears)

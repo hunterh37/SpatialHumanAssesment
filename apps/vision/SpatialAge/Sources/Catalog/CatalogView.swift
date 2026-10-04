@@ -1,7 +1,7 @@
 import ScoreKit
 import SwiftUI
 
-/// Games tab (Dusk spec section 7): title, "Play all", and a 4 x 2 grid of the eight games.
+/// Games tab (Dusk spec section 7): centered title and primary "Play all" above a 4 x 2 grid of the eight games.
 /// A card opens that game's intro.
 struct GamesView: View {
     @Environment(AppModel.self) private var model
@@ -12,10 +12,10 @@ struct GamesView: View {
             GameIntroView(game: game, start: start)
                 .transition(.opacity)
         } else {
-            VStack(alignment: .leading, spacing: 28) {
-                HStack(alignment: .firstTextBaseline) {
+            VStack(spacing: 16) {
+                // The one primary action on this screen sits on the center line, under the title.
+                VStack(spacing: 8) {
                     Text(DuskCopy.gamesTitle).font(DuskType.title)
-                    Spacer()
                     Button("Play all") { start(model.games) }.buttonStyle(.duskPrimary)
                 }
                 if let notice = model.notice { DuskChip(text: notice) }
@@ -27,28 +27,36 @@ struct GamesView: View {
                 }
                 Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity)
             .transition(.opacity)
         }
     }
 }
 
+/// One game: glyph, title, one instruction line, uppercase measures label. Lifts on gaze.
+/// Fixed height, sized for three lines of instruction and three of label, so the grid reads as a clean 4 x 2
+/// and the two rows fit the 800 pt window.
 struct GameCard: View {
+    static let height: CGFloat = 272
     let game: Game
     let open: () -> Void
 
     var body: some View {
         Button(action: open) {
-            VStack(alignment: .leading, spacing: 10) {
-                GameGlyph(game: game).frame(height: 88)
+            VStack(alignment: .leading, spacing: 6) {
+                GameGlyph(game: game).frame(height: 84)
                 Text(game.duskTitle).font(.title3)
                 Text(game.duskInstruction).font(.callout).duskSecondary()
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 DuskLabel(game.duskMeasures)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(18)
-            .frame(maxWidth: .infinity, minHeight: 260, alignment: .topLeading)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(height: Self.height)
             .contentShape(.rect(cornerRadius: Dusk.Layout.cardRadius))
         }
         .buttonStyle(.plain)
@@ -57,8 +65,10 @@ struct GameCard: View {
     }
 }
 
-/// Game intro (Dusk spec section 7): back, measures label, title, one line, primary "Start", practice toggle,
-/// "Before you start" side panel, tertiary "Skip this game".
+/// Game intro (Dusk spec section 7): back icon, measures label, title, one line, then the centered primary
+/// "Start", the practice toggle and tertiary "Skip this game"; "Before you start" sits in a side panel.
+/// "Practice round first" is `AppModel.practiceFirst` (on by default). `ImmersiveView` passes it to
+/// `Director`, which runs the existing unscored familiarization block before the scored one when it is on.
 struct GameIntroView: View {
     @Environment(AppModel.self) private var model
     let game: Game
@@ -66,24 +76,29 @@ struct GameIntroView: View {
 
     var body: some View {
         @Bindable var model = model
-        HStack(alignment: .top, spacing: 40) {
-            VStack(alignment: .leading, spacing: 18) {
-                Button("Back", systemImage: "chevron.left") { close() }.buttonStyle(.duskIcon)
-                DuskLabel(game.duskMeasures).padding(.top, 8)
-                Text(game.duskTitle).font(DuskType.title)
-                Text(game.duskInstruction).font(.title3).duskSecondary()
-                    .fixedSize(horizontal: false, vertical: true)
-                GameGlyph(game: game).frame(width: 160, height: 96)
+        HStack(alignment: .center, spacing: 40) {
+            VStack(spacing: Dusk.Layout.spacing) {
+                HStack {
+                    Button("Back", systemImage: "chevron.left") { close() }.buttonStyle(.duskIcon)
+                    Spacer(minLength: 0)
+                }
                 Spacer(minLength: 0)
+                VStack(spacing: 12) {
+                    DuskLabel(game.duskMeasures)
+                    Text(game.duskTitle).font(DuskType.title)
+                    Text(game.duskInstruction).font(.title3).duskSecondary()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .multilineTextAlignment(.center)
+                GameGlyph(game: game).frame(width: 160, height: 96)
+                Button("Start") { start([game]) }.buttonStyle(.duskPrimaryLarge)
                 Toggle("Practice round first", isOn: $model.practiceFirst)
                     .toggleStyle(DuskToggleStyle())
                     .frame(maxWidth: 360)
-                HStack(spacing: Dusk.Layout.spacing) {
-                    Button("Start") { start([game]) }.buttonStyle(.duskPrimaryLarge)
-                    Button("Skip this game") { close() }.buttonStyle(.duskTertiary)
-                }
+                Button("Skip this game") { close() }.buttonStyle(.duskTertiary)
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity)
 
             VStack(alignment: .leading, spacing: 18) {
                 DuskLabel("Before you start")

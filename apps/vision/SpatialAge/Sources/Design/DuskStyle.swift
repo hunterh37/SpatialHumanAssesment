@@ -43,8 +43,9 @@ struct DuskEdge<S: InsettableShape>: View {
 enum DuskType {
     /// Hero number: thin, rounded, tabular.
     static func hero(_ size: CGFloat = 112) -> Font { .system(size: size, weight: .light, design: .rounded).monospacedDigit() }
-    static let title = Font.largeTitle.weight(.regular)
-    static let screenTitle = Font.title.weight(.regular)
+    /// Titles carry numbers too ("Level 3", "Round 2 of 4"), so they use tabular figures.
+    static let title = Font.largeTitle.weight(.regular).monospacedDigit()
+    static let screenTitle = Font.title.weight(.regular).monospacedDigit()
     static let body = Font.body
     static let label = Font.caption.weight(.semibold)
     static let data = Font.body.monospacedDigit()
@@ -191,13 +192,15 @@ struct DuskSegmented<T: Hashable>: View {
                         .padding(.horizontal, 18)
                         .frame(minHeight: Dusk.Layout.minHit - 8)
                         .background(selection == value ? Color.duskChipStrong : .clear, in: Capsule())
+                        // The pill stays 52 pt; the 4 pt of track above and below joins the hit area (60 pt).
+                        .padding(.vertical, 4)
                         .contentShape(.capsule)
                 }
                 .buttonStyle(.plain)
                 .hoverEffect(.highlight)
             }
         }
-        .padding(4)
+        .padding(.horizontal, 4)
         .background(Color.duskChip, in: Capsule())
     }
 }
@@ -211,7 +214,7 @@ struct DuskChip: View {
     var body: some View {
         HStack(spacing: 8) {
             Circle().fill(dot).frame(width: 7, height: 7)
-            Text(text).font(.callout.weight(.medium)).foregroundStyle(Color.duskInk)
+            Text(text).font(.callout.weight(.medium)).monospacedDigit().foregroundStyle(Color.duskInk)
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .background(kind == .improved ? Color.duskAccentSoft : Color.duskChip, in: Capsule())
@@ -251,15 +254,19 @@ struct DuskBar: View {
 
 /// Rounds won, or HUD progress. Done = glassInk 75%, current = gold, upcoming = chipStrong.
 struct DuskDots: View {
+    /// Widest the row may get. Long blocks (Gate has 30 trials) shrink the dots and gaps together, so the
+    /// row cannot squeeze the text beside it in the HUD capsule.
+    static let maxWidth: CGFloat = 220
     let total: Int
     let done: Int
     var current = true
     var size: CGFloat = 8
 
     var body: some View {
-        HStack(spacing: size) {
+        let d = min(size, Self.maxWidth / CGFloat(max(2 * total - 1, 1)))
+        HStack(spacing: d) {
             ForEach(0..<max(total, 0), id: \.self) { i in
-                Circle().fill(color(i)).frame(width: size, height: size)
+                Circle().fill(color(i)).frame(width: d, height: d)
             }
         }
         .accessibilityElement()
