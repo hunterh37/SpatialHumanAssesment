@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: sample features test ingest app showcase scorekit-test scorekit-synth scorekit-score concept-algo
+.PHONY: sample features test ingest app showcase scorekit-test scorekit-synth scorekit-score concept-algo kdm-matrix kdm
 
 sample:
 	cd ml && $(PY) -m sha_biomarkers.synth --out ../data/synthetic --n 30
@@ -43,3 +43,18 @@ scorekit-score:
 
 showcase:
 	$(PY) showcase/src/build.py
+
+# KDM age: raw sessions -> metric matrix (ScoreKit) -> ages (ml). SESSIONS defaults to what ingest saved.
+SESSIONS ?= data/sessions
+KDM_DIR = data/kdm
+
+kdm-matrix:
+	cd packages/ScoreKit && swift build -c release
+	mkdir -p $(KDM_DIR)
+	$(SCOREKIT) matrix $(SESSIONS)/*.json > $(KDM_DIR)/matrix.csv
+	@echo "$(KDM_DIR)/matrix.csv"
+
+kdm: kdm-matrix
+	cd ml && $(PY) -m sha_biomarkers.kdm ../$(KDM_DIR)/matrix.csv > ../$(KDM_DIR)/ages.csv
+	@echo "$(KDM_DIR)/ages.csv"
+

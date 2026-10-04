@@ -14,7 +14,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "pattern": "^0\\.[1234]\\.\\d+$"
+      "pattern": "^0\\.[12345]\\.\\d+$"
     },
     "session_id": {
       "type": "string"
@@ -52,6 +52,22 @@
             "right",
             "ambi"
           ]
+        },
+        "height_cm": {
+          "type": "number",
+          "minimum": 50,
+          "maximum": 250
+        },
+        "weight_kg": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 300
+        },
+        "posture": {
+          "enum": [
+            "standing",
+            "seated"
+          ]
         }
       }
     },
@@ -66,8 +82,22 @@
         },
         "app_version": {
           "type": "string"
+        },
+        "device_id": {
+          "type": "string"
         }
       }
+    },
+    "mode": {
+      "enum": [
+        "full",
+        "single",
+        "duel"
+      ]
+    },
+    "prior_sessions": {
+      "type": "integer",
+      "minimum": 0
     },
     "blocks": {
       "type": "array",
