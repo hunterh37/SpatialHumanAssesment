@@ -184,7 +184,7 @@ final class ReachGrabGame: Minigame {
         ctx.layer.addChild(creature)
         live.append(creature)
         Tone.play(.creature, on: creature, gain: -6)
-        ctx.cheer("Freeze!", hold: Self.creatureTime)
+        ctx.cheer("Freeze", hold: Self.creatureTime)
 
         let hand = ctx.nearestTip(to: cube)?.hand ?? ctx.dominant
         _ = await ctx.clock.next()
@@ -205,7 +205,7 @@ final class ReachGrabGame: Minigame {
         live.removeAll { $0 === creature }
         ctx.micro.dissolve(creature)
         guard !Task.isCancelled else { return nil }
-        ctx.cheer("Go!", hold: 0.6)
+        ctx.cheer("Go", hold: 0.6)
         let shiftCm = Double(shift) * 100
         return ReachGrabTrial.Freeze(startT: start, endT: end, headSwayCmS: Self.pathRate(head, end - start),
                                      handDriftCm: Self.rms(tips).map { $0 * 100 }, headShiftCm: shiftCm,

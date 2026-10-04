@@ -142,4 +142,62 @@ enum Meshes {
         d.primitives = .triangles(indices)
         return try? MeshResource.generate(from: [d])
     }
+
+    /// Latitude band of a sphere seen from inside, between two elevations in degrees.
+    static func skyBand(radius: Float, from lo: Float, to hi: Float, segments: Int = 96) -> MeshResource? {
+        let a = lo * .pi / 180, b = hi * .pi / 180
+        return ridgeBetween(radius: radius, segments: segments,
+                            bottom: (radius * cos(a), radius * sin(a)), top: (radius * cos(b), radius * sin(b)))
+    }
+
+    private static func ridgeBetween(radius: Float, segments: Int, bottom: (r: Float, y: Float), top: (r: Float, y: Float)) -> MeshResource? {
+        var positions: [SIMD3<Float>] = [], normals: [SIMD3<Float>] = [], indices: [UInt32] = []
+        for s in 0...segments {
+            let theta = Float(s) / Float(segments) * 2 * .pi
+            let n = SIMD3<Float>(cos(theta), 0, sin(theta))
+            positions += [n * top.r + [0, top.y, 0], n * bottom.r + [0, bottom.y, 0]]
+            normals += [-n, -n]
+        }
+        for s in 0..<UInt32(segments) {
+            let a = 2 * s, b = 2 * s + 1, c = 2 * s + 2, e = 2 * s + 3
+            // Both faces: seen from inside and outside alike.
+            indices += [a, c, b, c, e, b, a, b, c, c, b, e]
+        }
+        var d = MeshDescriptor(name: "band")
+        d.positions = MeshBuffer(positions)
+        d.normals = MeshBuffer(normals)
+        d.primitives = .triangles(indices)
+        return try? MeshResource.generate(from: [d])
+    }
+
+    /// Mountain ridge: a vertical band around the origin at `radius`, seen from inside, from `base` up to a
+    /// height profile `top(theta)`. Theta runs from 0 to 2 pi around +X toward +Z.
+    static func ridge(radius: Float, base: Float = -1, segments: Int = 180, top: (Float) -> Float) -> MeshResource? {
+        var positions: [SIMD3<Float>] = [], normals: [SIMD3<Float>] = [], indices: [UInt32] = []
+        for s in 0...segments {
+            let theta = Float(s) / Float(segments) * 2 * .pi
+            let n = SIMD3<Float>(cos(theta), 0, sin(theta))
+            positions += [n * radius + [0, top(theta), 0], n * radius + [0, base, 0]]
+            normals += [-n, -n]
+        }
+        for s in 0..<UInt32(segments) {
+            let a = 2 * s, b = 2 * s + 1, c = 2 * s + 2, e = 2 * s + 3
+            // Both faces: seen from inside and outside alike.
+            indices += [a, c, b, c, e, b, a, b, c, c, b, e]
+        }
+        var d = MeshDescriptor(name: "ridge")
+        d.positions = MeshBuffer(positions)
+        d.normals = MeshBuffer(normals)
+        d.primitives = .triangles(indices)
+        return try? MeshResource.generate(from: [d])
+    }
+
+    /// Flat ellipse in the XY plane, facing +Z.
+    static func ellipse(width: Float, height: Float, segments: Int = 40) -> MeshResource? {
+        let poly = (0..<segments).map { i -> SIMD2<Float> in
+            let a = Float(i) / Float(segments) * 2 * .pi
+            return [cos(a) * width / 2, sin(a) * height / 2]
+        }
+        return flat([poly])
+    }
 }

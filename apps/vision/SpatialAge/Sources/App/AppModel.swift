@@ -9,10 +9,36 @@ final class AppModel {
     static let immersiveID = "Tasks"
     static let windowID = "Main"
 
-    enum Phase { case consent, participant, catalog, running, results }
+    enum Phase { case onboarding, catalog, running, results }
+    /// Leading tab ornament on the catalog phase (Dusk spec section 6).
+    enum Tab: Hashable { case home, games, progress, duel }
 
-    var phase: Phase = .consent
-    var participant = Participant(code: Participant.randomCode(), ageYears: 30)
+    /// Two players on one headset, four rounds, one game per round. A round goes to the higher game score.
+    struct Duel {
+        static let rounds = 4
+        static let games: [Game] = [.pendulum, .spark, .gate, .dots]
+        var players: [Participant]
+        var wins = [0, 0]
+        var round = 1
+        /// Whose turn it is within the round, 0 or 1.
+        var turn = 0
+        var scores: [Double?] = [nil, nil]
+        var game: Game { Self.games[(round - 1) % Self.games.count] }
+        var over: Bool { round > Self.rounds }
+    }
+
+    var phase: Phase
+    /// Saved setup answers. Nil until first-run setup finishes on this headset.
+    var profile: PlayerProfile?
+    /// Setup opens on its review screen when reached from Home's "Edit setup".
+    var editingSetup = false
+    var tab: Tab = .home
+    /// Game whose intro screen is open on the Games tab.
+    var intro: Game?
+    /// Dusk intro toggle "Practice round first". On by default.
+    var practiceFirst = true
+    var duel: Duel?
+    var participant: Participant
     var queue: [Game] = Game.catalog
     var recorder: SessionRecorder?
     var ingestURL = URL(string: "http://192.168.1.10:8787")!
@@ -22,6 +48,8 @@ final class AppModel {
 
     /// Hand anatomy overlay, toggled from the main window. Works during games and on its own.
     var anatomyMode: RealHandAnatomy.Mode = .off
+    /// Sky Plank height viewer (RealityHD rooftop-plank), toggled from the main window. Full immersion, no scoring.
+    var skyPlank = false
     /// True while the immersive space is open (set by ImmersiveView).
     var spaceOpen = false
     /// True while the main window is on screen. The window closes while games run so it never covers the stage.
@@ -31,7 +59,36 @@ final class AppModel {
     /// Shown on the catalog after a session was ended before the last game.
     var notice: String?
 
+    init() {
+        let saved = PlayerProfile.load()
+        profile = saved
+        participant = saved?.participant ?? Participant(code: Participant.randomCode(), ageYears: 30)
+        phase = saved == nil ? .onboarding : .catalog
+    }
+
+    /// The eight Dusk games, minus the standing-only ones for seated players.
+    var games: [Game] {
+        let skips = profile?.posture.skips ?? []
+        return Game.dusk.filter { !skips.contains($0) }
+    }
+
+    /// Saves the setup answers and opens Home.
+    func completeOnboarding(_ p: PlayerProfile) {
+        p.save()
+        profile = p
+        participant = p.participant
+        editingSetup = false
+        tab = .home
+        phase = .catalog
+    }
+
+    func editSetup() {
+        editingSetup = true
+        phase = .onboarding
+    }
+
     func start(_ games: [Game]) {
+        skyPlank = false
         queue = games
         recorder = SessionRecorder(participant: participant)
         report = nil
@@ -52,6 +109,10 @@ final class AppModel {
     func finishSession() async {
         guard phase == .running, let session = recorder?.finish() else { return }
         recorder = nil
+        guard session.blocks.contains(where: { !$0.familiarization }) else {
+            abortSession("Every game was skipped. Nothing was saved.")
+            return
+        }
         let engine = ScoreEngine()
         report = engine.score(session)
         do { try SessionStore.save(session) } catch { uploadStatus = "save failed: \(error.localizedDescription)" }
@@ -62,7 +123,7 @@ final class AppModel {
             .map(engine.score)
             .compactMap { r in r.spatialAge.map { PaceOfAging.Point(date: r.startedAt, spatialAge: $0, sd: r.spatialAgeSD ?? 5) } }
         pace = PaceOfAging.estimate(points)
-        phase = .results
+        if duel != nil { advanceDuel(score: report?.games.first(where: \.played)?.score) } else { phase = .results }
 
         do {
             _ = try await IngestClient(baseURL: ingestURL).upload(session)
@@ -72,20 +133,66 @@ final class AppModel {
         }
     }
 
-    /// Back to the catalog for the same participant.
-    func playAgain() {
-        notice = nil
+    /// Scored sessions for the current participant on this device, oldest first.
+    func history() -> [ScoreReport] {
+        let engine = ScoreEngine()
+        return SessionStore.all()
+            .filter { $0.participant.code == participant.code }
+            .map(engine.score)
+            .sorted { $0.startedAt < $1.startedAt }
+    }
+
+    func startDuel(second: Participant) {
+        duel = Duel(players: [participant, second])
+        tab = .duel
+    }
+
+    /// Records the finished turn, awards the round once both players have played, and hands over.
+    private func advanceDuel(score: Double?) {
+        guard var d = duel else { return }
+        d.scores[d.turn] = score
+        if d.turn == 0 {
+            d.turn = 1
+        } else {
+            let a = d.scores[0] ?? -.infinity, b = d.scores[1] ?? -.infinity
+            if a != b { d.wins[a > b ? 0 : 1] += 1 }
+            d.round += 1
+            d.turn = 0
+            d.scores = [nil, nil]
+        }
+        duel = d
+        participant = d.players[d.turn]
+        tab = .duel
         phase = .catalog
     }
 
-    /// Full reset to the consent screen with a fresh participant code.
+    func endDuel() {
+        if let first = duel?.players.first { participant = first }
+        duel = nil
+        tab = .home
+    }
+
+    /// Back to the catalog for the same participant.
+    func playAgain() {
+        notice = nil
+        tab = .games
+        phase = .catalog
+    }
+
+    /// Full reset to first-run setup with a fresh participant code. Clears the saved profile.
     func nextParticipant() {
         recorder = nil
+        PlayerProfile.clear()
+        profile = nil
+        editingSetup = false
         participant = Participant(code: Participant.randomCode(), ageYears: 30)
         report = nil
         pace = nil
         uploadStatus = nil
         notice = nil
-        phase = .consent
+        duel = nil
+        intro = nil
+        tab = .home
+        phase = .onboarding
     }
 }

@@ -23,7 +23,9 @@ struct Micro {
     }
 
     /// 1. Breathe. Call every frame with the time since spawn.
+    /// Off under Reduce Motion (Dusk spec section 8).
     func breathe(_ e: Entity, t: Double) {
+        guard !UIAccessibility.isReduceMotionEnabled else { e.scale = .one; return }
         let s = 1 + Theme.Motion.breatheDepth * Float(sin(2 * .pi * Theme.Motion.breatheHz * t))
         e.scale = .init(repeating: s)
     }

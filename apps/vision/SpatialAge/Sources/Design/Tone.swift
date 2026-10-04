@@ -17,7 +17,26 @@ enum Tone {
         case rustle
         /// Scary Balance creature: a low hum with a slow wobble, about 2 s.
         case creature
+        /// Songbird call, variant 0 to 3. Swept sines, finch-like.
+        case chirp(Int)
+        /// Songbird trill while petted.
+        case trill
+        /// Songbird alarm when startled off the hand.
+        case alarm
+        /// Wing whirr at takeoff.
+        case whirr
     }
+
+    /// One swept syllable: start and length in seconds, start and end frequency in Hz, relative gain.
+    typealias Syllable = (start: Double, length: Double, from: Double, to: Double, gain: Double)
+
+    private static let calls: [[Syllable]] = [
+        [(0, 0.07, 3600, 5200, 1), (0.10, 0.09, 5000, 3400, 0.9)],
+        [(0, 0.045, 3200, 4300, 1), (0.075, 0.045, 3300, 4400, 0.9), (0.15, 0.045, 3400, 4500, 0.85),
+         (0.225, 0.05, 4600, 3600, 0.8)],
+        [(0, 0.11, 3000, 5600, 1)],
+        [(0, 0.06, 5200, 4000, 1), (0.09, 0.06, 5100, 3900, 0.85)],
+    ]
 
     private static var cache: [Cue: AudioFileResource] = [:]
 
@@ -33,7 +52,12 @@ enum Tone {
         var partials: [(Double, Double)]
         var duration: Double
         var noise = 0.0, sustain = false
+        var song: [Syllable]?
         switch cue {
+        case .chirp(let k): song = calls[abs(k) % calls.count]; partials = []; duration = 0
+        case .trill: song = (0..<9).map { (Double($0) * 0.045, 0.032, 4300, 4900, 1) }; partials = []; duration = 0
+        case .alarm: song = (0..<3).map { (Double($0) * 0.06, 0.04, 6000, 3800, 1) }; partials = []; duration = 0
+        case .whirr: partials = [(120, 0.05)]; duration = 0.32; noise = 1
         case .pop(let step):
             let f = 660 * pow(2, Double(min(max(step, 0), 6)) / 6)
             partials = [(f, 1), (f * 2, 0.25)]; duration = 0.09
@@ -49,7 +73,8 @@ enum Tone {
         }
         let url = FileManager.default.temporaryDirectory.appending(path: "tone-\(abs(cue.hashValue)).wav")
         do {
-            try wav(partials: partials, duration: duration, noise: noise, sustain: sustain).write(to: url)
+            let data = song.map(Self.song) ?? wav(partials: partials, duration: duration, noise: noise, sustain: sustain)
+            try data.write(to: url)
             let r = try AudioFileResource.load(contentsOf: url)
             cache[cue] = r
             return r
@@ -85,6 +110,35 @@ enum Tone {
             var v = Int16(max(-1, min(1, s)) * Double(Int16.max)).littleEndian
             withUnsafeBytes(of: &v) { pcm.append(contentsOf: $0) }
         }
+        return riff(pcm, rate: rate)
+    }
+
+    /// Bird call: exponential frequency sweeps with a soft second harmonic, normalized to 0.8 peak.
+    static func song(_ syllables: [Syllable]) -> Data {
+        let rate = 44_100.0
+        let duration = (syllables.map { $0.start + $0.length }.max() ?? 0) + 0.02
+        let n = Int(rate * duration)
+        var samples = [Double](repeating: 0, count: n)
+        for s in syllables {
+            var phase = 0.0
+            let i0 = Int(s.start * rate), count = max(Int(s.length * rate), 1)
+            for k in 0..<count where i0 + k < n {
+                let u = Double(k) / Double(count)
+                phase += 2 * .pi * s.from * pow(s.to / s.from, u) / rate
+                samples[i0 + k] += (sin(phase) + 0.18 * sin(2 * phase)) * pow(sin(.pi * u), 0.7) * s.gain
+            }
+        }
+        let peak = max(samples.map(abs).max() ?? 1, 1e-6)
+        var pcm = Data(capacity: n * 2)
+        for x in samples {
+            var v = Int16(max(-1, min(1, x / peak * 0.8)) * Double(Int16.max)).littleEndian
+            withUnsafeBytes(of: &v) { pcm.append(contentsOf: $0) }
+        }
+        return riff(pcm, rate: rate)
+    }
+
+    /// RIFF header for 16-bit mono PCM.
+    private static func riff(_ pcm: Data, rate: Double) -> Data {
         var h = Data()
         func u32(_ v: UInt32) { var x = v.littleEndian; withUnsafeBytes(of: &x) { h.append(contentsOf: $0) } }
         func u16(_ v: UInt16) { var x = v.littleEndian; withUnsafeBytes(of: &x) { h.append(contentsOf: $0) } }

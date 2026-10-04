@@ -2,82 +2,57 @@ import RealKit
 import ScoreKit
 import SwiftUI
 
-/// Main window. Consent, participant, catalog, running, results, then back to catalog or consent.
-/// Opens the immersive space. `ImmersiveView` closes itself when the phase leaves `.running`.
+/// Main window. First-run setup (consent and player stats), then Home / Games / Progress / Duel under the leading tab ornament,
+/// running, results. Opens the immersive space. `ImmersiveView` closes itself when the phase leaves `.running`.
+/// Dusk spec sections 4 to 7: charcoal glass, cream type, one primary action per screen.
 struct ContentView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
     @Environment(\.dismissWindow) private var dismissWindow
-    @State private var confirmStartOver = false
 
     var body: some View {
         @Bindable var model = model
         Group {
             switch model.phase {
-            case .consent:
-                VStack(spacing: 24) {
-                    Text("Spatial Age").font(.largeTitle.weight(.semibold))
-                    Text("Five short reach and memory games, about 7 minutes in full immersion. No names are stored. Not a medical test.")
-                        .multilineTextAlignment(.center).frame(maxWidth: 520)
-                    Button("I agree") { model.phase = .participant }
-                        .buttonStyle(.borderedProminent)
-                }
-            case .participant:
-                VStack(spacing: 20) {
-                    Form {
-                        TextField("Code", text: $model.participant.code)
-                        Stepper("Age \(Int(model.participant.ageYears))", value: $model.participant.ageYears, in: 10...110)
-                        Picker("Sex", selection: $model.participant.sex) {
-                            ForEach(Participant.Sex.allCases, id: \.self) { Text($0.rawValue) }
-                        }
-                        Picker("Handedness", selection: $model.participant.handedness) {
-                            ForEach(Participant.Handedness.allCases, id: \.self) { Text($0.rawValue) }
-                        }
-                    }
-                    HStack {
-                        Button("Back") { model.phase = .consent }
-                        Button("Continue") { model.phase = .catalog }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(model.participant.code.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
+            case .onboarding:
+                if model.editingSetup, let p = model.profile {
+                    OnboardingView(start: .review, draft: OnboardingDraft(p))
+                } else {
+                    OnboardingView()
                 }
             case .catalog:
-                VStack(alignment: .leading, spacing: 18) {
-                    HStack {
-                        Button("Participant", systemImage: "chevron.left") { model.phase = .participant }
-                        Spacer()
-                        Text(model.participant.code).monospaced().foregroundStyle(.secondary)
-                        Button("Start over") { confirmStartOver = true }
+                TabView(selection: $model.tab) {
+                    Tab("Home", systemImage: "house", value: AppModel.Tab.home) { screen { HomeView() } }
+                    Tab("Games", systemImage: "square.grid.2x2", value: AppModel.Tab.games) {
+                        screen { GamesView(start: start) }
                     }
-                    if let notice = model.notice {
-                        Label(notice, systemImage: "info.circle")
-                            .font(.callout).foregroundStyle(.secondary)
+                    Tab("Progress", systemImage: "chart.line.uptrend.xyaxis", value: AppModel.Tab.progress) {
+                        screen { ProgressTab() }
                     }
-                    CatalogView { games in start(games) }
+                    Tab("Duel", systemImage: "person.2", value: AppModel.Tab.duel) { screen { DuelView(start: start) } }
                 }
-            case .running:
-                RunningView { model.abortSession() }
+                .tint(Color.duskAccent)
+            case .running: screen { RunningView { model.abortSession() } }
             case .results:
-                ResultsView {
-                    model.nextParticipant()
-                } again: {
-                    model.playAgain()
+                screen {
+                    ResultsView {
+                        model.nextParticipant()
+                    } again: {
+                        model.playAgain()
+                    }
                 }
             }
         }
-        .padding(40)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .top) { AnatomyToggle().padding(.top, 20) }
-        .animation(.easeInOut(duration: 0.25), value: model.phase)
-        .confirmationDialog("Start over with a new participant?", isPresented: $confirmStartOver) {
-            Button("Start over", role: .destructive) { model.nextParticipant() }
-        }
+        .foregroundStyle(Color.duskInk)
+        .tint(Color.duskAccentStrong)
+        .preferredColorScheme(.dark)
+        .animation(Dusk.Motion.spring, value: model.phase)
         .onAppear { model.windowOpen = true }
         #if DEBUG
-        // Screenshot hook: SA_DEMO=<game> skips consent and runs that one game.
+        // Screenshot hook: SA_DEMO=<game> skips setup and runs that one game.
         .task {
-            guard model.phase == .consent, let raw = ProcessInfo.processInfo.environment["SA_DEMO"],
+            guard let raw = ProcessInfo.processInfo.environment["SA_DEMO"],
                   let game = Game(rawValue: raw) else { return }
             start([game])
         }
@@ -87,6 +62,14 @@ struct ContentView: View {
             // Space closed by the system or the Digital Crown mid-session.
             if !open, model.phase == .running { model.abortSession() }
         }
+    }
+
+    /// One glass window surface per screen: 46 pt corners, charcoal tint, edge and highlight.
+    private func screen(@ViewBuilder _ content: () -> some View) -> some View {
+        content()
+            .padding(48)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .duskGlass()
     }
 
     private func start(_ games: [Game]) {
@@ -106,17 +89,117 @@ struct ContentView: View {
     }
 }
 
-/// Shown in the window while the games run. Also visible inside the full space.
+/// Age in whole years: minus and plus icon buttons around a tabular number.
+struct AgeStepper: View {
+    @Binding var age: Double
+    var range: ClosedRange<Double> = 10...110
+
+    var body: some View {
+        HStack(spacing: 16) {
+            Button("Younger", systemImage: "minus") { age = max(range.lowerBound, age - 1) }
+                .buttonStyle(.duskIcon)
+                .disabled(age <= range.lowerBound)
+            Text("\(Int(age))").font(.title2.weight(.light)).monospacedDigit().frame(minWidth: 52)
+            Button("Older", systemImage: "plus") { age = min(range.upperBound, age + 1) }
+                .buttonStyle(.duskIcon)
+                .disabled(age >= range.upperBound)
+        }
+    }
+}
+
+// MARK: - Home
+
+struct HomeView: View {
+    @Environment(AppModel.self) private var model
+    @State private var confirmStartOver = false
+    @State private var history: [ScoreReport] = []
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 40) {
+            VStack(spacing: 20) {
+                DuskLabel(DuskCopy.brand)
+                Text(DuskCopy.homeTitle).font(DuskType.title).multilineTextAlignment(.center)
+                Text(DuskCopy.homeLine)
+                    .duskSecondary()
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 520)
+                VStack(spacing: Dusk.Layout.spacing) {
+                    Button("Start a duel") { model.tab = .duel }.buttonStyle(.duskPrimaryLarge)
+                    Button("Play one game") { model.tab = .games }.buttonStyle(.duskSecondaryLarge)
+                }
+                .padding(.top, 12)
+                if let notice = model.notice { DuskChip(text: notice) }
+            }
+            .frame(maxWidth: .infinity)
+
+            VStack(alignment: .leading, spacing: Dusk.Layout.spacing) {
+                lastAgeCard
+                viewersCard
+                HStack {
+                    Button("Edit setup") { model.editSetup() }.buttonStyle(.duskTertiary)
+                    Spacer()
+                    Button("Start over") { confirmStartOver = true }.buttonStyle(.duskTertiary)
+                }
+            }
+            .frame(width: 330)
+        }
+        .confirmationDialog("Start over with a new participant?", isPresented: $confirmStartOver) {
+            Button("Start over", role: .destructive) { model.nextParticipant() }
+        }
+        .task(id: model.participant.code) { history = model.history() }
+    }
+
+    private var lastAgeCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                DuskLabel("Last movement age")
+                Spacer()
+                Text(model.participant.code).font(DuskType.data.monospaced()).duskSecondary()
+            }
+            if let last = history.last?.spatialAge {
+                Text(String(format: "%.1f", last)).font(DuskType.hero(64))
+                if history.count > 1, let first = history.first?.spatialAge {
+                    let delta = last - first
+                    DuskChip(text: String(format: "%+.1f years since first visit", delta),
+                             kind: delta < 0 ? .improved : .neutral)
+                }
+            } else {
+                Text("–").font(DuskType.hero(64))
+                Text("Play a game to see it here.").font(.callout).duskSecondary()
+            }
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .duskCard()
+    }
+
+    private var viewersCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DuskLabel("Viewers")
+            AnatomyToggle()
+            SkyPlankToggle()
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .duskCard()
+    }
+}
+
+// MARK: - Running
+
+/// Shown in the window while the games run. The window normally hides during play.
 struct RunningView: View {
     @Environment(AppModel.self) private var model
     let end: () -> Void
     @State private var confirm = false
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Playing").font(.title)
-            Text(model.queue.map(\.title).joined(separator: " · ")).foregroundStyle(.secondary)
-            Button("End session", systemImage: "xmark", role: .destructive) { confirm = true }
+        VStack(spacing: 18) {
+            DuskLabel("Playing")
+            Text(model.queue.map(\.duskTitle).joined(separator: " · "))
+                .font(DuskType.screenTitle).multilineTextAlignment(.center)
+            Button("End session", systemImage: "xmark") { confirm = true }
+                .buttonStyle(.duskSecondary)
                 .padding(.top, 12)
         }
         .confirmationDialog("End the session? Progress is not saved.", isPresented: $confirm) {
@@ -125,8 +208,10 @@ struct RunningView: View {
     }
 }
 
-/// Main-window control for the hand anatomy overlay. Opens the immersive space in passthrough when
-/// no game is running, and closes it again when the overlay is switched off.
+// MARK: - Viewers
+
+/// Hand anatomy overlay control. Opens the immersive space in passthrough when no game is running,
+/// and closes it again when the overlay is switched off.
 struct AnatomyToggle: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
@@ -134,19 +219,12 @@ struct AnatomyToggle: View {
 
     var body: some View {
         @Bindable var model = model
-        HStack(spacing: 14) {
-            Image(systemName: "hand.raised.fingers.spread")
-            Picker("Hand anatomy", selection: $model.anatomyMode) {
-                Text("Off").tag(RealHandAnatomy.Mode.off)
-                Text("X-ray").tag(RealHandAnatomy.Mode.xray)
-                Text("Muscle").tag(RealHandAnatomy.Mode.muscle)
-                Text("Both").tag(RealHandAnatomy.Mode.both)
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 360)
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Hand anatomy", systemImage: "hand.raised.fingers.spread").font(.callout).duskSecondary()
+            DuskSegmented(selection: $model.anatomyMode, options: [
+                (RealHandAnatomy.Mode.off, "Off"), (.xray, "X-ray"), (.muscle, "Muscle"), (.both, "Both"),
+            ])
         }
-        .padding(.horizontal, 20).padding(.vertical, 12)
-        .background(.regularMaterial, in: Capsule())
         .task {
             // Launch argument `-anatomy xray|muscle|both` opens the viewer directly (demos, captures).
             if let m = UserDefaults.standard.string(forKey: "anatomy").flatMap(RealHandAnatomy.Mode.init(rawValue:)), m != .off {
@@ -164,6 +242,40 @@ struct AnatomyToggle: View {
             if case .error = await openImmersiveSpace(id: AppModel.immersiveID) { model.spaceOpen = false }
         } else if mode == .off, model.spaceOpen, model.phase != .running {
             await dismissImmersiveSpace()
+        }
+    }
+}
+
+/// Sky Plank height viewer switch. Opens the space in full immersion (or lifts an open passthrough
+/// space to full); switching off closes it via ImmersiveView.
+struct SkyPlankToggle: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+
+    var body: some View {
+        @Bindable var model = model
+        Toggle(isOn: $model.skyPlank) {
+            Label("Sky Plank", systemImage: "building.2")
+        }
+        .toggleStyle(DuskToggleStyle())
+        .disabled(model.phase == .running)
+        .task {
+            // Launch argument `-skyplank YES` opens the viewer directly (demos, captures).
+            if UserDefaults.standard.bool(forKey: "skyplank") { model.skyPlank = true }
+        }
+        .onChange(of: model.skyPlank) { _, on in
+            guard on else { return }
+            model.passthrough = false
+            guard !model.spaceOpen else { return }
+            model.spaceOpen = true
+            Task {
+                switch await openImmersiveSpace(id: AppModel.immersiveID) {
+                case .opened: break
+                default:
+                    model.spaceOpen = false
+                    model.skyPlank = false
+                }
+            }
         }
     }
 }

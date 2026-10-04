@@ -24,6 +24,10 @@ final class HUD {
     var visible = false
     /// Position in the queue, e.g. "2 / 5". Empty for a single game.
     var step = ""
+    /// False from the countdown to the end of a block: clouds freeze and the bird keeps to its far ring.
+    var ambient = true
+    /// Ends the current game only. Set by the Director while a game runs; the HUD shows its skip control.
+    var skip: (() -> Void)?
     /// Large center text: countdown digits and short praise. Never a number from play.
     var cue = ""
     /// World positions of the HUD panel and the exit button. Set at each recenter.
@@ -63,10 +67,10 @@ final class GameContext {
         placeHUD()
     }
 
-    /// HUD and exit button low in front of the participant. Spec: specs/games/design.md, HUD.
+    /// HUD at the top of the view, exit button low, both past arm's reach. Spec: Dusk section 7, In play.
     private func placeHUD() {
         let d = Theme.Layout.distance
-        hud.anchor = rig.world([0, rig.eye - Theme.Layout.hudDrop, -d])
+        hud.anchor = rig.world([0, rig.eye + Theme.Layout.hudRise, -d])
         hud.exitAnchor = rig.world([0, rig.eye - Theme.Layout.exitDrop, -d])
     }
 
@@ -98,8 +102,8 @@ final class GameContext {
     }
 
     func show(_ game: Game, familiarization: Bool, total: Int) {
-        hud.title = game.title
-        hud.line = familiarization ? "Practice. \(game.instruction)" : game.instruction
+        hud.title = game.duskTitle
+        hud.line = familiarization ? "Practice. \(game.duskInstruction)" : game.duskInstruction
         if game.isTimed && !familiarization { hud.line += " You are timed." }
         hud.done = 0
         hud.total = total
@@ -109,6 +113,8 @@ final class GameContext {
 
     /// 3, 2, 1, Go on the HUD, 0.7 s per step, a tock on each digit.
     func countdown() async {
+        // Ambient motion stops at the countdown: the bird leaves the hand before the first trial.
+        hud.ambient = false
         for n in ["3", "2", "1"] where !Task.isCancelled {
             hud.cue = n
             Tone.play(.tock, on: layer, gain: -16)
@@ -120,7 +126,7 @@ final class GameContext {
         if hud.cue == "Go" { hud.cue = "" }
     }
 
-    static let praise = ["Nice!", "Great job!", "Got it!", "Good!", "Well done!"]
+    static let praise = ["Nice.", "Got it.", "Good.", "Well done."]
     private var cueSerial = 0
 
     /// Short praise on the HUD for `hold` seconds. A newer cue replaces it.
