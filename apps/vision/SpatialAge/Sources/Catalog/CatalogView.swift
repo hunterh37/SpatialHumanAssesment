@@ -51,7 +51,11 @@ struct GameGlyph: View {
     let game: Game
 
     var body: some View {
-        Canvas { ctx, size in
+        Canvas { ctx, size in Self.draw(game, &ctx, size) }
+    }
+
+    /// Drawn in a typed function: one closure holding every glyph was too slow for the type checker.
+    static func draw(_ game: Game, _ ctx: inout GraphicsContext, _ size: CGSize) {
             let c = CGPoint(x: size.width / 2, y: size.height / 2)
             func dot(_ p: CGPoint, _ r: CGFloat, _ color: UIColor) {
                 ctx.fill(Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: 2 * r, height: 2 * r)),
@@ -83,7 +87,22 @@ struct GameGlyph: View {
                 }
                 ctx.stroke(path, with: .color(Color(uiColor: Theme.teal).opacity(0.35)), lineWidth: 1)
                 dot(CGPoint(x: c.x + 40 * sin(1.1), y: c.y + 26 * sin(2.2 + 0.6)), 9, Theme.teal)
+            case .reach:
+                var arm = Path(); arm.move(to: CGPoint(x: c.x - 44, y: c.y + 8)); arm.addLine(to: CGPoint(x: c.x + 24, y: c.y - 4))
+                ctx.stroke(arm, with: .color(.white.opacity(0.7)), lineWidth: 1.5)
+                dot(CGPoint(x: c.x - 44, y: c.y + 8), 5, Theme.mute)
+                dot(CGPoint(x: c.x + 36, y: c.y - 6), 10, Theme.gold)
+            case .wall:
+                let wall = CGRect(x: c.x - 46, y: c.y - 28, width: 92, height: 56)
+                ctx.stroke(Path(roundedRect: wall, cornerRadius: 4), with: .color(.white.opacity(0.7)), lineWidth: 1.5)
+                dot(CGPoint(x: c.x - 26, y: c.y - 6), 8, Theme.go)
+                dot(CGPoint(x: c.x + 26, y: c.y - 6), 8, Theme.go)
+            case .dots:
+                for i in 0..<7 {
+                    let a = Double(i) / 6 * .pi
+                    let p = CGPoint(x: c.x - 44 * cos(a), y: c.y + 12 - 26 * sin(a))
+                    dot(p, 6, i % 3 == 0 ? Theme.go : Theme.mute)
+                }
             }
-        }
     }
 }

@@ -84,6 +84,8 @@ public struct Synth {
                                   trials: (0..<n).map { .pursuit(pursuit($0, p, clock: &clock)) })
         case .constellation: return Block(task: .corsi, familiarization: familiarization, seed: seed,
                                           trials: corsi(p, familiarization: familiarization, clock: &clock))
+        // v0.3 games have no synthetic physiology yet; their blocks stay empty so sessions still round-trip.
+        case .reach, .wall, .dots: return Block(task: g.task, familiarization: familiarization, seed: seed, trials: [])
         }
     }
 
@@ -213,8 +215,11 @@ public struct Synth {
         var worstGap = 0.0, gapRun = 0.0
         var t = 0.0
         while t <= duration {
-            let noise = V3(rng.gauss(0, 1), rng.gauss(0, 1), rng.gauss(0, 1)) * (sigma * dt.squareRoot())
-            e = e + (e * (-theta * dt)) + noise
+            // Component-wise on purpose: Xcode 26.2 (Swift 6.2) rejects the V3-operator form of this update.
+            let gx = rng.gauss(0, 1), gy = rng.gauss(0, 1), gz = rng.gauss(0, 1)
+            let scale: Double = sigma * dt.squareRoot()
+            let decay: Double = -theta * dt
+            e = V3(e.x + e.x * decay + gx * scale, e.y + e.y * decay + gy * scale, e.z + e.z * decay + gz * scale)
             let target = path.position(at: t)
             ts.append(start + t); targets.append(target)
             if dropout == 0 && rng.uniform() < 0.0015 { dropout = Int(rng.uniform(2, 6)) }
