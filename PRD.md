@@ -65,15 +65,17 @@ Proposed answers from the 12:27 to 12:37 team discussion. Jess owns the name, bu
 
 Jason and Hunter lead the idea; it is their Vision Pro work.
 
-| Person | Role | Owns |
-|---|---|---|
-| Jason | Idea lead | Works with Hunter: reaction game, the `mini-catalog` app shell, hand x-ray |
-| Hunter | Idea lead | Reaction game, the `mini-catalog` app shell, hand x-ray, with Jason |
-| Jess | Team | Business use case, name, UI/UX |
-| Wilson | Team | Memory and balance games, PRD and research |
-| Alex | Team | Memory and balance games; designed Reach and grab and Hole in the wall |
-| Franco | Team | Memory and balance games |
-| Ben | Team | The data set |
+| Person | Role | Owns | LinkedIn |
+|---|---|---|---|
+| Jason Morris | Idea lead | Works with Hunter: reaction games, the app shell, hand x-ray | [Medical Technology Specialist](https://www.linkedin.com/in/jason-morris-a803294/) |
+| Hunter Harris | Idea lead | Reaction games, the app shell, hand x-ray, with Jason | [Featured iOS / visionOS Engineer - ARKit, RealityKit, SharePlay. 10+ Vision Pro Apps](https://www.linkedin.com/in/hunt3r-harris/) |
+| Jessica Myles | Team | Business use case, name, UI/UX | [MBA Candidate at Harvard Business School · Ex-Doordash, Accenture](https://www.linkedin.com/in/jessica-myles/) |
+| Wilson Wu | Team | Memory and balance games, PRD and research | [Building with AI · Founder, Dubbs Capital · CRO at Snappy · MSCS @ Georgia Tech](https://www.linkedin.com/in/wilson1wu/) |
+| Alex Fu | Team | Memory and balance games; designed Scary Balance and Hole in the Wall; branding and the Games Ideas deck | [Non-Invasive Devices · BU Mechanical Engineering Student, focusing on Human-Machine Interaction and MedTech](https://www.linkedin.com/in/alex-fu-bu/) |
+| Franco | Team | Memory and balance games | To add |
+| Ben | Team | The data set; Vision Pro landscape research | To add |
+
+Headlines are as shown on each LinkedIn profile on 4 October 2026.
 
 ## Problem
 
@@ -124,6 +126,8 @@ Anyone can play: players duel friends wherever they have a Vision Pro. Clinics c
 
 ## Product
 
+**As built (17:00):** the catalog follows Alex's Games Ideas deck: Stick Drop (catch the falling stick), Spatial Memory (the Color dots game), Scary Balance (reach, lean and freeze while a creature watches), Hole in the Wall, and Spatial Tracking (react to sound and light). Gate, Constellation and Orbit still run but are not listed (`specs/games/README.md`). Stick Drop and Spatial Tracking play in a forest clearing, Hole in the Wall on a stone island with a moat, and a yellow canary companion lives in every scene. Ben's idea for a next memory game: hide objects such as a bird, a bottle and a coin in containers, show them for a few seconds, then ask where each one is; it also works with language flashcards.
+
 A duel is a set of short games in mixed reality. Both players run the same games, each game awards a point, and the result screen shows both movement ages. The headset sees the head and both hands only, so every game reads through them (`specs/architecture.md`).
 
 | Game | Metric | What players do | What the headset measures | Owner |
@@ -167,6 +171,8 @@ Movement age combines published age slopes with an anchor measured on this heads
 | Memory | Color-dot recall: hits, false taps, decision time | Not yet searched. Decision time can borrow the choice reaction slope above | Pending |
 
 **Level-up curve:** a metric counts as improved only when it beats the player's own baseline by more than test-retest noise. A Quest 3 reaction task had single-trial ICC 0.80 to 0.88, and mixed and full VR scores differed by up to about 110 ms, so each player is compared in one environment ([source](https://pmc.ncbi.nlm.nih.gov/articles/PMC13568001/)).
+
+**Age model v0.2 (as built):** a Klemera-Doubal estimate in `ml/sha_biomarkers/kdm.py` combines one biomarker per construct, weighted by how strongly each changes with age relative to its noise, with literature priors per entry until event sessions refit them (`specs/age-model.md`). Ben's reference set: Woods 2015 simple reaction time ([PMC4374455](https://pmc.ncbi.nlm.nih.gov/articles/PMC4374455/)), Woods 2015 choice reaction time ([PMC4407573](https://pmc.ncbi.nlm.nih.gov/articles/PMC4407573/)), Deary and Ritchie 2016 processing speed at 70 and 83 ([PMC4796023](https://pmc.ncbi.nlm.nih.gov/articles/PMC4796023/)), Nakhostin-Ansari 2022 functional reach and balance ([PMC9422043](https://pmc.ncbi.nlm.nih.gov/articles/PMC9422043/)), and Chilean functional fitness norms for older adults 2025 ([PMC12209290](https://pmc.ncbi.nlm.nih.gov/articles/PMC12209290/)).
 
 ## Requirements and user stories
 
@@ -272,6 +278,8 @@ Most of the realism comes from RealityKit itself: grounding shadows, image-based
 **From Ben's landscape** (`research/bw2_vision_pro_health_games_landscape_and_gaps.html`): none of the apps listed are open source, so none can be forked. Spatial Boxing Pro is Hunter's own (Veep LLC), so its code is ours to reuse. The one forkable base is Stanford's [ResearchKit](https://github.com/StanfordBDHG/ResearchKit) under a BSD-style license: its core runs on visionOS for consent and surveys, while its active tasks (reaction time, range of motion, the nine-hole peg test) are iOS-only, so we port their protocols, not their code.
 
 ## Design system
+
+**As built:** Hunter implemented the Dusk theme from the team's design spec (`concept/SpatialAge_Dusk_Design_Spec.pdf`, `specs/games/design.md`): Dusk tokens, glass components, a sunset stage and a dashboard. It replaces the yellow-on-black proposal below. The results screen calls the score the BetterYears Age, so the final name is Jess's call.
 
 Jess and Alex own the look. Every game already takes its colors from `Theme.swift` and its feedback from five shared micro-interactions (`specs/games/design.md`), so re-skinning all eight games is one token edit, not eight game edits.
 
