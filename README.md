@@ -1,4 +1,6 @@
-# Spatial Human Assessment
+<p align="center"><img src="docs/brand/betteryears-mark-512.png" width="160" alt="BetterYears Age bird logo"></p>
+
+# BetterYears Age (Spatial Human Assessment)
 
 Five Vision Pro minigames (Pendulum, Spark, Gate, Constellation, Orbit) that measure reaction, reach and spatial memory as a functional aging biomarker. Read `PRD.md`, then the spec for the area you work on in `specs/`. Games: `specs/games/`. Score: `specs/score.md`.
 

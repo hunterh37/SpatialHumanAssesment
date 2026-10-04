@@ -25,6 +25,9 @@ targets:
         product: ScoreKit
       - package: RealityHD
         product: RealityHD
+    settings:
+      base:
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     info:
       path: SpatialAge/Info.plist
       properties:
