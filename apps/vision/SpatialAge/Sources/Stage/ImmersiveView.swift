@@ -7,11 +7,14 @@ import SwiftUI
 struct ImmersiveView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+    @Environment(\.openWindow) private var openWindow
     @State private var clock = FrameClock()
     @State private var hud = HUD()
     @State private var layer = Entity()
     @State private var stage = Entity()
     @State private var anatomy = AnatomyOverlay()
+    @State private var plank = SkyPlank()
+    @State private var bird = Bird()
     @State private var tracker: HandTracker?
     @State private var updates: EventSubscription?
     @State private var game: Task<Void, Never>?
@@ -21,37 +24,54 @@ struct ImmersiveView: View {
         RealityView { content, attachments in
             let s = Stage.make()
             stage.addChild(s)
+            stage.addChild(bird.root)
+            #if DEBUG
+            if UserDefaults.standard.bool(forKey: "birdpreview") { bird.preview(at: [0.36, 1.42, -0.55]) }
+            #endif
             content.add(stage)
             content.add(layer)
+            content.add(plank.root)
             content.add(anatomy.root)
-            if let panel = attachments.entity(for: "hud") {
-                panel.position = [0, 1.75, -1.2]
+            // HUD and exit sit low, past arm's reach. GameContext moves them in front of the participant
+            // at each game start (hud.anchor); until then they wait at a seated default.
+            let panel = attachments.entity(for: "hud")
+            if let panel {
+                panel.position = [0, 0.7, -Theme.Layout.distance]
                 panel.components.set(BillboardComponent())
                 content.add(panel)
             }
-            if let exit = attachments.entity(for: "exit") {
-                // Low and close, below the play area, so a reach never hits it by accident.
-                exit.position = [0, 0.95, -0.75]
+            let exit = attachments.entity(for: "exit")
+            if let exit {
+                exit.position = [0, 0.4, -Theme.Layout.distance]
                 exit.components.set(BillboardComponent())
                 content.add(exit)
             }
             updates = content.subscribe(to: SceneEvents.Update.self) { event in
+                if let a = hud.anchor, panel?.position != a { panel?.position = a }
+                if let a = hud.exitAnchor, exit?.position != a { exit?.position = a }
                 clock.tick(event.deltaTime)
+                Stage.tick(stage, dt: event.deltaTime, ambient: hud.ambient)
+                if stage.isEnabled { bird.update(dt: event.deltaTime, tracker: tracker, ambient: hud.ambient) }
                 anatomy.update(tracker: tracker, dt: event.deltaTime)
             }
         } attachments: {
             Attachment(id: "hud") { HUDView(hud: hud) }
             Attachment(id: "exit") {
                 if model.phase == .running { ExitControl { model.abortSession() } }
+                else if model.skyPlank { ExitControl(title: "Leave the roof") { model.skyPlank = false } }
             }
         }
         // Real hands cover virtual content; hide them while the anatomy overlay replaces them.
         .upperLimbVisibility(model.anatomyMode == .off ? .visible : .hidden)
         .onChange(of: model.anatomyMode, initial: true) { _, m in anatomy.setMode(m) }
-        .onChange(of: model.passthrough, initial: true) { _, mixed in stage.isEnabled = !mixed }
+        .onChange(of: model.passthrough, initial: true) { _, mixed in stage.isEnabled = !mixed && !model.skyPlank }
+        .onChange(of: model.skyPlank, initial: true) { was, on in Task { await syncPlank(on, was: was) } }
         .onAppear { model.spaceOpen = true }
         .onDisappear {
             halt()
+            // Closed by the Digital Crown or the system mid-session: end it and bring the window back.
+            if model.phase == .running { model.abortSession() }
+            showWindow()
             updates?.cancel()
             updates = nil
             model.spaceOpen = false
@@ -61,6 +81,8 @@ struct ImmersiveView: View {
             // With the anatomy overlay on, stay open in passthrough; otherwise close the space.
             guard phase != .running else { return }
             halt()
+            showWindow()
+            if model.skyPlank { return }
             if model.anatomyMode == .off { close() } else { model.passthrough = true }
         }
         .task { await anatomy.prepare() }
@@ -91,7 +113,7 @@ struct ImmersiveView: View {
         await clock.wait(1.5)
         let ctx = GameContext(clock: clock, tracker: t, recorder: recorder, layer: layer, hud: hud,
                               handedness: model.participant.handedness)
-        await Director(ctx: ctx).run(model.queue)
+        await Director(ctx: ctx, practice: model.practiceFirst).run(model.queue)
         // Ended early: the window already shows the catalog. Do not score a partial run.
         guard !Task.isCancelled, model.phase == .running else { return }
         await model.finishSession()
@@ -106,6 +128,31 @@ struct ImmersiveView: View {
         layer.children.removeAll()
     }
 
+    /// Shows the rooftop with the board start under the participant, facing where they face; hides it
+    /// and closes the space (or drops to passthrough for the anatomy overlay) when switched off.
+    private func syncPlank(_ on: Bool, was: Bool) async {
+        if on {
+            stage.isEnabled = false
+            // The hand tracker starts with the space; give it a moment so the board lands under the feet.
+            for _ in 0..<40 where tracker == nil { try? await Task.sleep(for: .milliseconds(50)) }
+            var rig = Rig(head: matrix_identity_float4x4)
+            if let tracker, await tracker.waitForHead() { rig = Rig(head: tracker.head()) }
+            let d = Theme.Layout.distance
+            hud.exitAnchor = rig.world([0, rig.eye - Theme.Layout.exitDrop, -d])
+            await plank.show(at: rig)
+        } else {
+            plank.hide()
+            stage.isEnabled = !model.passthrough
+            guard was, model.spaceOpen, model.phase != .running else { return }
+            if model.anatomyMode == .off { close() } else { model.passthrough = true }
+        }
+    }
+
+    /// Reopens the main window, which was dismissed while the games ran.
+    private func showWindow() {
+        if !model.windowOpen { openWindow(id: AppModel.windowID) }
+    }
+
     private func close() {
         guard !closing else { return }
         closing = true
@@ -113,49 +160,74 @@ struct ImmersiveView: View {
     }
 }
 
-/// Title, one instruction line, a cue line (countdown, praise) and progress dots. No scores during play.
+/// In-play HUD (Dusk spec section 7): a small glass capsule at the top with the game title, one
+/// instruction line, progress dots and skip. Below it a cue line (countdown, short praise). No scores.
 struct HUDView: View {
     let hud: HUD
+    @State private var armed = false
 
     var body: some View {
-        VStack(spacing: 10) {
-            Text(hud.title.uppercased())
-                .font(.system(size: 13, weight: .semibold)).tracking(3)
-                .foregroundStyle(Theme.color(Theme.mute))
-            Text(hud.line)
-                .font(.system(size: 26, weight: .medium))
-                .foregroundStyle(Theme.color(Theme.paper))
-                .multilineTextAlignment(.center)
-            Text(hud.cue)
-                .font(.system(size: 44, weight: .bold)).monospacedDigit()
-                .foregroundStyle(Theme.color(Theme.go))
-                .frame(height: 54)
-                .contentTransition(.numericText())
-            HStack(spacing: 6) {
-                ForEach(0..<max(hud.total, 0), id: \.self) { i in
-                    Circle()
-                        .fill(Theme.color(i < hud.done ? Theme.paper : Theme.mute).opacity(i < hud.done ? 1 : 0.35))
-                        .frame(width: 6, height: 6)
+        VStack(spacing: 14) {
+            HStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 6) {
+                    DuskLabel(hud.title)
+                    Text(hud.line)
+                        .font(.system(size: 24, weight: .regular))
+                        .foregroundStyle(Color.duskInk)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                DuskDots(total: hud.total, done: hud.done, size: 7)
+                if hud.skip != nil {
+                    Button {
+                        if armed { hud.skip?(); armed = false } else { arm() }
+                    } label: {
+                        Label(armed ? "Tap again to skip this game" : "Skip this game", systemImage: "xmark")
+                    }
+                    .buttonStyle(.duskIcon)
+                    .help(armed ? "Tap again to skip" : "Skip this game")
+                    .overlay(alignment: .bottom) {
+                        if armed {
+                            Text("Tap again").font(.caption.weight(.semibold)).foregroundStyle(Color.duskInk)
+                                .fixedSize().offset(y: 26)
+                        }
+                    }
                 }
             }
-        }
-        .frame(width: 560)
-        .overlay(alignment: .topTrailing) {
-            if !hud.step.isEmpty {
-                Text(hud.step).font(.system(size: 13, weight: .semibold)).monospacedDigit()
-                    .foregroundStyle(Theme.color(Theme.mute))
-            }
+            .padding(.leading, 32).padding(.trailing, 14).padding(.vertical, 14)
+            .frame(width: 720)
+            .background(Color.duskGlassStrong, in: Capsule())
+            .glassBackgroundEffect(in: Capsule())
+            .overlay { DuskEdge(shape: Capsule()) }
+
+            Text(hud.cue)
+                .font(DuskType.hero(56))
+                .foregroundStyle(Color.duskInk)
+                .shadow(color: .duskShadow, radius: 8)
+                .frame(height: 66)
+                .contentTransition(.numericText())
         }
         .opacity(hud.visible ? 1 : 0)
         .animation(.easeOut(duration: 0.3), value: hud.visible)
         .animation(.easeOut(duration: 0.2), value: hud.done)
         .animation(.easeOut(duration: 0.15), value: hud.cue)
+        .animation(Dusk.Motion.quick, value: armed)
+    }
+
+    private func arm() {
+        armed = true
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            armed = false
+        }
     }
 }
 
 /// Exit button inside the full space. First tap arms it, second tap within 3 s ends the session,
-/// so a stray reach during a trial cannot end it.
+/// so a stray reach during a trial cannot end it. Secondary capsule on strong glass.
 struct ExitControl: View {
+    var title = "End session"
     let exit: () -> Void
     @State private var armed = false
 
@@ -163,13 +235,12 @@ struct ExitControl: View {
         Button {
             if armed { exit() } else { arm() }
         } label: {
-            Label(armed ? "Tap again to end" : "End session", systemImage: "xmark")
-                .font(.system(size: 15, weight: .medium))
-                .padding(.horizontal, 6)
+            Label(armed ? "Tap again to end" : title, systemImage: "xmark")
         }
-        .tint(armed ? Theme.color(Theme.nogo) : nil)
-        .glassBackgroundEffect()
-        .animation(.easeOut(duration: 0.2), value: armed)
+        .buttonStyle(.duskSecondary)
+        .background(Color.duskGlassStrong, in: Capsule())
+        .glassBackgroundEffect(in: Capsule())
+        .animation(Dusk.Motion.quick, value: armed)
     }
 
     private func arm() {

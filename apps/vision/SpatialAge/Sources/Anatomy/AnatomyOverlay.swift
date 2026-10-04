@@ -17,6 +17,10 @@ final class AnatomyOverlay {
     private var prepared = false
     private(set) var mode: RealHandAnatomy.Mode = .off
     private var demoT: Double = 0
+    /// Time of the last ARKit sample applied per hand.
+    private var lastSample: [Hand: Double] = [:]
+    /// Seconds a hand keeps its last pose after tracking drops before it hides.
+    static let holdS = 0.5
 
     init() {
         RealKitSetup.register()
@@ -47,6 +51,7 @@ final class AnatomyOverlay {
 
     func setMode(_ m: RealHandAnatomy.Mode) {
         mode = m
+        lastSample = [:]
         for h in hands.values { h.setMode(m) }
     }
 
@@ -54,13 +59,20 @@ final class AnatomyOverlay {
         guard mode != .off else { return }
         if let tracker, HandTrackingProvider.isSupported {
             for (side, overlay) in hands {
-                if let pose = tracker.skeleton(side) {
-                    overlay.root.isEnabled = true
-                    overlay.update(pose)
-                } else {
-                    overlay.root.isEnabled = false
-                    overlay.resetSmoothing()
+                // Hold the last pose through short tracking gaps; hiding on every gap made the hands blink.
+                guard let sample = tracker.skeletonSample(side, maxAge: Self.holdS) else {
+                    if overlay.root.isEnabled {
+                        overlay.root.isEnabled = false
+                        overlay.resetSmoothing()
+                    }
+                    lastSample[side] = nil
+                    continue
                 }
+                overlay.root.isEnabled = true
+                // Rebuild soft tissue only on a new ARKit sample, not on every render frame.
+                guard lastSample[side] != sample.t else { continue }
+                lastSample[side] = sample.t
+                overlay.update(sample.pose)
             }
             return
         }

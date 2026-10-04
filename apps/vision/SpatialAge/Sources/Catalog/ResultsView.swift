@@ -1,7 +1,8 @@
 import ScoreKit
 import SwiftUI
 
-/// Session result. Spatial Age first, then the five domains, then the games. Numbers only where they mean something.
+/// Session result (Dusk spec section 7). Movement age first, then the five domains, then the games.
+/// Numbers only where they mean something.
 struct ResultsView: View {
     @Environment(AppModel.self) private var model
     let next: () -> Void
@@ -9,53 +10,55 @@ struct ResultsView: View {
 
     var body: some View {
         if let r = model.report {
-            HStack(alignment: .top, spacing: 48) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("SPATIAL AGE").font(.caption.weight(.semibold)).tracking(3).foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 56) {
+                VStack(alignment: .leading, spacing: 12) {
+                    DuskLabel("Movement age")
                     Text(r.spatialAge.map { String(format: "%.1f", $0) } ?? "–")
-                        .font(.system(size: 112, weight: .semibold, design: .rounded))
+                        .font(DuskType.hero(120))
                         .contentTransition(.numericText())
-                    if let gap = r.ageGap, let chrono = r.chronologicalAge {
-                        Text(String(format: "%+.1f years vs %.0f", gap, chrono))
-                            .font(.title3).foregroundStyle(gap <= 0 ? Theme.color(Theme.teal) : Theme.color(Theme.nogo))
+                    if let gap = r.ageGap, let chrono = r.chronologicalAge, abs(gap) >= 0.05 {
+                        DuskChip(text: String(format: "%.1f years %@ than %.0f", abs(gap), gap < 0 ? "younger" : "older", chrono),
+                                 kind: gap < 0 ? .improved : .neutral)
                     }
                     if let lo = r.spatialAgeLow, let hi = r.spatialAgeHigh {
-                        Text(String(format: "80%% interval %.0f to %.0f", lo, hi)).foregroundStyle(.secondary)
+                        Text(String(format: "80%% interval %.0f to %.0f", lo, hi)).monospacedDigit().duskSecondary()
                     }
                     if let pace = model.pace {
                         Text(String(format: "Pace %.2fx over %d sessions", pace.pace, pace.sessions))
-                            .foregroundStyle(.secondary)
+                            .monospacedDigit().duskSecondary()
                     }
                     if !r.quality.usable {
-                        Text("Low data quality: " + r.quality.flags.joined(separator: ", "))
-                            .font(.footnote).foregroundStyle(Theme.color(Theme.nogo))
+                        DuskChip(text: "Tracking lost: " + r.quality.flags.joined(separator: ", "), kind: .warn)
                     }
-                    Spacer()
-                    HStack {
-                        Button("Play again", action: again)
-                        Button("Next participant", action: next).buttonStyle(.borderedProminent)
+                    Text("A game score, not a medical test.").font(.footnote).duskSecondary()
+                    Spacer(minLength: 0)
+                    HStack(spacing: Dusk.Layout.spacing) {
+                        Button("Play again", action: again).buttonStyle(.duskSecondary)
+                        Button("Next player", action: next).buttonStyle(.duskPrimaryLarge)
                     }
-                    if let status = model.uploadStatus { Text(status).font(.footnote).foregroundStyle(.tertiary) }
+                    if let status = model.uploadStatus { Text(status).font(.footnote).duskSecondary() }
                 }
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 20) {
                     ForEach(r.domains, id: \.domain) { d in
                         DomainBar(title: d.title, score: d.score)
                     }
-                    Divider()
+                    Divider().overlay(Color.duskLine)
                     ForEach(r.games.filter(\.played), id: \.game) { g in
                         HStack {
-                            Text(g.title)
+                            Text(g.game.duskTitle)
                             Spacer()
                             if let id = g.headline, let m = r.metrics.first(where: { $0.id == id }) {
-                                Text(Self.format(m)).monospacedDigit().foregroundStyle(.secondary)
+                                Text(Self.format(m)).font(DuskType.data).duskSecondary()
                             }
                         }
                     }
                 }
-                .frame(width: 380)
+                .padding(26)
+                .frame(width: 420)
+                .duskCard()
             }
         } else {
-            ProgressView()
+            ProgressView().tint(Color.duskAccentStrong)
         }
     }
 
@@ -72,23 +75,15 @@ struct ResultsView: View {
 struct DomainBar: View {
     let title: String
     let score: Double
-    @State private var shown = 0.0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
                 Spacer()
-                Text("\(Int(score.rounded()))").monospacedDigit().foregroundStyle(.secondary)
+                Text("\(Int(score.rounded()))").font(DuskType.data).duskSecondary()
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.1))
-                    Capsule().fill(Theme.color(Theme.paper)).frame(width: geo.size.width * shown / 100)
-                }
-            }
-            .frame(height: 6)
+            DuskBar(fraction: score / 100)
         }
-        .onAppear { withAnimation(.spring(duration: 0.8, bounce: 0.15)) { shown = score } }
     }
 }
