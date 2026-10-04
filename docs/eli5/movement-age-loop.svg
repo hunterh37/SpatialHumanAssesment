@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-labelledby="eli5-loop-title eli5-loop-desc" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <title id="eli5-loop-title">One loop: play, measure, compare, level up</title>
+  <desc id="eli5-loop-desc">Loop of one duel: players play, the headset measures head and hands, scores are compared with published age norms to give a movement age, and players level up and play again; each pass saves the age and XP to the player's record.</desc>
+  <defs>
+    <marker id="eli5-loop-arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#8a8f99"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="800" fill="#f6f4ef"/>
+  <text x="48" y="64" font-size="14" fill="#8a8f99" font-weight="700" letter-spacing="3">ELI5 · FIG A</text>
+  <text x="48" y="100" font-size="32" fill="#1b2430" font-weight="700">One loop: play, measure, compare, level up</text>
+  <text x="48" y="132" font-size="16" fill="#8a8f99">Every duel saves your movement age, so the next duel shows whether it dropped.</text>
+  <rect x="48" y="160" width="1104" height="600" rx="16" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+
+  <!-- ring arrows first, so boxes sit on top -->
+  <g fill="none" stroke="#8a8f99" stroke-width="2">
+    <path d="M720 260.703 A250 250 0 0 1 823.517 368" marker-end="url(#eli5-loop-arrow)"/>
+    <path d="M846.779 440 A250 250 0 0 1 785.137 648" marker-end="url(#eli5-loop-arrow)"/>
+    <path d="M670 720 A250 250 0 0 1 530 720" marker-end="url(#eli5-loop-arrow)"/>
+    <path d="M414.863 648 A250 250 0 0 1 353.221 440" marker-end="url(#eli5-loop-arrow)"/>
+    <path d="M376.483 368 A250 250 0 0 1 480 260.703" marker-end="url(#eli5-loop-arrow)"/>
+  </g>
+  <!-- dashed write-back spokes into the player's record -->
+  <g fill="none" stroke="#8a8f99" stroke-width="1.5" stroke-dasharray="6 5">
+    <path d="M540 648 V528" marker-end="url(#eli5-loop-arrow)"/>
+    <path d="M468 440 V480 Q468 488 476 488 H500" marker-end="url(#eli5-loop-arrow)"/>
+  </g>
+  <rect x="500" y="584" width="28" height="16" rx="2" fill="#ffffff"/>
+  <text x="526" y="597" font-size="12" fill="#8a8f99" font-weight="700" letter-spacing="1" text-anchor="end">AGE</text>
+  <rect x="436" y="456" width="20" height="16" rx="2" fill="#ffffff"/>
+  <text x="454" y="469" font-size="12" fill="#8a8f99" font-weight="700" letter-spacing="1" text-anchor="end">XP</text>
+
+  <!-- stations, clockwise from the top -->
+  <rect x="480" y="192" width="240" height="72" rx="12" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+  <text x="600" y="224" font-size="20" fill="#1b2430" font-weight="700" text-anchor="middle">Play a duel</text>
+  <text x="600" y="248" font-size="16" fill="#8a8f99" text-anchor="middle">2 players, 4 quick games</text>
+
+  <rect x="716" y="368" width="240" height="72" rx="12" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+  <text x="836" y="400" font-size="20" fill="#1b2430" font-weight="700" text-anchor="middle">Headset measures</text>
+  <text x="836" y="424" font-size="16" fill="#8a8f99" text-anchor="middle">time, reach, hold, recall</text>
+
+  <rect x="628" y="648" width="240" height="72" rx="12" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+  <text x="748" y="680" font-size="20" fill="#1b2430" font-weight="700" text-anchor="middle">Compare with norms</text>
+  <text x="748" y="704" font-size="16" fill="#8a8f99" text-anchor="middle">published age tables</text>
+
+  <rect x="332" y="648" width="240" height="72" rx="12" fill="#eaf0ff" stroke="#2f6bff" stroke-width="2.5"/>
+  <text x="452" y="680" font-size="20" fill="#1b2430" font-weight="700" text-anchor="middle">Movement age</text>
+  <text x="452" y="704" font-size="16" fill="#2f6bff" text-anchor="middle">your score, in years</text>
+
+  <rect x="244" y="368" width="240" height="72" rx="12" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+  <text x="364" y="400" font-size="20" fill="#1b2430" font-weight="700" text-anchor="middle">Level up</text>
+  <text x="364" y="424" font-size="16" fill="#8a8f99" text-anchor="middle">train your oldest score</text>
+
+  <!-- hub: the player's record -->
+  <rect x="500" y="432" width="200" height="96" rx="12" fill="#f6f4ef" stroke="#bfa680" stroke-width="1.5"/>
+  <text x="600" y="472" font-size="20" fill="#1b2430" font-weight="700" text-anchor="middle">Your record</text>
+  <text x="600" y="496" font-size="16" fill="#8a8f99" text-anchor="middle">baseline, XP, level</text>
+
+  <text x="48" y="788" font-size="14" fill="#8a8f99">Movement age is a game score against published norms, not a medical test or a biological age.</text>
+</svg>
