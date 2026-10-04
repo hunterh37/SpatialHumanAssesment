@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SpatialAge Onboarding</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@200;300;400&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one charcoal glass window over the Dusk sunset scene, one question per screen; step rail and data spec below. All tokens from SpatialAge Dusk design spec v1.0. */
+:root{
+  --bg:#1B191A; --surface:#262324; --surface2:#2F2B2C; --fg:#F7E9DA; --mute:#A89698; --line:rgba(251,218,180,.13);
+  --accent:#FBDAB4; --accentStrong:#D8AB8B; --onAccent:#252322; --accentSoft:rgba(216,171,139,.20); --accentGlow:rgba(251,218,180,.45); --warn:#FF9A62;
+  --glass:rgba(37,35,34,.52); --glassStrong:rgba(37,35,34,.80); --glassEdge:rgba(251,218,180,.22); --glassHi:rgba(251,218,180,.18); --glassInk:#FBEADA;
+  --chip:rgba(251,218,180,.09); --chipStrong:rgba(251,218,180,.20); --gaze:rgba(251,218,180,.22); --shadow:rgba(0,0,0,.55);
+  --go:#2F6BFF; --nogo:#FF7A3D; --gold:#FFC83D; --teal:#14B8A6;
+  --display:"Urbanist",-apple-system,"SF Pro Rounded",system-ui,sans-serif; --body:"Figtree",-apple-system,"SF Pro Text",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --spring:cubic-bezier(.3,1.15,.5,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:18px;padding-block:28px 64px;display:grid;gap:22px}
+header{display:grid;gap:8px}
+.lab{font:600 11.5px/1.2 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+h1{font:300 clamp(30px,4.6vw,46px)/1.05 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+header p{max-width:72ch;color:var(--mute);margin:0}
+
+.scene{--u:1cqw;position:relative;container-type:inline-size;aspect-ratio:16/10;border-radius:20px;overflow:hidden;overflow:clip;background:#3A3240}
+.scene>svg.bg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage{position:absolute;left:17%;right:17%;top:8%;bottom:16%}
+.win{position:absolute;inset:0;border-radius:calc(var(--u)*3.8);background:var(--glass);-webkit-backdrop-filter:blur(calc(var(--u)*2)) saturate(1.5);backdrop-filter:blur(calc(var(--u)*2)) saturate(1.5);
+  color:var(--glassInk);display:flex;flex-direction:column;padding:calc(var(--u)*1.8) calc(var(--u)*2.4) calc(var(--u)*2.2);font-family:var(--body);
+  box-shadow:inset 0 0 0 1px var(--glassEdge),inset 0 1px 0 var(--glassHi),0 calc(var(--u)*2) calc(var(--u)*6) var(--shadow)}
+.grab{position:absolute;top:calc(100% + var(--u)*1.3);left:50%;transform:translateX(-50%);display:flex;gap:calc(var(--u)*.8);align-items:center}
+.grab i{display:block;width:calc(var(--u)*7.5);height:calc(var(--u)*.65);border-radius:1em;background:rgba(251,234,218,.55)}
+.grab b{display:block;width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;background:rgba(251,234,218,.4)}
+.top{display:grid;grid-template-columns:calc(var(--u)*5.4) 1fr calc(var(--u)*5.4);align-items:center}
+.icon{width:calc(var(--u)*5.4);height:calc(var(--u)*5.4);border-radius:50%;border:0;background:var(--chip);color:var(--glassInk);display:grid;place-items:center;cursor:pointer;transition:transform .25s var(--spring),background .2s}
+.icon svg{width:calc(var(--u)*2.3);height:calc(var(--u)*2.3)}
+.icon:hover{background:var(--chipStrong);transform:scale(1.035)}
+.icon:disabled{opacity:0;pointer-events:none}
+.dots{display:flex;justify-content:center;gap:calc(var(--u)*.8)}
+.dots i{width:calc(var(--u)*.85);height:calc(var(--u)*.85);border-radius:50%;background:var(--chipStrong);transition:background .25s}
+.dots i.done{background:rgba(251,234,218,.75)}
+.dots i.now{background:var(--gold)}
+.count{font:400 calc(var(--u)*1.3) var(--mono);color:rgba(251,234,218,.6);text-align:right;font-variant-numeric:tabular-nums}
+.body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:calc(var(--u)*1.4);min-height:0}
+.eyebrow{font:600 calc(var(--u)*1.3)/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:rgba(251,234,218,.7)}
+.q{font:300 calc(var(--u)*4.2)/1.05 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.q.hero{font-size:calc(var(--u)*6.2);font-weight:200;letter-spacing:-.04em}
+.why{font-size:calc(var(--u)*1.7);color:rgba(251,234,218,.72);max-width:64%;margin:0;line-height:1.4}
+.foot{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.6);padding-top:calc(var(--u)*.8)}
+.btn{font:600 calc(var(--u)*1.9)/1 var(--body);border-radius:999px;padding:0 calc(var(--u)*4);height:calc(var(--u)*5.6);min-width:calc(var(--u)*24);cursor:pointer;transition:transform .25s var(--spring),box-shadow .25s,opacity .2s}
+.btn.p{background:var(--accent);color:var(--onAccent);border:0}
+.btn.p:hover:not(:disabled){transform:scale(1.035);box-shadow:0 0 calc(var(--u)*3) var(--accentGlow)}
+.btn:active:not(:disabled){transform:scale(.95)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.tert{border:0;background:none;color:var(--glassInk);opacity:.72;font:500 calc(var(--u)*1.55) var(--body);height:calc(var(--u)*4.2);padding:0 calc(var(--u)*2);cursor:pointer;border-radius:999px}
+.tert:hover{opacity:1;background:var(--chip)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accentStrong);outline-offset:3px}
+.anim-f{animation:inF .3s var(--spring)} .anim-b{animation:inB .3s var(--spring)}
+@keyframes inF{from{opacity:0;transform:translateX(3%)}to{opacity:1;transform:none}}
+@keyframes inB{from{opacity:0;transform:translateX(-3%)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.anim-f,.anim-b{animation:none}*{transition:none!important}}
+
+.field{width:56%;font:300 calc(var(--u)*3.4)/1.1 var(--display);text-align:center;color:var(--glassInk);background:var(--chip);border:1px solid var(--glassEdge);border-radius:999px;height:calc(var(--u)*7);padding:0 calc(var(--u)*2.4)}
+.field::placeholder{color:rgba(251,234,218,.4)}
+.field:focus{outline:none;border-color:var(--accentStrong);background:var(--chipStrong)}
+.hint{font-size:calc(var(--u)*1.4);color:rgba(251,234,218,.6)}
+.step{display:flex;align-items:center;gap:calc(var(--u)*3)}
+.round{width:calc(var(--u)*6.4);height:calc(var(--u)*6.4);border-radius:50%;border:1px solid var(--glassEdge);background:var(--chip);color:var(--glassInk);font:300 calc(var(--u)*3.4)/1 var(--display);cursor:pointer;display:grid;place-items:center;transition:transform .25s var(--spring),background .2s}
+.round:hover{transform:scale(1.035);background:var(--chipStrong)}
+.round:active{transform:scale(.95)}
+.val{font:200 calc(var(--u)*10.5)/.9 var(--display);letter-spacing:-.04em;min-width:calc(var(--u)*24);font-variant-numeric:tabular-nums}
+.val small{font:600 calc(var(--u)*1.3) var(--body);letter-spacing:.16em;color:rgba(251,234,218,.7);margin-left:.5em;vertical-align:.9em}
+.seg{display:inline-flex;background:var(--chip);border-radius:999px;padding:calc(var(--u)*.4)}
+.seg button{border:0;background:transparent;color:rgba(251,234,218,.72);font:600 calc(var(--u)*1.45) var(--body);height:calc(var(--u)*4.4);padding:0 calc(var(--u)*2.4);border-radius:999px;cursor:pointer}
+.seg button.on{background:var(--chipStrong);color:var(--glassInk)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:50%;height:calc(var(--u)*3.4);background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(var(--accentStrong),var(--accentStrong)) 0/var(--p,50%) 100% no-repeat,var(--chipStrong)}
+input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:var(--chipStrong)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:6px;background:var(--accentStrong)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border-radius:50%;background:var(--glassInk);margin-top:calc(3px - var(--u)*1.3);border:0}
+input[type=range]::-moz-range-thumb{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border-radius:50%;background:var(--glassInk);border:0}
+.opts{display:grid;gap:calc(var(--u)*1.4);width:70%}
+.opts.c2{grid-template-columns:1fr 1fr}.opts.c3{grid-template-columns:repeat(3,1fr)}
+.opt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.6);min-height:calc(var(--u)*7.2);padding:calc(var(--u)*1.4);border-radius:calc(var(--u)*2.6);
+  background:var(--chip);border:1px solid transparent;color:var(--glassInk);font:500 calc(var(--u)*2)/1.15 var(--body);cursor:pointer;transition:transform .25s var(--spring),background .2s,border-color .2s}
+.opt small{font-weight:400;font-size:calc(var(--u)*1.35);color:rgba(251,234,218,.65)}
+.opt svg{width:calc(var(--u)*4);height:calc(var(--u)*4)}
+.opt .pair{display:flex}.opt .pair svg{width:calc(var(--u)*3);height:calc(var(--u)*4)}
+.opt:hover{transform:scale(1.035);background:var(--chipStrong)}
+.opt.on{background:var(--chipStrong);border-color:var(--accentStrong)}
+.opt.on::after{content:"";position:absolute;top:calc(var(--u)*1);right:calc(var(--u)*1);width:calc(var(--u)*2.2);height:calc(var(--u)*2.2);border-radius:50%;
+  background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%23252322' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/68% no-repeat}
+.list{width:76%;display:grid;text-align:left;font-size:calc(var(--u)*1.7)}
+.list div{display:grid;grid-template-columns:calc(var(--u)*3.6) 1fr;gap:calc(var(--u)*1);align-items:center;padding:calc(var(--u)*1.05) 0;border-top:1px solid var(--line);line-height:1.35}
+.list div:first-child{border-top:0}
+.list b{width:calc(var(--u)*2.7);height:calc(var(--u)*2.7);border-radius:50%;background:var(--chipStrong);display:grid;place-items:center;font:500 calc(var(--u)*1.3) var(--mono)}
+.rev{width:82%;display:grid;grid-template-columns:1fr 1fr;gap:0 calc(var(--u)*3);text-align:left}
+.rev div{display:flex;justify-content:space-between;align-items:center;min-height:calc(var(--u)*4.6);border-top:1px solid var(--line);font-size:calc(var(--u)*1.65)}
+.rev span{color:rgba(251,234,218,.65)}
+.rev strong{font-weight:500;display:flex;gap:calc(var(--u)*.6);align-items:center;font-variant-numeric:tabular-nums}
+.rev button{border:0;background:none;color:var(--accent);opacity:.85;font:600 calc(var(--u)*1.4) var(--body);cursor:pointer;height:calc(var(--u)*4.2);padding:0 calc(var(--u)*1);border-radius:999px}
+.rev button:hover{opacity:1;background:var(--chip)}
+.rev .code{font:500 calc(var(--u)*1.45) var(--mono);letter-spacing:.06em;color:var(--glassInk);background:var(--chip);border:1px solid var(--glassEdge);padding:calc(var(--u)*.5) calc(var(--u)*1.3);border-radius:999px}
+.toast{position:absolute;left:50%;top:3%;transform:translateX(-50%);background:var(--glassStrong);color:var(--glassInk);font:500 calc(var(--u)*1.5) var(--body);padding:calc(var(--u)*1.1) calc(var(--u)*2.4);border-radius:999px;box-shadow:inset 0 0 0 1px var(--glassEdge);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+
+@media (max-width:700px){
+  .scene{--u:1.95cqw;aspect-ratio:3/5}
+  .stage{left:4%;right:4%;top:5%;bottom:10%}
+  .why{max-width:92%}.field{width:88%}.opts{width:96%}.list,.rev{width:100%}.rev{grid-template-columns:1fr}
+}
+
+.rail{display:flex;flex-wrap:wrap;gap:8px}
+.rail button{font:600 13px var(--body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:99px;height:36px;padding:0 14px;cursor:pointer}
+.rail button.on{background:var(--accent);border-color:var(--accent);color:var(--onAccent)}
+.cols{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
+@media (max-width:860px){.cols{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px;min-width:0;display:grid;gap:10px;align-content:start}
+.card h2{font:300 24px/1.1 var(--display);letter-spacing:-.01em;margin:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px 9px 0;border-top:1px solid var(--line);vertical-align:top}
+thead th{border-top:0;color:var(--mute);font:600 11px var(--body);letter-spacing:.16em;text-transform:uppercase}
+td code,.note code{font:12px var(--mono);color:var(--accent);white-space:nowrap}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--surface2);white-space:nowrap}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:rgba(247,233,218,.4)}
+.t-req{background:var(--accentSoft)}.t-req::before{background:var(--accentStrong)}
+.t-new::before{background:var(--accent)}
+.note{font-size:14px;color:var(--mute)}
+.note p{margin:0 0 10px}
+.note b{color:var(--fg);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="lab">SpatialAge · First-run setup · Dusk theme</span>
+    <h1>A one-minute setup, one question at a time</h1>
+    <p>Clickable prototype built from the Dusk design spec v1.0: charcoal glass over the sunset scene, cream text, a single peach button for the next step. Answer and press Continue, or jump to any step below. Names and numbers are sample data.</p>
+  </header>
+
+  <div class="scene" id="scene" aria-label="Vision Pro onboarding prototype">
+    <div class="stage">
+      <div class="win">
+        <div class="top"><button class="icon" id="back" type="button" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="dots" id="dots"></div><span class="count" id="count"></span></div>
+        <div class="body" id="body"></div>
+        <div class="foot" id="foot"></div>
+      </div>
+      <div class="grab"><i></i><b></b></div>
+    </div>
+  </div>
+
+  <nav class="rail" id="rail" aria-label="Jump to step"></nav>
+
+  <div class="cols">
+    <div class="card"><h2>What we collect, and why</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Screen</th><th>Saved as</th><th>Status</th><th>Why we ask</th></tr></thead>
+        <tbody>
+          <tr><td>First name</td><td>Not saved</td><td><span class="tag">This visit only</span></td><td>Greets the player during setup. Cleared when the session ends, so results stay code-only.</td></tr>
+          <tr><td>Age</td><td><code>participant.age_years</code></td><td><span class="tag t-req">Required</span></td><td>Movement age starts from chronological age, N(age, 9²), and is compared with age norms.</td></tr>
+          <tr><td>Sex</td><td><code>participant.sex</code></td><td><span class="tag">Optional</span></td><td>Norms differ by sex. Values: female, male, other, unspecified.</td></tr>
+          <tr><td>Height</td><td><code>participant.height_cm</code></td><td><span class="tag t-new">New field</span></td><td>Sets reach distances in Spark and Reach and Grab to the player's size.</td></tr>
+          <tr><td>Weight</td><td><code>participant.weight_kg</code></td><td><span class="tag t-new">New field</span></td><td>Skippable. Not used by ScoreKit today; useful for clinic records.</td></tr>
+          <tr><td>Main hand</td><td><code>participant.handedness</code></td><td><span class="tag">Optional</span></td><td>Starting side for Orbit and reach games. Values: left, right, ambi.</td></tr>
+          <tr><td>Standing or seated</td><td><code>participant.posture</code></td><td><span class="tag t-new">New field</span></td><td>Safety. Seated play skips Reach and Grab and Hole in the Wall.</td></tr>
+          <tr><td>(automatic)</td><td><code>participant.code</code></td><td><span class="tag t-req">Required</span></td><td>Random code, for example SA-4821. The only identity that is saved.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card note"><h2>Notes for the team</h2>
+      <p><b>Names.</b> The Dusk spec says never store names, only participant codes. This flow asks for a first name because it was requested, uses it only to greet the player during setup, and never writes it to the session. Drop the screen if the team wants no name at all.</p>
+      <p><b>Schema.</b> Height, weight and posture are new optional fields on <code>participant</code>. Adding them means bumping the session schema version (repo rule).</p>
+      <p><b>Spec checks.</b> Dusk tokens only. Signal colors aren't used for decoration, apart from gold on the current progress dot, which the spec allows. One primary button per screen, every control at least 60 pt, "movement age" wording, no exclamation marks, Reduce Motion respected.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function rng(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
+  function ridge(r,y0,amp,step,W,H){let y=y0,d=`M0,${H} L0,${y0}`;for(let x=0;x<=W+step;x+=step){y+=(r()-.5)*amp;y+=(y0-y)*.2;d+=` L${x},${y.toFixed(1)}`}return d+` L${W},${H} Z`}
+  function pines(r,base,n,hmin,hmax,x0,x1){let d="";for(let k=0;k<n;k++){const x=x0+r()*(x1-x0),h=hmin+r()*(hmax-hmin),w=h*.2;d+=`M${(x-w).toFixed(1)},${base} L${x.toFixed(1)},${(base-h).toFixed(1)} L${(x+w).toFixed(1)},${base} Z `}return d}
+  function dusk(){const r=rng(31),W=1600,H=1000,hz=620;
+    let clouds="";[[260,170,1.1],[700,250,.8],[1200,140,1],[1480,300,.7]].forEach(c=>{for(let k=0;k<4;k++)clouds+=`<ellipse cx="${c[0]+(k-1.5)*80*c[2]}" cy="${c[1]+(r()-.5)*16}" rx="${(110+r()*60)*c[2]}" ry="${(14+r()*8)*c[2]}"/>`});
+    const tL=pines(r,hz+40,10,120,260,-40,260),tR=pines(r,hz+40,10,120,260,1340,1660),tL2=pines(r,hz+70,6,220,380,-60,180),tR2=pines(r,hz+70,6,220,380,1420,1660);
+    return `<svg class="bg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
+    <linearGradient id="dk" x1="0" y1="0" x2="0" y2="${hz}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3A3240"/><stop offset="1" stop-color="#FBD3A6"/></linearGradient>
+    <radialGradient id="dh" cx="330" cy="${hz-40}" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFE6C4" stop-opacity=".95"/><stop offset=".25" stop-color="#FFE6C4" stop-opacity=".45"/><stop offset="1" stop-color="#FFE6C4" stop-opacity="0"/></radialGradient>
+    <linearGradient id="dl" x1="0" y1="${hz}" x2="0" y2="${H}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#D8AB8B"/><stop offset="1" stop-color="#D8AB8B" stop-opacity=".55"/></linearGradient>
+    <filter id="db"><feGaussianBlur stdDeviation="10"/></filter></defs>
+    <rect width="${W}" height="${H}" fill="url(#dk)"/><rect width="${W}" height="${hz+60}" fill="url(#dh)"/>
+    <circle cx="330" cy="${hz-40}" r="34" fill="#FFE6C4"/>
+    <g fill="#E9B9A0" opacity=".45" filter="url(#db)">${clouds}</g>
+    <path d="${ridge(r,hz-120,70,30,W,H)}" fill="#A39193"/>
+    <rect y="${hz-90}" width="${W}" height="90" fill="rgba(216,171,139,.18)"/>
+    <path d="${ridge(r,hz-60,60,30,W,H)}" fill="#6F6470"/>
+    <path d="${ridge(r,hz-10,30,40,W,H)}" fill="#4E4B51"/>
+    <rect y="${hz}" width="${W}" height="${H-hz}" fill="url(#dl)"/>
+    <g fill="#FFE6C4" opacity=".5"><ellipse cx="330" cy="${hz+30}" rx="90" ry="3"/><ellipse cx="350" cy="${hz+60}" rx="140" ry="2.5"/><ellipse cx="300" cy="${hz+100}" rx="70" ry="2"/><ellipse cx="900" cy="${hz+80}" rx="120" ry="1.5"/></g>
+    <path d="${tL}" fill="#3A363C"/><path d="${tR}" fill="#3A363C"/><path d="${tL2}" fill="#252322"/><path d="${tR2}" fill="#252322"/>
+    <path d="M0,${H} L0,890 C320,860 620,900 900,885 S1350,860 1600,880 L1600,${H}Z" fill="#2D2A2C"/></svg>`}
+  document.getElementById("scene").insertAdjacentHTML("afterbegin",dusk());
+
+  const S={name:"",age:62,sex:null,cm:168,hImp:true,kg:73,wImp:true,wSkip:false,hand:null,posture:null,code:"SA-4821"};
+  const steps=["welcome","consent","name","age","sex","height","weight","hand","posture","review"];
+  const labels=["Welcome","Consent","Name","Age","Sex","Height","Weight","Main hand","Standing or seated","Review"];
+  let i=0,dir="f",fromReview=false;
+  const $=id=>document.getElementById(id);
+  const esc=t=>t.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const inch=cm=>Math.round(cm/2.54), lbs=kg=>Math.round(kg*2.20462);
+  const handSvg=flip=>`<svg viewBox="0 0 48 48" style="${flip?'transform:scaleX(-1)':''}"><path d="M17 44c-4-3-8-9-10-15-1-2 0-4 2-4s3 1 4 3l3 5V9a2.5 2.5 0 0 1 5 0v14V6a2.5 2.5 0 0 1 5 0v17V8a2.5 2.5 0 0 1 5 0v16-11a2.5 2.5 0 0 1 5 0v17c0 8-4 14-9 15Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+  const opt=(k,v,label,sub,icon)=>`<button type="button" class="opt ${S[k]===v?'on':''}" data-pick="${k}" data-v="${v}" aria-pressed="${S[k]===v}">${icon||""}<span>${label}</span>${sub?`<small>${sub}</small>`:""}</button>`;
+  const stepper=(k,valHtml,a,b)=>`<div class="step"><button type="button" class="round" data-step="${k}" data-d="-1" aria-label="${a}">−</button><div class="val" aria-live="polite">${valHtml}</div><button type="button" class="round" data-step="${k}" data-d="1" aria-label="${b}">+</button></div>`;
+  const seg=(k,a,b)=>`<div class="seg" role="group" aria-label="Units"><button type="button" data-unit="${k}" data-v="1" class="${S[k]?'on':''}">${a}</button><button type="button" data-unit="${k}" data-v="0" class="${!S[k]?'on':''}">${b}</button></div>`;
+  const hVal=()=>S.hImp?`${Math.floor(inch(S.cm)/12)}<small>FT</small> ${inch(S.cm)%12}<small>IN</small>`:`${Math.round(S.cm)}<small>CM</small>`;
+  const wVal=()=>S.wImp?`${lbs(S.kg)}<small>LB</small>`:`${Math.round(S.kg)}<small>KG</small>`;
+  const nm=()=>esc(S.name.trim());
+
+  const V={
+    welcome:()=>({html:`<span class="eyebrow">SpatialAge</span><h2 class="q hero">How old do you move?</h2><p class="why">First, a few quick questions so we can compare your games fairly. It takes about a minute.</p>`,p:"Begin",ok:true}),
+    consent:()=>({html:`<span class="eyebrow">Before you start</span><h2 class="q">How your answers are used</h2><div class="list">
+      <div><b>1</b><span>Your answers and movements are used only to estimate your movement age.</span></div>
+      <div><b>2</b><span>Results are saved under a random code, never your name.</span></div>
+      <div><b>3</b><span>Passthrough stays available. You can skip a game or stop at any time.</span></div></div>`,p:"I agree",ok:true}),
+    name:()=>({html:`<span class="eyebrow">Your name</span><h2 class="q">What should we call you?</h2><input class="field" id="f-name" type="text" autocomplete="off" placeholder="First name" value="${esc(S.name)}" maxlength="24" aria-label="First name"><span class="hint">Look at the box and speak, or type.</span><p class="why">Used to greet you today. It isn't saved.</p>`,p:"Continue",ok:S.name.trim().length>0,focus:"f-name"}),
+    age:()=>({html:`<span class="eyebrow">Age</span><h2 class="q">How old are you${S.name.trim()?", "+nm():""}?</h2>${stepper("age",`${S.age}<small>YRS</small>`,"Younger","Older")}<input type="range" id="r-age" min="18" max="100" value="${S.age}" style="--p:${(S.age-18)/82*100}%" aria-label="Age"><p class="why">Your movement age is compared with this.</p>`,p:"Continue",ok:true}),
+    sex:()=>({html:`<span class="eyebrow">Sex</span><h2 class="q">What is your sex?</h2><div class="opts c2">${opt("sex","female","Female")}${opt("sex","male","Male")}${opt("sex","other","Other")}${opt("sex","unspecified","Prefer not to say")}</div><p class="why">Typical scores differ, so we compare you with the right group.</p>`,p:"Continue",ok:!!S.sex}),
+    height:()=>({html:`<span class="eyebrow">Height</span><h2 class="q">How tall are you?</h2>${seg("hImp","ft / in","cm")}${stepper("cm",hVal(),"Shorter","Taller")}<p class="why">We place reach targets where your arms can get to them.</p>`,p:"Continue",ok:true}),
+    weight:()=>({html:`<span class="eyebrow">Weight · optional</span><h2 class="q">What do you weigh?</h2>${seg("wImp","lb","kg")}${stepper("kg",wVal(),"Less","More")}<p class="why">Kept with your clinic record. Skip it if you'd rather not say.</p>`,p:"Continue",ok:true,t:"Skip this question"}),
+    hand:()=>({html:`<span class="eyebrow">Main hand</span><h2 class="q">Which hand do you use most?</h2><div class="opts c3">${opt("hand","left","Left","",handSvg(true))}${opt("hand","ambi","Both","",`<span class="pair">${handSvg(true)}${handSvg(false)}</span>`)}${opt("hand","right","Right","",handSvg(false))}</div><p class="why">Reach games start on this side.</p>`,p:"Continue",ok:!!S.hand}),
+    posture:()=>({html:`<span class="eyebrow">How you'll play</span><h2 class="q">Standing or seated?</h2><div class="opts c2">${opt("posture","standing","Standing","All eight games")}${opt("posture","seated","Seated","Six games, no balance games")}</div><p class="why">Choose seated if standing in place for six minutes is uncomfortable. You can change this later.</p>`,p:"Continue",ok:!!S.posture}),
+    review:()=>{const sx={female:"Female",male:"Male",other:"Other",unspecified:"Not shared"}[S.sex]||"Not shared",hd={left:"Left",right:"Right",ambi:"Both"}[S.hand]||"Not shared";
+      const row=(l,v,k)=>`<div><span>${l}</span><strong>${v}<button type="button" data-edit="${k}" aria-label="Edit ${l}">Edit</button></strong></div>`;
+      const h=S.hImp?`${Math.floor(inch(S.cm)/12)}′ ${inch(S.cm)%12}″`:`${Math.round(S.cm)} cm`;
+      const w=S.wSkip?"Skipped":(S.wImp?lbs(S.kg)+" lb":Math.round(S.kg)+" kg");
+      return {html:`<span class="eyebrow">Review</span><h2 class="q">You're set${S.name.trim()?", "+nm():""}</h2><div class="rev">
+      ${row("Age",S.age,"age")}${row("Sex",sx,"sex")}${row("Height",h,"height")}${row("Weight",w,"weight")}${row("Main hand",hd,"hand")}${row("Play",S.posture==="seated"?"Seated":"Standing","posture")}
+      <div><span>Saved as</span><strong><span class="code">${S.code}</span></strong></div><div><span>Name</span><strong style="color:rgba(251,234,218,.65)">Not saved</strong></div></div>`,p:"Go to home",ok:true}}
+  };
+
+  function render(){
+    const k=steps[i],v=V[k](),qn=i>=2&&i<=8;
+    $("dots").innerHTML=qn?steps.slice(2,9).map((_,j)=>`<i class="${j+2<i?'done':j+2===i?'now':''}"></i>`).join(""):"";
+    $("count").textContent=qn?`${i-1}/7`:"";
+    const b=$("body");b.innerHTML=v.html;b.className="body"+(dir?" anim-"+dir:"");
+    const label=fromReview&&k!=="review"?"Save":v.p;
+    $("foot").innerHTML=`<button type="button" class="btn p" id="next" ${v.ok?"":"disabled"}>${label}</button>`+(v.t?`<button type="button" class="tert" id="tert">${v.t}</button>`:"");
+    $("back").disabled=i===0;
+    document.querySelectorAll("#rail button").forEach((x,j)=>x.classList.toggle("on",j===i));
+    if(v.focus){const f=$(v.focus);f&&f.focus({preventScroll:true})}
+  }
+  function go(n,d){if(n<0||n>=steps.length)return;dir=d||(n>i?"f":"b");i=n;render()}
+  function toast(t){const el=document.createElement("div");el.className="toast";el.textContent=t;$("scene").appendChild(el);setTimeout(()=>el.remove(),1800)}
+  function next(){
+    const k=steps[i];
+    if(k==="review")return toast("Opening Home");
+    if(k==="weight")S.wSkip=false;
+    if(fromReview){fromReview=false;return go(9,"f")}
+    go(i+1,"f");
+  }
+  const sc=$("scene");
+  sc.addEventListener("scroll",()=>{sc.scrollTop=0;sc.scrollLeft=0});
+  sc.addEventListener("click",e=>{
+    const t=e.target.closest("button");if(!t)return;
+    if(t.id==="next")return next();
+    if(t.id==="tert"){S.wSkip=true;if(fromReview){fromReview=false;return go(9,"f")}return go(i+1,"f")}
+    if(t.id==="back"){if(fromReview){fromReview=false;return go(9,"b")}return go(i-1,"b")}
+    if(t.dataset.pick){S[t.dataset.pick]=t.dataset.v;dir="";return render()}
+    if(t.dataset.unit){S[t.dataset.unit]=t.dataset.v==="1";dir="";return render()}
+    if(t.dataset.step){const k=t.dataset.step,d=+t.dataset.d;
+      if(k==="age")S.age=Math.min(100,Math.max(18,S.age+d));
+      if(k==="cm")S.cm=S.hImp?Math.min(84,Math.max(48,inch(S.cm)+d))*2.54:Math.min(215,Math.max(120,Math.round(S.cm)+d));
+      if(k==="kg"){S.kg=S.wImp?Math.min(450,Math.max(70,lbs(S.kg)+d))/2.20462:Math.min(200,Math.max(30,Math.round(S.kg)+d));S.wSkip=false}
+      dir="";return render()}
+    if(t.dataset.edit){fromReview=true;return go(steps.indexOf(t.dataset.edit),"b")}
+  });
+  sc.addEventListener("input",e=>{
+    if(e.target.id==="f-name"){S.name=e.target.value;$("next").disabled=!S.name.trim()}
+    if(e.target.id==="r-age"){S.age=+e.target.value;e.target.style.setProperty("--p",(S.age-18)/82*100+"%");e.target.closest(".body").querySelector(".val").innerHTML=S.age+"<small>YRS</small>"}
+  });
+  sc.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="f-name"&&S.name.trim()){e.preventDefault();next()}});
+  $("rail").innerHTML=labels.map((l,j)=>`<button type="button">${j>=2&&j<=8?(j-1)+". ":""}${l}</button>`).join("");
+  $("rail").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;fromReview=false;go([...b.parentNode.children].indexOf(b))});
+  render();
+})();
+</script>
+</body>
+</html>
