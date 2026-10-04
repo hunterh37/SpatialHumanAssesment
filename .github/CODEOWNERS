@@ -1,0 +1,7 @@
+# Replace @owner-* with GitHub handles.
+/apps/vision/       @owner-vision
+/apps/dashboard/    @owner-dashboard
+/services/ingest/   @owner-backend
+/ml/                @owner-ml
+/packages/schema/   @owner-vision @owner-ml
+/specs/             @owner-vision @owner-ml

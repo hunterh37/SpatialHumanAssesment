@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spatialhumanassessment/session.schema.json",
+  "title": "Session",
+  "type": "object",
+  "required": ["schema_version", "session_id", "participant", "device", "started_at", "blocks"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^0\\.1\\.\\d+$" },
+    "session_id": { "type": "string" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "participant": {
+      "type": "object",
+      "required": ["code", "age_years"],
+      "properties": {
+        "code": { "type": "string" },
+        "age_years": { "type": "number", "minimum": 10, "maximum": 110 },
+        "sex": { "enum": ["female", "male", "other", "unspecified"] },
+        "handedness": { "enum": ["left", "right", "ambi"] }
+      }
+    },
+    "device": {
+      "type": "object",
+      "properties": {
+        "model": { "type": "string" },
+        "os_version": { "type": "string" },
+        "app_version": { "type": "string" }
+      }
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task", "familiarization", "trials"],
+        "properties": {
+          "task": { "enum": ["simple_rt", "choice_rt", "corsi"] },
+          "familiarization": { "type": "boolean" },
+          "seed": { "type": "integer" },
+          "trials": {
+            "type": "array",
+            "items": { "oneOf": [ { "$ref": "#/$defs/reactionTrial" }, { "$ref": "#/$defs/corsiTrial" } ] }
+          }
+        }
+      }
+    },
+    "healthkit": {
+      "type": "object",
+      "properties": {
+        "resting_hr_bpm": { "type": "number" },
+        "hrv_sdnn_ms": { "type": "number" },
+        "vo2max": { "type": "number" }
+      }
+    }
+  },
+  "$defs": {
+    "reactionTrial": {
+      "type": "object",
+      "required": ["index", "kind", "spawn_t", "move_t", "contact_t", "eccentricity_deg", "outcome"],
+      "properties": {
+        "index": { "type": "integer" },
+        "kind": { "enum": ["go", "nogo"] },
+        "hand": { "enum": ["left", "right", null] },
+        "spawn_t": { "type": "number" },
+        "move_t": { "type": ["number", "null"] },
+        "contact_t": { "type": ["number", "null"] },
+        "position": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+        "eccentricity_deg": { "type": "number" },
+        "outcome": { "enum": ["hit", "miss", "false_alarm", "correct_reject"] },
+        "tracking_gap_ms": { "type": "number" }
+      }
+    },
+    "corsiTrial": {
+      "type": "object",
+      "required": ["index", "span", "sequence", "response", "correct"],
+      "properties": {
+        "index": { "type": "integer" },
+        "span": { "type": "integer" },
+        "sequence": { "type": "array", "items": { "type": "integer" } },
+        "response": { "type": "array", "items": { "type": "integer" } },
+        "correct": { "type": "boolean" },
+        "start_t": { "type": "number" },
+        "end_t": { "type": "number" }
+      }
+    }
+  }
+}

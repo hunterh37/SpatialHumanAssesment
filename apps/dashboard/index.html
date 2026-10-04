@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spatial Age</title>
+<style>
+  :root { --bg:#f6f4ef; --fg:#1b2430; --mute:#8a8f99; --blue:#2f6fde; }
+  body { margin:0; font-family:"Helvetica Neue",Arial,sans-serif; background:var(--bg); color:var(--fg); padding:32px; }
+  .big { font-size:120px; font-weight:700; line-height:1; }
+  .k { font-size:12px; letter-spacing:3px; color:var(--mute); text-transform:uppercase; }
+  table { border-collapse:collapse; margin-top:24px; } td { padding:4px 16px 4px 0; }
+</style>
+<div class="k" id="task">waiting for headset</div>
+<div class="big" id="rt">--</div>
+<div class="k">last reaction time (ms)</div>
+<div id="result"></div>
+<script>
+// Spec: specs/dashboard.md. Placeholder: shows last RT and final result.
+const ws = new WebSocket(`ws://${location.host}/live`);
+ws.onmessage = (e) => {
+  const m = JSON.parse(e.data);
+  if (m.type === "trial_end") {
+    task.textContent = `${m.task} · trial ${m.index + 1}`;
+    if (m.rt != null) rt.textContent = Math.round(m.rt * 1000);
+  }
+  if (m.type === "result") {
+    const rows = Object.entries(m.features).map(([k, v]) => `<tr><td class="k">${k}</td><td>${v ?? "-"}</td></tr>`).join("");
+    result.innerHTML = `<h2>${m.participant.code}: functional age ${m.functional_age} (actual ${m.participant.age_years})</h2><table>${rows}</table>`;
+  }
+};
+</script>

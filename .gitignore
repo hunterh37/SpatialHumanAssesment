@@ -1,0 +1,12 @@
+.DS_Store
+data/*
+!data/.gitkeep
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+apps/vision/*.xcodeproj
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate

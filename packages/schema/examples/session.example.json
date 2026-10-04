@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1.0",
+  "session_id": "00000000-0000-0000-0000-000000000001",
+  "started_at": "2026-10-04T12:00:00Z",
+  "participant": { "code": "EX001", "age_years": 34, "sex": "unspecified", "handedness": "right" },
+  "device": { "model": "RealityDevice14,1", "os_version": "26.0", "app_version": "0.1.0" },
+  "blocks": [
+    { "task": "simple_rt", "familiarization": true, "trials": [
+      { "index": 0, "kind": "go", "hand": "right", "spawn_t": 1.0, "move_t": 1.9, "contact_t": 2.4,
+        "position": [0.2, 1.2, -0.5], "eccentricity_deg": 20, "outcome": "hit", "tracking_gap_ms": 0 }
+    ]},
+    { "task": "simple_rt", "familiarization": false, "trials": [
+      { "index": 0, "kind": "go", "hand": "right", "spawn_t": 5.0, "move_t": 5.28, "contact_t": 5.7,
+        "position": [0.3, 1.1, -0.4], "eccentricity_deg": 15, "outcome": "hit", "tracking_gap_ms": 8 },
+      { "index": 1, "kind": "go", "hand": "right", "spawn_t": 8.0, "move_t": 8.3, "contact_t": 8.8,
+        "position": [-0.5, 1.3, 0.1], "eccentricity_deg": 75, "outcome": "hit", "tracking_gap_ms": 12 },
+      { "index": 2, "kind": "go", "hand": "left", "spawn_t": 11.0, "move_t": 11.33, "contact_t": 11.95,
+        "position": [-0.2, 1.0, 0.5], "eccentricity_deg": 110, "outcome": "hit", "tracking_gap_ms": 5 }
+    ]},
+    { "task": "choice_rt", "familiarization": false, "trials": [
+      { "index": 0, "kind": "go", "hand": "right", "spawn_t": 15.0, "move_t": 15.42, "contact_t": 15.9,
+        "position": [0.4, 1.2, -0.3], "eccentricity_deg": 30, "outcome": "hit", "tracking_gap_ms": 4 },
+      { "index": 1, "kind": "nogo", "hand": "right", "spawn_t": 18.0, "move_t": 18.35, "contact_t": 18.8,
+        "position": [0.1, 1.4, -0.6], "eccentricity_deg": 10, "outcome": "false_alarm", "tracking_gap_ms": 6 }
+    ]},
+    { "task": "corsi", "familiarization": false, "seed": 42, "trials": [
+      { "index": 0, "span": 2, "sequence": [3, 7], "response": [3, 7], "correct": true, "start_t": 30, "end_t": 34 },
+      { "index": 1, "span": 2, "sequence": [1, 5], "response": [1, 5], "correct": true, "start_t": 35, "end_t": 39 },
+      { "index": 2, "span": 3, "sequence": [0, 4, 8], "response": [0, 4, 8], "correct": true, "start_t": 40, "end_t": 46 },
+      { "index": 3, "span": 3, "sequence": [2, 6, 1], "response": [2, 1, 6], "correct": false, "start_t": 47, "end_t": 53 },
+      { "index": 4, "span": 4, "sequence": [5, 0, 7, 3], "response": [5, 0, 3, 7], "correct": false, "start_t": 54, "end_t": 62 },
+      { "index": 5, "span": 4, "sequence": [8, 2, 4, 6], "response": [8, 4, 2, 6], "correct": false, "start_t": 63, "end_t": 71 }
+    ]}
+  ]
+}
