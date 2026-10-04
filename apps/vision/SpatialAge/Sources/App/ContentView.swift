@@ -8,6 +8,7 @@ struct ContentView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+    @Environment(\.dismissWindow) private var dismissWindow
     @State private var confirmStartOver = false
 
     var body: some View {
@@ -66,10 +67,22 @@ struct ContentView: View {
             }
         }
         .padding(40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .top) { AnatomyToggle().padding(.top, 20) }
         .animation(.easeInOut(duration: 0.25), value: model.phase)
         .confirmationDialog("Start over with a new participant?", isPresented: $confirmStartOver) {
             Button("Start over", role: .destructive) { model.nextParticipant() }
         }
+        .onAppear { model.windowOpen = true }
+        #if DEBUG
+        // Screenshot hook: SA_DEMO=<game> skips consent and runs that one game.
+        .task {
+            guard model.phase == .consent, let raw = ProcessInfo.processInfo.environment["SA_DEMO"],
+                  let game = Game(rawValue: raw) else { return }
+            start([game])
+        }
+        #endif
+        .onDisappear { model.windowOpen = false }
         .onChange(of: model.spaceOpen) { _, open in
             // Space closed by the system or the Digital Crown mid-session.
             if !open, model.phase == .running { model.abortSession() }
@@ -82,7 +95,9 @@ struct ContentView: View {
             model.start(games)
             model.passthrough = false
             switch await openImmersiveSpace(id: AppModel.immersiveID) {
-            case .opened: break
+            case .opened:
+                // The window would sit in front of the stage. ImmersiveView reopens it when the session ends.
+                if model.phase == .running { dismissWindow(id: AppModel.windowID) }
             case .userCancelled: model.abortSession("Immersion was cancelled.")
             case .error: model.abortSession("Could not open the immersive space.")
             @unknown default: model.abortSession("Could not open the immersive space.")
