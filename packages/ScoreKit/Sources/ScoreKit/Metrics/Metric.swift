@@ -4,6 +4,7 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
     case catchLatency = "catch_latency"
     case catchDropCm = "catch_drop_cm"
     case catchRate = "catch_rate"
+    case catchEccSlope = "catch_ecc_slope"
     // Spark
     case reachRT = "reach_rt"
     case reachMT = "reach_mt"
@@ -32,15 +33,20 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
     case reachMaxCm = "reach_max_cm"
     case reachLeanCm = "reach_lean_cm"
     case reachGrabRate = "reach_grab_rate"
+    case freezeSwayCmS = "freeze_sway_cms"
+    case freezeHandDriftCm = "freeze_hand_drift_cm"
+    case freezeHeldRate = "freeze_held_rate"
     // Hole in the wall
     case wallSwayCmS = "wall_sway_cms"
     case wallHandDriftCm = "wall_hand_drift_cm"
     case wallClearRate = "wall_clear_rate"
+    case wallWorstPoseCm = "wall_worst_pose_cm"
     // Color dots
     case dotsSpan = "dots_span"
     case dotsAccuracy = "dots_accuracy"
     case dotsFalseRate = "dots_false_rate"
     case dotsDecisionTime = "dots_decision_time"
+    case dotsSelectTime = "dots_select_time"
 
     public static func < (a: MetricID, b: MetricID) -> Bool {
         allCases.firstIndex(of: a)! < allCases.firstIndex(of: b)!
@@ -48,14 +54,14 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
 
     public var game: Game {
         switch self {
-        case .catchLatency, .catchDropCm, .catchRate: .pendulum
+        case .catchLatency, .catchDropCm, .catchRate, .catchEccSlope: .pendulum
         case .reachRT, .reachMT, .rtTau, .rtCV, .eccSlope, .peakSpeed, .pathEfficiency, .smoothness: .spark
         case .choiceRT, .decisionTime, .commissionRate, .omissionRate, .dPrime: .gate
         case .corsiSpan, .corsiTotal, .corsiTapInterval: .constellation
         case .pursuitRMS, .pursuitLag, .pursuitOnTarget, .pursuitGain: .orbit
-        case .reachMaxCm, .reachLeanCm, .reachGrabRate: .reach
-        case .wallSwayCmS, .wallHandDriftCm, .wallClearRate: .wall
-        case .dotsSpan, .dotsAccuracy, .dotsFalseRate, .dotsDecisionTime: .dots
+        case .reachMaxCm, .reachLeanCm, .reachGrabRate, .freezeSwayCmS, .freezeHandDriftCm, .freezeHeldRate: .reach
+        case .wallSwayCmS, .wallHandDriftCm, .wallClearRate, .wallWorstPoseCm: .wall
+        case .dotsSpan, .dotsAccuracy, .dotsFalseRate, .dotsDecisionTime, .dotsSelectTime: .dots
         }
     }
 
@@ -64,6 +70,7 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
         case .catchLatency: "Catch latency"
         case .catchDropCm: "Drop distance"
         case .catchRate: "Catch rate"
+        case .catchEccSlope: "Field of view cost"
         case .reachRT: "Reaction time"
         case .reachMT: "Movement time"
         case .rtTau: "RT tail (tau)"
@@ -87,27 +94,33 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
         case .reachMaxCm: "Furthest grab"
         case .reachLeanCm: "Lean distance"
         case .reachGrabRate: "Grab rate"
+        case .freezeSwayCmS: "Freeze head sway"
+        case .freezeHandDriftCm: "Freeze hand shake"
+        case .freezeHeldRate: "Freezes held"
         case .wallSwayCmS: "Head sway"
         case .wallHandDriftCm: "Hand drift"
         case .wallClearRate: "Walls cleared"
+        case .wallWorstPoseCm: "Hardest pose error"
         case .dotsSpan: "Dot span"
         case .dotsAccuracy: "Recall accuracy"
         case .dotsFalseRate: "False taps"
         case .dotsDecisionTime: "Recall start time"
+        case .dotsSelectTime: "Select decision time"
         }
     }
 
     public var unit: String {
         switch self {
         case .catchLatency, .reachRT, .reachMT, .rtTau, .choiceRT, .decisionTime, .corsiTapInterval,
-             .dotsDecisionTime: "s"
-        case .catchDropCm, .pursuitRMS, .reachMaxCm, .reachLeanCm, .wallHandDriftCm: "cm"
-        case .wallSwayCmS: "cm/s"
+             .dotsDecisionTime, .dotsSelectTime: "s"
+        case .catchDropCm, .pursuitRMS, .reachMaxCm, .reachLeanCm, .wallHandDriftCm, .freezeHandDriftCm,
+             .wallWorstPoseCm: "cm"
+        case .wallSwayCmS, .freezeSwayCmS: "cm/s"
         case .pursuitLag: "ms"
         case .peakSpeed: "m/s"
-        case .eccSlope: "s/90°"
+        case .eccSlope, .catchEccSlope: "s/90°"
         case .catchRate, .commissionRate, .omissionRate, .pursuitOnTarget, .pathEfficiency, .reachGrabRate,
-             .wallClearRate, .dotsAccuracy, .dotsFalseRate: "ratio"
+             .wallClearRate, .dotsAccuracy, .dotsFalseRate, .freezeHeldRate: "ratio"
         case .rtCV, .smoothness, .dPrime, .corsiSpan, .corsiTotal, .pursuitGain, .dotsSpan: ""
         }
     }

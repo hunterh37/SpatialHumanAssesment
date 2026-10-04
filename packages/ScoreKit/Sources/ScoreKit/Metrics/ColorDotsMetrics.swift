@@ -1,4 +1,4 @@
-/// Color Dots: recall of lit dots among decoys. Spec: specs/games/color-dots.md.
+/// Spatial Memory: select by rule, then recall which balls were or were not touched. Spec: specs/games/color-dots.md.
 public enum ColorDotsMetrics: MetricExtractor {
     public static let game = Game.dots
 
@@ -35,6 +35,15 @@ public enum ColorDotsMetrics: MetricExtractor {
         // Decision time: from the grey scene to the first touch, in trials that had one.
         let firstTouch = kept.compactMap { t in t.touchT.first.map { $0 - t.recallStartT } }
         if let m = firstTouch.robustMedian(.dotsDecisionTime) { out.append(m) }
+
+        // Select decision time: time per select touch, the first from select start and the rest touch to touch.
+        var perTouch: [Double] = []
+        for t in kept {
+            guard let times = t.selectT, !times.isEmpty else { continue }
+            var last = t.studyStartT
+            for x in times { perTouch.append(x - last); last = x }
+        }
+        if let m = perTouch.robustMedian(.dotsSelectTime) { out.append(m) }
         return (out, q)
     }
 }

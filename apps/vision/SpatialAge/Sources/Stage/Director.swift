@@ -30,10 +30,13 @@ final class Director {
             for familiarization in [true, false] {
                 let n = familiarization ? game.familiarizationTrials : game.scoredTrials
                 ctx.show(game, familiarization: familiarization, total: n)
-                await ctx.clock.wait(familiarization ? 2.5 : 1.2)
+                await ctx.clock.wait(familiarization ? 2.5 : 1.8)
+                await ctx.countdown()
                 let seed = Int(truncatingIfNeeded: seeds.next() >> 33)
                 let block = await instance.play(familiarization: familiarization, trials: n, seed: seed)
                 ctx.recorder.append(block)
+                ctx.cheer(familiarization ? "Practice done. Nice work!" : "Great job!", hold: 1.4)
+                await ctx.clock.wait(1.4)
             }
             instance.teardown()
             ctx.hud.visible = false

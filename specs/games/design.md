@@ -37,4 +37,4 @@ Procedural sine partials with exponential decay, rendered to WAV once (`Tone.swi
 
 ## No score in play
 
-The HUD shows title, one instruction line and progress dots. Numbers appear only on the results screen. Pendulum is the exception: the ruler marks the catch height, the way the classic ruler drop reads.
+The HUD shows title, one instruction line, a cue line and progress dots. Numbers appear only on the results screen. Timed games (Pendulum, Spark, Gate, `Game.isTimed`) say "as fast as you can" in the instruction, and the scored block adds "You are timed." Every block opens with a 3, 2, 1, Go countdown on the cue line (0.7 s per digit, tock per digit) and closes with praise for 1.4 s. Spark and Gate show a short praise word for 0.8 s after each blue touch, and Gate shows "Good, you left it." after each no-go trial left alone. Pendulum is the exception: the ruler marks the catch height, the way the classic ruler drop reads.

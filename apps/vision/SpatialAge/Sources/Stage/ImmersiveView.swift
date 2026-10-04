@@ -113,7 +113,7 @@ struct ImmersiveView: View {
     }
 }
 
-/// Title, one instruction line and progress dots. No numbers during play.
+/// Title, one instruction line, a cue line (countdown, praise) and progress dots. No scores during play.
 struct HUDView: View {
     let hud: HUD
 
@@ -126,6 +126,11 @@ struct HUDView: View {
                 .font(.system(size: 26, weight: .medium))
                 .foregroundStyle(Theme.color(Theme.paper))
                 .multilineTextAlignment(.center)
+            Text(hud.cue)
+                .font(.system(size: 44, weight: .bold)).monospacedDigit()
+                .foregroundStyle(Theme.color(Theme.go))
+                .frame(height: 54)
+                .contentTransition(.numericText())
             HStack(spacing: 6) {
                 ForEach(0..<max(hud.total, 0), id: \.self) { i in
                     Circle()
@@ -144,6 +149,7 @@ struct HUDView: View {
         .opacity(hud.visible ? 1 : 0)
         .animation(.easeOut(duration: 0.3), value: hud.visible)
         .animation(.easeOut(duration: 0.2), value: hud.done)
+        .animation(.easeOut(duration: 0.15), value: hud.cue)
     }
 }
 
