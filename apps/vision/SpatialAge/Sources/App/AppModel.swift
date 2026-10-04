@@ -119,7 +119,11 @@ final class AppModel {
         }
         let engine = ScoreEngine()
         report = engine.score(session)
-        do { try SessionStore.save(session) } catch { uploadStatus = "save failed: \(error.localizedDescription)" }
+        var saved = true
+        do { try SessionStore.save(session) } catch {
+            saved = false
+            uploadStatus = "save failed: \(error.localizedDescription)"
+        }
 
         // Pace of aging across this participant's sessions on this device.
         let points = SessionStore.all()
@@ -129,12 +133,32 @@ final class AppModel {
         pace = PaceOfAging.estimate(points)
         if duel != nil { advanceDuel(score: report?.games.first(where: \.played)?.score) } else { phase = .results }
 
-        do {
-            _ = try await IngestClient(baseURL: ingestURL).upload(session)
-            uploadStatus = "Uploaded"
-        } catch {
-            uploadStatus = "Saved on device. Upload failed."
+        if !saved {
+            // Not on disk, so it cannot wait for a retry: this upload is its only chance.
+            let sent = (try? await IngestClient(baseURL: ingestURL).upload(session)) != nil
+            uploadStatus = sent ? "Uploaded. Saving on device failed." : "Not saved: device save and upload both failed."
+            return
         }
+        let waiting = await uploadPending()
+        uploadStatus = waiting == 0 ? "Uploaded" : "Saved on device. \(waiting) waiting to upload."
+    }
+
+    /// Sends every saved session ingest has not acknowledged, this one included, so a session from a run
+    /// without the laptop reaches it on a later run. Ingest keys files by session id, so a resend is harmless.
+    /// Returns how many are still waiting.
+    private func uploadPending() async -> Int {
+        let client = IngestClient(baseURL: ingestURL)
+        let pending = SessionStore.pending()
+        for (i, s) in pending.enumerated() {
+            do {
+                _ = try await client.upload(s)
+                SessionStore.markUploaded(s.sessionId)
+            } catch {
+                // Ingest unreachable or refusing: stop instead of waiting out a timeout per session.
+                return pending.count - i
+            }
+        }
+        return 0
     }
 
     /// Scored sessions for the current participant on this device, oldest first.

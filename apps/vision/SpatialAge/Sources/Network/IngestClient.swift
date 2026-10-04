@@ -8,6 +8,7 @@ struct IngestClient {
     func upload(_ session: Session) async throws -> String {
         var req = URLRequest(url: baseURL.appending(path: "sessions"))
         req.httpMethod = "POST"
+        req.timeoutInterval = 10
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try Session.encoder.encode(session)
         let (data, response) = try await URLSession.shared.data(for: req)

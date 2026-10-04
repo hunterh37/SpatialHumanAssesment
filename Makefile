@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: sample features test ingest app showcase scorekit-test scorekit-synth scorekit-score concept-algo kdm-matrix kdm
+.PHONY: sample features test ingest app showcase scorekit-test scorekit-synth scorekit-score concept-algo kdm-matrix kdm kdm-fit
 
 sample:
 	cd ml && $(PY) -m sha_biomarkers.synth --out ../data/synthetic --n 30
@@ -54,7 +54,14 @@ kdm-matrix:
 	$(SCOREKIT) matrix $(SESSIONS)/*.json > $(KDM_DIR)/matrix.csv
 	@echo "$(KDM_DIR)/matrix.csv"
 
+# Uses fitted parameters once `make kdm-fit` has adopted some, else the literature priors.
+KDM_PARAMS = $(if $(wildcard $(KDM_DIR)/params.json),--params ../$(KDM_DIR)/params.json,)
+
 kdm: kdm-matrix
-	cd ml && $(PY) -m sha_biomarkers.kdm ../$(KDM_DIR)/matrix.csv > ../$(KDM_DIR)/ages.csv
+	cd ml && $(PY) -m sha_biomarkers.kdm ../$(KDM_DIR)/matrix.csv $(KDM_PARAMS) > ../$(KDM_DIR)/ages.csv
 	@echo "$(KDM_DIR)/ages.csv"
+
+# Refit from the literature priors on every collected session; adopt only if leave-one-out error improves.
+kdm-fit: kdm-matrix
+	cd ml && $(PY) -m sha_biomarkers.kdm_fit ../$(KDM_DIR)/matrix.csv --out-dir ../$(KDM_DIR)
 
