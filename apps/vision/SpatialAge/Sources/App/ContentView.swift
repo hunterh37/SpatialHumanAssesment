@@ -2,7 +2,7 @@ import RealKit
 import ScoreKit
 import SwiftUI
 
-/// Main window. First-run setup (consent and player stats), then Home / Games / Progress / Duel under the leading tab ornament,
+/// Main window. First-run setup (consent and player stats), then Games / Progress / Duel under the leading tab ornament,
 /// running, results. Opens the immersive space. `ImmersiveView` closes itself when the phase leaves `.running`.
 /// Dusk spec sections 4 to 7: charcoal glass, cream type, one primary action per screen.
 struct ContentView: View {
@@ -34,7 +34,6 @@ struct ContentView: View {
                 }
             case .catalog:
                 TabView(selection: $model.tab) {
-                    Tab("Home", systemImage: "house", value: AppModel.Tab.home) { screen { HomeView() } }
                     Tab("Games", systemImage: "square.grid.2x2", value: AppModel.Tab.games) {
                         screen { GamesView(start: start) }
                     }
@@ -143,87 +142,6 @@ struct AgeStepper: View {
                 .buttonStyle(.duskIcon)
                 .disabled(age >= range.upperBound)
         }
-    }
-}
-
-// MARK: - Home
-
-struct HomeView: View {
-    @Environment(AppModel.self) private var model
-    @State private var confirmStartOver = false
-    @State private var history: [ScoreReport] = []
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 40) {
-            VStack(spacing: 20) {
-                DuskLabel(DuskCopy.brand)
-                Text(DuskCopy.homeTitle).font(DuskType.title).multilineTextAlignment(.center)
-                Text(DuskCopy.homeLine)
-                    .duskSecondary()
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 520)
-                VStack(spacing: Dusk.Layout.spacing) {
-                    Button("Start a duel") { model.tab = .duel }.buttonStyle(.duskPrimaryLarge)
-                    Button("Play one game") { model.tab = .games }.buttonStyle(.duskSecondaryLarge)
-                    Button("Replay intro", systemImage: "sparkles") { model.replayIntro() }
-                        .buttonStyle(.duskTertiary)
-                }
-                .padding(.top, 12)
-                if let notice = model.notice { DuskChip(text: notice) }
-            }
-            .frame(maxWidth: .infinity)
-
-            VStack(alignment: .leading, spacing: Dusk.Layout.spacing) {
-                lastAgeCard
-                MusicMiniPlayer()
-                viewersCard
-                HStack {
-                    Button("Edit setup") { model.editSetup() }.buttonStyle(.duskTertiary)
-                    Spacer()
-                    Button("Start over") { confirmStartOver = true }.buttonStyle(.duskTertiary)
-                }
-            }
-            .frame(width: 330)
-        }
-        .confirmationDialog("Start over with a new participant?", isPresented: $confirmStartOver) {
-            Button("Start over", role: .destructive) { model.nextParticipant() }
-        }
-        .task(id: model.participant.code) { history = model.history() }
-    }
-
-    private var lastAgeCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                DuskLabel("Last movement age")
-                Spacer()
-                Text(model.participant.code).font(DuskType.data.monospaced()).duskSecondary()
-            }
-            if let last = history.last?.spatialAge {
-                Text(String(format: "%.1f", last)).font(DuskType.hero(64))
-                if history.count > 1, let first = history.first?.spatialAge {
-                    let delta = last - first
-                    DuskChip(text: String(format: "%+.1f years since first visit", delta),
-                             kind: delta < 0 ? .improved : .neutral)
-                }
-            } else {
-                Text("–").font(DuskType.hero(64))
-                Text("Play a game to see it here.").font(.callout).duskSecondary()
-            }
-        }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .duskCard()
-    }
-
-    private var viewersCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            DuskLabel("Viewers")
-            AnatomyToggle()
-            SkyPlankToggle()
-        }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .duskCard()
     }
 }
 
