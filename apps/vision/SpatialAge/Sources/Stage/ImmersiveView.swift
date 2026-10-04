@@ -128,7 +128,10 @@ struct ImmersiveView: View {
             let g = Task { await play(recorder, t) }
             game = g
             await g.value
-        } else if model.phase == .intro, let bird {
+        } else if model.phase == .intro {
+            // The RealityView make closure builds the bird; this task can start before it finishes.
+            while bird == nil, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(50)) }
+            guard let bird else { return }
             introActive = true
             model.introRunning = true
             let g = Task { @MainActor in

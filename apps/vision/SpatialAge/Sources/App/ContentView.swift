@@ -76,6 +76,8 @@ struct ContentView: View {
                   let game = Game(rawValue: raw) else { return }
             start([game])
         }
+        // Capture hook: launch argument `-intro YES` replays the title sequence.
+        .task { if UserDefaults.standard.bool(forKey: "intro") { model.replayIntro() } }
         #endif
         .onDisappear { model.windowOpen = false }
         .onChange(of: model.spaceOpen) { _, open in
