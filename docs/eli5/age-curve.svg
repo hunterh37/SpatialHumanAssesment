@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-labelledby="eli5-curve-title eli5-curve-desc" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <title id="eli5-curve-title">Your time lands on the age line</title>
+  <desc id="eli5-curve-desc">Line chart of typical simple reaction time by age from population cohorts, 290 ms at 30, 318 ms at 50 and 354 ms at 69, with an example player's time traced across to the age where the line matches it.</desc>
+  <rect width="1200" height="800" fill="#f6f4ef"/>
+  <text x="48" y="64" font-size="14" fill="#8a8f99" font-weight="700" letter-spacing="3">ELI5 · FIG B</text>
+  <text x="48" y="100" font-size="32" fill="#1b2430" font-weight="700">Your time lands on the age line</text>
+  <text x="48" y="132" font-size="16" fill="#8a8f99">Typical reaction time slows with age. The age where the line matches your time is your movement age.</text>
+  <rect x="48" y="160" width="1104" height="600" rx="16" fill="#ffffff" stroke="#1b2430" stroke-width="2"/>
+
+  <!-- grid: ages 20 to 80, reaction time 250 to 400 ms -->
+  <g stroke="#d9d4c7" stroke-width="1">
+    <line x1="160" y1="240" x2="160" y2="640"/>
+    <line x1="313.333" y1="240" x2="313.333" y2="640"/>
+    <line x1="466.667" y1="240" x2="466.667" y2="640"/>
+    <line x1="620" y1="240" x2="620" y2="640"/>
+    <line x1="773.333" y1="240" x2="773.333" y2="640"/>
+    <line x1="926.667" y1="240" x2="926.667" y2="640"/>
+    <line x1="1080" y1="240" x2="1080" y2="640"/>
+    <line x1="160" y1="240" x2="1080" y2="240"/>
+    <line x1="160" y1="373.333" x2="1080" y2="373.333"/>
+    <line x1="160" y1="506.667" x2="1080" y2="506.667"/>
+  </g>
+  <line x1="160" y1="640" x2="1080" y2="640" stroke="#1b2430" stroke-width="1.5"/>
+  <g font-size="16" fill="#8a8f99" text-anchor="middle">
+    <text x="160" y="672">20</text>
+    <text x="313.333" y="672">30</text>
+    <text x="466.667" y="672">40</text>
+    <text x="620" y="672">50</text>
+    <text x="773.333" y="672">60</text>
+    <text x="926.667" y="672">70</text>
+    <text x="1080" y="672">80</text>
+  </g>
+  <g font-size="16" fill="#8a8f99" text-anchor="end">
+    <text x="148" y="645">250 ms</text>
+    <text x="148" y="512">300 ms</text>
+    <text x="148" y="378">350 ms</text>
+    <text x="148" y="245">400 ms</text>
+  </g>
+  <text x="160" y="224" font-size="16" fill="#1b2430" font-weight="700">Simple reaction time</text>
+  <text x="1080" y="708" font-size="16" fill="#1b2430" font-weight="700" text-anchor="end">Age (years)</text>
+
+  <!-- example player: traced from their time to the line, then down to an age -->
+  <g fill="none" stroke="#2f6bff" stroke-width="2" stroke-dasharray="8 6">
+    <line x1="160" y1="426.667" x2="717.1" y2="426.667"/>
+    <line x1="717.1" y1="426.667" x2="717.1" y2="640"/>
+  </g>
+  <text x="176" y="412" font-size="16" fill="#2f6bff" font-weight="700">Example player's time</text>
+
+  <!-- published cohort line -->
+  <polyline points="313.333,533.333 620,458.667 911.333,362.667" fill="none" stroke="#1b2430" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="313.333" cy="533.333" r="6" fill="#1b2430"/>
+  <circle cx="620" cy="458.667" r="6" fill="#1b2430"/>
+  <circle cx="911.333" cy="362.667" r="6" fill="#1b2430"/>
+  <g font-size="14" fill="#1b2430">
+    <text x="329" y="561">age 30: 290 ms</text>
+    <text x="580" y="488">age 50: 318 ms</text>
+    <text x="927" y="392">age 69: 354 ms</text>
+  </g>
+  <circle cx="717.1" cy="426.667" r="9" fill="#2f6bff"/>
+  <text x="717.1" y="700" font-size="16" fill="#2f6bff" font-weight="700" text-anchor="middle">movement age about 56</text>
+
+  <text x="80" y="728" font-size="14" fill="#8a8f99">Line: population cohorts aged 30, 50 and 69 (n = 2,196), PMC5608941. The example player is illustrative.</text>
+  <text x="80" y="748" font-size="14" fill="#8a8f99">The game itself uses how fast times change with age, measured on this headset.</text>
+</svg>

@@ -1,6 +1,6 @@
-/// The five minigames. Each one runs one task kind from the session schema.
+/// The minigames. Each one runs one task kind from the session schema.
 public enum Game: String, CaseIterable, Codable, Sendable {
-    case pendulum, spark, gate, constellation, orbit
+    case pendulum, spark, gate, constellation, orbit, reach, wall, dots
 
     public var task: TaskKind {
         switch self {
@@ -9,6 +9,9 @@ public enum Game: String, CaseIterable, Codable, Sendable {
         case .gate: .choiceRT
         case .constellation: .corsi
         case .orbit: .pursuit
+        case .reach: .reachGrab
+        case .wall: .wall
+        case .dots: .colorDots
         }
     }
 
@@ -24,6 +27,9 @@ public enum Game: String, CaseIterable, Codable, Sendable {
         case .gate: "Gate"
         case .constellation: "Constellation"
         case .orbit: "Orbit"
+        case .reach: "Reach and Grab"
+        case .wall: "Hole in the Wall"
+        case .dots: "Color Dots"
         }
     }
 
@@ -35,6 +41,9 @@ public enum Game: String, CaseIterable, Codable, Sendable {
         case .gate: "Touch blue. Leave orange."
         case .constellation: "Watch the stars light, then touch them in order."
         case .orbit: "Keep your fingertip inside the moving light."
+        case .reach: "Keep your feet planted. Reach out and touch each object."
+        case .wall: "Fit your hands into the holes and hold still as the wall passes."
+        case .dots: "Watch which dots light up, then touch only those."
         }
     }
 
@@ -46,6 +55,9 @@ public enum Game: String, CaseIterable, Codable, Sendable {
         case .gate: "Decision time and inhibition"
         case .constellation: "Spatial working memory span"
         case .orbit: "Visuomotor tracking error and lag"
+        case .reach: "Reach distance and lean"
+        case .wall: "Postural sway and hand steadiness"
+        case .dots: "Spatial recall and decisions"
         }
     }
 
@@ -57,6 +69,9 @@ public enum Game: String, CaseIterable, Codable, Sendable {
         case .gate: 30
         case .constellation: 14
         case .orbit: 3
+        case .reach: 12
+        case .wall: 8
+        case .dots: 10
         }
     }
 
@@ -67,6 +82,9 @@ public enum Game: String, CaseIterable, Codable, Sendable {
         case .gate: 5
         case .constellation: 1
         case .orbit: 1
+        case .reach: 2
+        case .wall: 1
+        case .dots: 1
         }
     }
 }

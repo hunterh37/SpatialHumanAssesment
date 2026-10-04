@@ -76,7 +76,7 @@ public struct NormTable: Codable, Sendable {
     /// v0 priors. Every value is provisional until refit on collected sessions (specs/age-model.md v1).
     /// Sources name the study the shape comes from; the numbers are set for a fingertip reach task in
     /// a headset, which none of those studies used, so they need calibration.
-    public static let provisional = NormTable(version: "prior-0.2", norms: [
+    public static let provisional = NormTable(version: "prior-0.3", norms: [
         Norm(.catchLatency, .speed, mean25: 0.19, sd25: 0.025, slope: 0.0009, accel: 0.000012, tauYears: 14,
              source: "Ruler drop RT shape: Eckner et al. 2010; age slope after Der and Deary 2006"),
         Norm(.catchDropCm, nil, mean25: 17.7, sd25: 4.5, slope: 0.17, tauYears: 99,
@@ -123,5 +123,26 @@ public struct NormTable: Codable, Sendable {
              source: "Display only, redundant with tracking error"),
         Norm(.pursuitGain, nil, mean25: 1.0, sd25: 0.08, slope: -0.0005, tauYears: 99,
              source: "Display only"),
+        // Reach and grab, Hole in the wall, Color dots (v0.3). Weak priors with high tau until refit on event data.
+        Norm(.reachMaxCm, nil, mean25: 75, sd25: 8, slope: -0.1, tauYears: 99,
+             source: "Display only. Depends on arm length, so it is not an age marker by itself"),
+        Norm(.reachLeanCm, .control, mean25: 37.0, sd25: 7.4, slope: -0.25, tauYears: 25,
+             source: "Functional reach by age band, Nakhostin-Ansari et al. 2022 (PMC9422043) Table 2, parsed in code: 37.3 cm at 18-29 to 24.3 cm at 70+. Head lean is not hand reach, so calibrate"),
+        Norm(.reachGrabRate, nil, mean25: 0.8, sd25: 0.1, slope: -0.003, tauYears: 99,
+             source: "Display only"),
+        Norm(.wallSwayCmS, .control, mean25: 1.2, sd25: 0.4, slope: 0.015, accel: 0.0002, tauYears: 28,
+             source: "Placeholder prior: no headset head-sway norms found. Direction from posturography sway by age band (PMC12926707). Replace after calibration"),
+        Norm(.wallHandDriftCm, .control, mean25: 0.8, sd25: 0.3, slope: 0.008, tauYears: 30,
+             source: "Placeholder prior, needs calibration"),
+        Norm(.wallClearRate, nil, mean25: 0.9, sd25: 0.1, slope: -0.003, tauYears: 99,
+             source: "Display only"),
+        Norm(.dotsSpan, .memory, mean25: 5.0, sd25: 1.0, slope: -0.030, accel: -0.0004, tauYears: 20,
+             source: "Shape from Corsi span norms (Kessels et al. 2000); recognition among decoys differs, so calibrate"),
+        Norm(.dotsAccuracy, .memory, mean25: 0.85, sd25: 0.1, slope: -0.003, tauYears: 24,
+             source: "Placeholder prior, needs calibration"),
+        Norm(.dotsFalseRate, .decision, mean25: 0.05, sd25: 0.04, slope: 0.0006, tauYears: 26,
+             source: "Shape from go/no-go commission errors: Bedard et al. 2002"),
+        Norm(.dotsDecisionTime, .decision, mean25: 0.9, sd25: 0.2, slope: 0.0028, tauYears: 22,
+             source: "Slope: choice RT rises 2.80 ms per year, Woods et al. 2015 (PMC4407573). Level is a placeholder"),
     ])
 }
