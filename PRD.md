@@ -250,6 +250,25 @@ Data flow is in `specs/architecture.md`: each headset posts one session file to 
 
 The schema is the contract between all areas. Changing it needs a version bump and a note in `specs/session-schema.md`.
 
+## Build resources
+
+Open-source code that makes the games look and feel real, checked through the GitHub API on 4 October 2026. Rebuild Wii Sports-style mechanics from scratch; never copy Nintendo's assets or code.
+
+| Resource | What it gives us | Use it for |
+|---|---|---|
+| [Dicyanin packages](https://github.com/hunterh37/DicyaninPackages) (Hunter, about 40, mostly MIT) | Hunter's visionOS toolkit | Everything below; ask Hunter what is already in the app |
+| [DicyaninHandTracking](https://github.com/hunterh37/DicyaninHandTracking), [DicyaninHandGesture](https://github.com/hunterh37/DicyaninHandGesture), [DicyaninGrabbableObject](https://github.com/hunterh37/DicyaninGrabbableObject) | Hand tracking, gesture detection, grabbable objects | Reach and grab, Catch |
+| [DicyaninMultiPeer](https://github.com/hunterh37/DicyaninMultiPeer), [DicyaninSharePlay](https://github.com/hunterh37/DicyaninSharePlay) | Game state synced across headsets in one room | Head-to-head duels |
+| [RealityHD](https://github.com/hunterh37/RealityHD), [DicyaninRagdoll](https://github.com/hunterh37/DicyaninRagdoll), [DicyaninSceneReconstruction](https://github.com/hunterh37/DicyaninSceneReconstruction) | Photoreal props and scenes, ragdoll physics, collisions with the real room | Realism |
+| [DicyaninMockHandTracking](https://github.com/hunterh37/DicyaninMockHandTracking), [DicyaninSimulatorInput](https://github.com/hunterh37/DicyaninSimulatorInput) | Simulated hand input | Testing without a headset |
+| [HandVector](https://github.com/XanderXu/HandVector) (202 stars, MIT) | Hand-pose similarity scoring and simulator hand-tracking tests | Hole in the wall pose matching |
+| [HandGesture](https://github.com/johnhaney/HandGesture) (44 stars, MIT) | Semantic gestures from hand tracking | Swings and throws |
+| [visionOS_30Days](https://github.com/satoshi0212/visionOS_30Days) (2,236 stars, MIT) | 30 small visionOS demos: particles, physics, hand tracking | Fast effects |
+| Apple samples: [Happy Beam](https://developer.apple.com/documentation/visionos/happybeam), [Swift Splash](https://developer.apple.com/documentation/visionos/swift-splash), [BOT-anist](https://developer.apple.com/documentation/visionos/bot-anist) | Apple's own visionOS games | Reference patterns |
+| [awesome-visionOS](https://github.com/tomkrikorian/awesome-visionOS) (377 stars, updated June 2026) | Maintained resource list | Anything else |
+
+Most of the realism comes from RealityKit itself: grounding shadows, image-based lighting, physics bodies and spatial audio.
+
 ## Hack-day plan
 
 Times are Boston time and stay targets until the team confirms them.
