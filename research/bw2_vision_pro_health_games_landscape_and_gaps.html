@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision Pro Health Landscape</title>
+<style>
+:root {
+  --bg: #fbfaf7; --fg: #1f2328; --muted: #5d6470; --card: #ffffff; --border: #e3e0d8;
+  --accent: #2f6f8f; --gap: #b4442d; --ok: #2e7d4f; --warn: #a66a00; --th: #f1eee6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a; --fg: #e6e6e3; --muted: #a0a6ad; --card: #1d2024; --border: #33373d;
+    --accent: #7cb8d6; --gap: #e98a73; --ok: #7fcf9b; --warn: #e2b55a; --th: #24282d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a; --fg: #e6e6e3; --muted: #a0a6ad; --card: #1d2024; --border: #33373d;
+  --accent: #7cb8d6; --gap: #e98a73; --ok: #7fcf9b; --warn: #e2b55a; --th: #24282d;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+main { max-width: 1050px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 1.9rem; margin: 0 0 4px; }
+h2 { font-size: 1.35rem; margin: 44px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+h3 { font-size: 1.08rem; margin: 26px 0 8px; }
+.sub { color: var(--muted); margin: 0 0 22px; }
+a { color: var(--accent); }
+.callout { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+.callout.gap { border-left-color: var(--gap); }
+.callout.warn { border-left-color: var(--warn); }
+.tablewrap { overflow-x: auto; margin: 10px 0 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+th { background: var(--th); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+.tag { display: inline-block; font-size: 0.78rem; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--border); white-space: nowrap; }
+.tag.no { color: var(--gap); border-color: var(--gap); }
+.tag.yes { color: var(--ok); border-color: var(--ok); }
+.tag.unc { color: var(--warn); border-color: var(--warn); }
+ol.gaps > li { margin-bottom: 12px; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+code { font-size: 0.88em; background: var(--th); padding: 1px 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Apple Vision Pro: health, exercise, coaching and games apps</h1>
+<p class="sub">What exists and where the gaps are, with a focus on medical settings and nursing homes. Research done October 4, 2026, for the SpatialAge hackathon app (reaction time, reach and spatial memory as a measure of functional aging).</p>
+
+<div class="callout">
+<strong>Bottom line.</strong> About 150 apps and deployments were checked across five areas.
+<ul>
+<li>Vision Pro health use is dominated by <strong>surgeons and radiologists</strong> on the clinical side and <strong>calm, passive meditation</strong> on the consumer side.</li>
+<li>Exercise, games and brain training exist only as small independent apps with very few ratings.</li>
+<li><strong>Nothing on Vision Pro is designed for older adults.</strong> None of the senior-living VR companies (Rendever, Mynd Immersive, Viva Vita, Penumbra, XRHealth's Medicare product) runs on it, and no nursing-home pilot has been published.</li>
+<li><strong>No app measures anything a clinician could use.</strong> None reports reaction time, reach or spatial memory against age norms, keeps a score over time, or has a caregiver or clinician dashboard.</li>
+</ul>
+That is exactly the space SpatialAge targets. The biggest risk is the platform itself, not the competition: Apple has reportedly stopped work on future Vision Pro hardware.
+</div>
+
+<h2>1. What exists, by category</h2>
+
+<h3>1a. Medical and clinical (mostly for clinicians)</h3>
+<div class="tablewrap"><table>
+<tr><th>App or deployment</th><th>Who</th><th>What it does</th><th>Status</th></tr>
+<tr><td>SportSuite Vision</td><td>Stryker</td><td>Arthroscopy video in the surgeon's view during surgery</td><td><span class="tag yes">FDA De Novo, Jul 17 2026</span> first third-party app authorized by the FDA for use during surgery (<a href="https://vr.org/articles/stryker-sportsuite-vision-den250040-new-fda-device-class-2026">vr.org</a>)</td></tr>
+<tr><td>Prism correction</td><td>Apple</td><td>Applies a prism eyeglass prescription in the display</td><td><span class="tag yes">FDA 510(k)</span> (<a href="https://www.mobihealthnews.com/news/apple-receives-fda-nod-hypertension-notification-feature">MobiHealthNews</a>)</td></tr>
+<tr><td>Medivis, Siemens Cinematic Reality, Visage Ease VP, Falcon Vue, myMako</td><td>Various</td><td>3D medical imaging and surgical planning</td><td>In use; Vision Pro versions not cleared for diagnosis (<a href="https://www.apple.com/newsroom/2024/03/apple-vision-pro-unlocks-new-opportunities-for-health-app-developers/">Apple Newsroom</a>)</td></tr>
+<tr><td>ScopeXR, ClearSphere</td><td>SightMD; Sharp HealthCare</td><td>Cataract surgery with a 3D microscope feed</td><td>Hundreds of cases; Sharp study NCT07301385 (<a href="https://clinicaltrials.gov/study/NCT07301385">ClinicalTrials.gov</a>)</td></tr>
+<tr><td>CyranoHealth, CollaboratOR 3D, Fundamental Surgery, Complete HeartX</td><td>Boston Children's, KARL STORZ, FundamentalVR, Elsevier</td><td>Staff and surgical training, anatomy</td><td>Education, not regulated</td></tr>
+<tr><td>Xaia</td><td>Cedars-Sinai</td><td>AI therapist avatar for patients</td><td>14-patient feasibility study (<a href="https://www.cedars-sinai.org/newsroom/study-mental-health-gets-a-boost-from-artificial-intelligence/">Cedars-Sinai</a>)</td></tr>
+<tr><td>Vision acuity apps (AmblyoPlay, EyeChart, Warby Parker test)</td><td>Various</td><td>Eye charts, amblyopia games</td><td><span class="tag unc">mostly iPad apps in a window</span></td></tr>
+<tr><td>RelieVRx, Penumbra REAL, XRHealth</td><td>AppliedVR, Penumbra, XRHealth</td><td>FDA-registered VR pain and rehab therapy</td><td><span class="tag no">not on Vision Pro</span> (own headset, HTC VIVE, Meta Quest)</td></tr>
+</table></div>
+<p class="muted">Not found on Vision Pro: any FDA-cleared cognitive, rehab or diagnostic assessment; any test for mild cognitive impairment (MCI) or dementia; balance or fall-risk tests; visual field testing; a shipping telehealth app; a rehab app that measures reach with hand tracking.</p>
+
+<h3>1b. Fitness, exercise and coaching</h3>
+<div class="tablewrap"><table>
+<tr><th>App</th><th>What it does</th><th>Input</th><th>Older-adult fit</th></tr>
+<tr><td>Synth Riders (Apple Arcade)</td><td>Rhythm game, arms follow rails</td><td>Hand tracking</td><td>Has seated, one-handed and no-obstacle modes (<a href="https://www.uploadvr.com/synth-riders-apple-vision-pro/">UploadVR</a>)</td></tr>
+<tr><td>Kung Fu Panda: School of Chi</td><td>Slow tai-chi-style moves copied from Po</td><td>Hands and head</td><td>The most senior-appropriate movement format found (<a href="https://apps.apple.com/us/app/kung-fu-panda-school-of-chi/id6477230272">App Store</a>)</td></tr>
+<tr><td>FunFitLand</td><td>Coached boxing, dance, moving meditation; Apple Watch heart rate in headset</td><td>Hands, PS VR2 controllers</td><td>Seated and standing; logs to Apple Health (<a href="https://apps.apple.com/us/app/funfitland/id6744429139">App Store</a>)</td></tr>
+<tr><td>Boxing Trainer, Beat Punch, Spatial Boxing Pro</td><td>Hand-tracked boxing</td><td>Hands</td><td>Standing; too vigorous</td></tr>
+<tr><td>Pickle Pro, Ping Pong Club</td><td>Racket sports vs AI</td><td>PS VR2 controllers / hands</td><td>Ping Pong Club can be played seated</td></tr>
+<tr><td>Gymaholic, Calisthenics Coachy, Convict Conditioning Vision</td><td>3D exercise demonstrations</td><td>Look and pinch</td><td>Reference only, no tracking of the user</td></tr>
+<tr><td>Reflexy</td><td>Reaction-time challenges, game scores</td><td>Unclear</td><td><span class="tag unc">store link 404, may be delisted</span> (<a href="https://appsforapplevision.com/apps-directory/reflexy">directory</a>)</td></tr>
+</table></div>
+<p>Major workout services are absent from Vision Pro.</p>
+<ul>
+<li><strong>Apple Fitness+:</strong> never shipped there, and Apple reportedly dropped the idea (<a href="https://appleinsider.com/articles/26/08/02/apples-latest-job-listings-suggest-apple-fitness-could-come-to-apple-glasses">AppleInsider</a>).</li>
+<li><strong>Supernatural, FitXR, Les Mills, Beat Saber:</strong> no Vision Pro versions (<a href="https://www.uploadvr.com/vr-fitness-supernatural-alternatives/">UploadVR</a>).</li>
+<li><strong>Apple's own Health and Fitness page for Vision Pro:</strong> mostly meditation and breathing (<a href="https://apps.apple.com/us/vision/editorial/6503710759">App Store editorial</a>).</li>
+<li><strong>Golf coaching apps:</strong> iPad apps running in a flat window.</li>
+</ul>
+
+<h3>1c. Wellness, mental health and social connection</h3>
+<div class="tablewrap"><table>
+<tr><th>Group</th><th>Apps</th><th>Notes</th></tr>
+<tr><td>Meditation and breathing</td><td>Apple Mindfulness, TRIPP Vision, Healium, Lungy: Spaces, Visutate, Endel Realms, Odio, Vibescape, Orbit, mentalOS, Mindway</td><td>The best-covered category. Mindfulness follows your breathing with the headset cameras; Healium reacts to Apple Watch heart rate.</td></tr>
+<tr><td>AI therapist or companion</td><td>Xaia, TRIPP's Kokua companion, Orbit, mentalOS</td><td>Only Xaia has a study (n=14)</td></tr>
+<tr><td>Exposure therapy</td><td>oVRcome, ZeroPhobia, Open Step</td><td>Phone apps running in a window</td></tr>
+<tr><td>Travel and nature</td><td>Explore POV (App of the Year 2025), Apple Immersive Video, Portal Vision</td><td>"Armchair travel" is the most common senior-living VR activity, but nothing here is packaged for it</td></tr>
+<tr><td>Social</td><td>FaceTime with spatial Personas (life-size avatars of up to 5 people), inSpaze, Photos "spatial scenes" (2D photos turned into 3D)</td><td>Personas only work if family also own a Vision Pro. Spatial scenes is the nearest thing to reminiscence therapy.</td></tr>
+<tr><td>Big brands</td><td>Headspace (iPad app in a window); Calm (no native app found)</td><td></td></tr>
+</table></div>
+
+<h3>1d. Games</h3>
+<div class="tablewrap"><table>
+<tr><th>Group</th><th>Apps</th><th>Relevance</th></tr>
+<tr><td>Brain training</td><td>Brain Experiment (Myelin FZCO: mazes, sequence memory); Focus (waitlist only, no store listing found)</td><td>Closest to SpatialAge, but training only, with no validation or norms (<a href="https://apps.apple.com/us/app/brain-experiment/id6737743910">App Store</a>)</td></tr>
+<tr><td>Puzzles</td><td>Puzzling Places, Real Puzzler (your own photos), Loóna, Blackbox, Porta Nubi, CONNECTOME, LEGO Builder's Journey, Checkmate Chronicles</td><td>No timing recorded</td></tr>
+<tr><td>Reflex and rhythm</td><td>Synth Riders, Super Fruit Ninja, Beat Punch, DapTap, Thrasher, Proton Pulse</td><td>Use real arm reach; record only scores</td></tr>
+<tr><td>Reaction-time testers</td><td>Reflex Reaction Trainer, Reaction Time &amp; Reflex Games, "Explode or Whack-a-Mole" (claims dementia prevention, no evidence)</td><td>iPad apps in a window: tap latency, not 3D reach</td></tr>
+<tr><td>Social and tabletop</td><td>Game Room (Apple Arcade: chess, cards, mahjong, cross-play with iPhone), Solitaire XR, Demeo, Virtual Pool IRL</td><td>The most senior-friendly group: look-and-pinch only, can be played seated. Game Room keeps per-user stats (<a href="https://apps.apple.com/us/app/game-room/id1642897935?platform=vision">App Store</a>)</td></tr>
+<tr><td>Sports and leisure</td><td>Immersive Bowling, What the Golf?, Silly Golf, Fishing Haven, Vacation Simulator</td><td>Quest favorites for seniors (Walkabout Mini Golf, Real VR Fishing, Eleven Table Tennis) are missing</td></tr>
+</table></div>
+<p class="muted">Big brain-training brands (Lumosity, Elevate, Peak, BrainHQ) have no Vision Pro apps. There is no spatial whack-a-mole, Simon-style sequence game, 3D Corsi block test or object-location memory game.</p>
+
+<h3>1e. Senior-living VR companies (all on other headsets)</h3>
+<div class="tablewrap"><table>
+<tr><th>Company</th><th>Product</th><th>Headset</th><th>Business model</th><th>Vision Pro?</th></tr>
+<tr><td>Rendever</td><td>Group social VR, reminiscence, travel, fitness; family portal</td><td>Pico, Lenovo; AARP's Alcove on Quest</td><td>Facility subscription: 2 to 6+ headsets plus a staff tablet; about 800 communities (<a href="https://fortune.com/2025/12/26/seniors-virtual-reality-vr-headsets-rendever-3d-programs">Fortune</a>)</td><td><span class="tag no">no</span></td></tr>
+<tr><td>Mynd Immersive (formerly MyndVR)</td><td>Engagement; physical, occupational and speech therapy; caregiver training</td><td>HTC VIVE XR Elite</td><td>Subscription; 500+ communities through Select Rehabilitation (<a href="https://secure.businesswire.com/news/home/20250401171183/en/Mynd-Immersive-Select-Rehabilitation-HTC-VIVE-and-ATT-Expand-Next-Generation-of-Immersive-Therapeutics-to-More-Than-150-U.S.-Senior-Living-Communities">BusinessWire</a>)</td><td><span class="tag no">no</span></td></tr>
+<tr><td>Viva Vita</td><td>VR activity kit, 100 experiences</td><td>Pico</td><td>Kit sold to facilities</td><td><span class="tag no">no</span></td></tr>
+<tr><td>XRHealth</td><td>At-home VR therapy with licensed therapists</td><td>Meta Quest</td><td>Medicare billing code E1905 (<a href="https://www.xr.health/us/blog/virtual-reality-physical-therapy-medicare/">XRHealth</a>)</td><td><span class="tag unc">partial</span>: Apple featured its visionOS work, but its Medicare product ships on Quest</td></tr>
+<tr><td>Penumbra REAL</td><td>Clinic rehab with full-body sensors</td><td>HTC VIVE Focus</td><td>Sold to rehab providers</td><td><span class="tag no">no</span></td></tr>
+<tr><td>Virtuleap Enhance</td><td>Brain games plus a "Cognitive Assessment Report"</td><td>Meta Quest</td><td>Consumer and clinical; only the React task correlated with standard tests (<a href="https://www.sciencedirect.com/science/article/abs/pii/S1879406825001365">ScienceDirect</a>)</td><td><span class="tag no">no</span></td></tr>
+</table></div>
+
+<h2>2. The obvious gaps</h2>
+<div class="callout gap"><strong>Gaps that apply directly to SpatialAge</strong></div>
+<ol class="gaps">
+<li><strong>No measurement app at all.</strong> Nothing on Vision Pro reports reaction time in milliseconds, reach range or spatial memory, compares results with age norms, or tracks a score over time. Existing apps report game scores, calories or meditation minutes. The closest are Brain Experiment, Focus and Reflexy, and none claims validation.</li>
+<li><strong>Nothing designed for older adults.</strong> No visionOS app across all four categories markets to seniors, uses large text or simplified onboarding for them, or reports results by age.</li>
+<li><strong>No caregiver or clinician view.</strong> The best today is in-app stats (Game Room) or Apple Health workout logging (Ping Pong Club, FunFitLand). Nothing shares results with family or a clinician.</li>
+<li><strong>No 3D Corsi or object-location memory task, and no hand-tracked reach test.</strong> These are validated on tablets and on other headsets. A VR spatial memory task separated MCI from healthy older adults with 0.94 sensitivity and 0.96 specificity (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9408476/">PMC9408476</a>). Meta-analyses put VR detection of MCI at about 0.88 sensitivity and specificity (<a href="https://pubmed.ncbi.nlm.nih.gov/41293102/">PubMed 41293102</a>).</li>
+<li><strong>No published Vision Pro study in older adults.</strong> Every Vision Pro user study found used young volunteers or clinicians. A feasibility study would be new: comfort, how often eye tracking fails with drooping eyelids or cataracts, cybersickness, and whether scores repeat on retest.</li>
+</ol>
+<div class="callout gap"><strong>Wider gaps (other teams' opportunities, or later add-ons)</strong></div>
+<ol class="gaps" start="6">
+<li><strong>Senior-living platform on Vision Pro.</strong> No Rendever or Mynd equivalent: reminiscence, group travel, a staff tablet that runs several headsets at once.</li>
+<li><strong>Balance, gait and fall risk.</strong> Nothing exists, and visionOS has no body or leg tracking (visionOS 27 adds tracked accessories only) (<a href="https://www.uploadvr.com/visionos-27-announced-apple-vision-pro-wwdc-26/">UploadVR</a>).</li>
+<li><strong>Rehab with measurement.</strong> No stroke, physical therapy or occupational therapy app on Vision Pro; all rehab VR vendors are on Quest or VIVE.</li>
+<li><strong>Gentle guided exercise for seniors</strong> (seated tai chi or chair exercise with feedback). Only Kung Fu Panda comes close.</li>
+<li><strong>Family connection for people whose family doesn't own a Vision Pro.</strong> Personas require peers with headsets. Game Room cross-play with a grandchild's iPhone is the only bridge found.</li>
+<li><strong>Reminiscence therapy.</strong> Photos "spatial scenes" turns old family photos into 3D, but nobody packages it for memory care.</li>
+<li><strong>Shared-headset workflow for residents.</strong> visionOS 26 lets a team share headsets, but each person's setup is saved to their own iPhone or iCloud. Residents without iPhones have no supported path (<a href="https://support.apple.com/en-us/124965">Apple 124965</a>).</li>
+<li><strong>Billing route.</strong> Rehab VR bills Medicare through E1905 or CPT 0770T. No Vision Pro product uses cognitive-assessment or remote-monitoring billing codes.</li>
+</ol>
+
+<h2>3. Why the gaps exist (barriers worth naming in the pitch)</h2>
+<div class="tablewrap"><table>
+<tr><th>Barrier</th><th>Detail</th><th>Mitigation for SpatialAge</th></tr>
+<tr><td>Platform future</td><td>MacRumors (Apr 29, 2026) reports Apple stopped work on future Vision Pro hardware; about 600k sold; the cheaper "Vision Air" reportedly canceled (<a href="https://www.macrumors.com/2026/04/29/apple-vision-pro-m5-flop/">MacRumors</a>). Reports, not Apple statements.</td><td>Keep task logic and scoring independent of the headset so they can move to Quest, Android XR or glasses</td></tr>
+<tr><td>Price</td><td>$3,699 since June 2026, about 7 times a Quest 3 (<a href="https://www.macrumors.com/2026/06/25/apple-vision-pro-just-got-even-more-expensive/">MacRumors</a>)</td><td>Sell to clinics and research studies first (one headset, many patients) rather than equipping nursing homes</td></tr>
+<tr><td>Weight</td><td>750 to 800 g (M5 model) plus a 353 g battery on a cable (<a href="https://www.apple.com/apple-vision-pro/specs/">Apple specs</a>)</td><td>Seated sessions of 10 minutes or less</td></tr>
+<tr><td>Eyes and glasses</td><td>No eyeglasses inside; needs ZEISS inserts (readers up to +2.75). Drooping eyelids, strabismus and nystagmus can defeat eye tracking (<a href="https://support.apple.com/en-us/120052">Apple 120052</a>)</td><td>Use hand-based tasks; offer Pointer Control or Dwell Control as a fallback</td></tr>
+<tr><td>Medical cautions</td><td>Apple advises caution for fall risk, seizures, pacemakers and hearing aids (<a href="https://support.apple.com/en-us/118495">Apple 118495</a>)</td><td>Seated only; screen for these at enrollment</td></tr>
+<tr><td>Hygiene</td><td>Light Seal cushion: soap and water only, no disinfectant wipes (<a href="https://support.apple.com/en-us/119574">Apple 119574</a>)</td><td>A spare cushion per resident, or face covers</td></tr>
+<tr><td>Measurement quality</td><td>Hand tracking runs at about 90 Hz (roughly 11 ms between samples) with optional prediction (<a href="https://www.uploadvr.com/visionos-2-improves-apple-vision-pro-hand-tracking/">UploadVR</a>). Apps get no raw gaze data. One study found higher workload on Vision Pro than HoloLens 2 (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12671319/">PMC12671319</a>).</td><td>Turn prediction off; correct for tracking delay; do practice trials before scored trials</td></tr>
+<tr><td>Cybersickness</td><td>Nursing home residents (mean age 89): 61% no symptoms, 18% significant in at least one session (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10394641/">PMC10394641</a>)</td><td>Passthrough (real room visible), fixed scene, no artificial movement</td></tr>
+</table></div>
+<p><strong>Enablers:</strong></p>
+<ul>
+<li><strong>HealthKit:</strong> works on visionOS (<a href="https://developer.apple.com/videos/play/wwdc2024/10083/">WWDC24</a>).</li>
+<li><strong>ResearchKit:</strong> a Stanford fork supports visionOS (<a href="https://github.com/StanfordBDHG/researchkit">GitHub</a>).</li>
+<li><strong>Shared use:</strong> Guest User mode, team device sharing in visionOS 26, and remote device management that resets a headset for the next person (<a href="https://support.apple.com/guide/deployment/deploy-apple-vision-pro-dep18daf732d/web">Apple deployment guide</a>).</li>
+<li><strong>Accessibility:</strong> Dwell Control and Pointer Control.</li>
+<li><strong>No controllers to grip:</strong> hand tracking only.</li>
+</ul>
+
+<h2>4. What this means for SpatialAge</h2>
+<ul>
+<li><strong>Positioning:</strong> "the first functional aging measurement on Vision Pro". The incumbents sell entertainment and therapy sessions, not a repeatable measurement.</li>
+<li><strong>Framing:</strong> keep it as wellness or research use. A diagnostic claim would likely make it FDA-regulated software. Brain Experiment and Focus both avoid clinical claims.</li>
+<li><strong>Demo hooks judges will recognize:</strong> a 3D Corsi task (validated on paper and tablets, never shipped on Vision Pro), hand-tracked reach range, and a longitudinal score sent to a clinician or family dashboard. The repo's <code>services/ingest</code> and <code>apps/dashboard</code> already point that way.</li>
+<li><strong>Answer to "why Vision Pro?":</strong> hand tracking with no controllers to grip, and passthrough so the person still sees the room. The scoring should be portable to other headsets.</li>
+<li><strong>Cheap evidence:</strong> a small test-retest and comfort study in older adults would be the first published Vision Pro study in that group.</li>
+</ul>
+
+<h2>5. Caveats</h2>
+<ul class="muted">
+<li>A listing that says "Requires visionOS" does not mean the app was built for Vision Pro, because iPhone and iPad apps show the same line. The research files mark each app as native, compatibility mode or uncertain.</li>
+<li>Some App Store pages were rate limited, and a few numbers come from search summaries. Check exact figures before putting them on a slide.</li>
+<li>The App Store has no public full catalog, so this is a broad survey, not a complete census. Uncertain entries: Focus (waitlist only), Reflexy and Spatial Solitaire (404), Calm (no native app), Mindway (2024 coverage only).</li>
+<li>The Vision Pro hardware news comes from press reports, not Apple.</li>
+</ul>
+
+<h2>Detailed source files</h2>
+<p class="muted">Each has full app tables with a link for every claim:
+<code>01_fitness_coaching.md</code> (34 apps), <code>02_medical_clinical.md</code> (32 entries plus studies), <code>03_wellness_mental_health.md</code> (25 apps), <code>04_games.md</code> (38 games), <code>05_senior_care_and_barriers.md</code> (vendors, research, barriers), all in this folder.</p>
+
+</main>
+</body>
+</html>
