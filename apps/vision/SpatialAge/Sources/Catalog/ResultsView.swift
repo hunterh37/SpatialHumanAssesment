@@ -200,10 +200,11 @@ struct Scoreboard: View {
                     .matchedGeometryEffect(id: "chip", in: ns)
                 VStack(alignment: .leading, spacing: 4) {
                     if let lo = report.spatialAgeLow, let hi = report.spatialAgeHigh {
-                        Text(String(format: "Likely range %.0f to %.0f", lo, hi))
+                        // ScoreKit's low and high are the 80 percent interval (z = 1.2816).
+                        Text(String(format: "80%% interval %.0f to %.0f", lo, hi)).monospacedDigit()
                     }
                     if let pace {
-                        Text(String(format: "Pace %.2fx over %d sessions", pace.pace, pace.sessions))
+                        Text(String(format: "Pace %.2fx over %d sessions", pace.pace, pace.sessions)).monospacedDigit()
                     }
                     Text(report.participantCode).monospaced().font(.footnote)
                 }
@@ -214,9 +215,10 @@ struct Scoreboard: View {
                         .font(.footnote).foregroundStyle(Dusk.color(Dusk.warn))
                 }
                 Spacer(minLength: 28)
-                HStack(spacing: 16) {
-                    Button("Retake test", action: again).buttonStyle(DuskButton(primary: false))
-                    Button("Next participant", action: next).buttonStyle(DuskButton(primary: true))
+                // Spec section 7: secondary "Play again", the one primary "Next player".
+                HStack(spacing: Dusk.Layout.spacing) {
+                    Button("Play again", action: again).buttonStyle(.duskSecondary)
+                    Button("Next player", action: next).buttonStyle(.duskPrimary)
                 }
                 if let uploadStatus {
                     Text(uploadStatus).font(.footnote).foregroundStyle(Dusk.color(Dusk.mute))
@@ -439,27 +441,11 @@ struct AgeChip: View {
                      ? "\(abs(years)) \(abs(years) == 1 ? "year" : "years") \(younger ? "younger" : "older") than \(Int(chrono.rounded()))"
                      : "In line with age \(Int(chrono.rounded()))")
                     .fontWeight(.semibold)
+                    .monospacedDigit()
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(Dusk.color(older ? Dusk.chip : Dusk.accentSoft), in: Capsule())
         }
-    }
-}
-
-/// Spec section 6: primary = accent capsule, secondary = chip capsule with a glassEdge border. 60 pt tall.
-struct DuskButton: ButtonStyle {
-    let primary: Bool
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.body.weight(.semibold))
-            .padding(.horizontal, 26)
-            .frame(minHeight: 60)
-            .foregroundStyle(Dusk.color(primary ? Dusk.onAccent : Dusk.glassInk))
-            .background(Dusk.color(primary ? Dusk.accent : Dusk.chip), in: Capsule())
-            .overlay { if !primary { Capsule().strokeBorder(Dusk.color(Dusk.glassEdge)) } }
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .hoverEffect(.lift)
-            .animation(.spring(duration: 0.25, bounce: 0.15), value: configuration.isPressed)
     }
 }
 

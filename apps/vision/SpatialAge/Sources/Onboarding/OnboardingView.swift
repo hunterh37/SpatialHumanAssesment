@@ -66,7 +66,8 @@ struct OnboardingView: View {
     }
 
     private var foot: some View {
-        VStack(spacing: 6) {
+        // 16 pt between the primary and the tertiary "Skip this question" (spec: 60 pt targets, 16 pt apart).
+        VStack(spacing: Dusk.Layout.spacing) {
             Button(fromReview && step != .review ? "Save" : primaryTitle, action: next)
                 .buttonStyle(.duskPrimaryLarge)
                 .frame(minWidth: 300)
