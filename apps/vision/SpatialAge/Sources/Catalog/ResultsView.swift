@@ -87,3 +87,47 @@ struct DomainBar: View {
         }
     }
 }
+
+/// Reached from "Play again" on the result. Same player, a recent player on this headset, or a new one.
+struct PlayerSwitchView: View {
+    @Environment(AppModel.self) private var model
+    @State private var recent: [Participant] = []
+
+    var body: some View {
+        VStack(spacing: 26) {
+            VStack(spacing: 8) {
+                DuskLabel("Play again")
+                Text("Who plays next?").font(DuskType.title)
+            }
+            HStack(spacing: Dusk.Layout.spacing) {
+                card(model.participant, title: "Same player", selected: true)
+                ForEach(recent, id: \.code) { card($0, title: "Recent") }
+            }
+            .frame(maxWidth: 900)
+            HStack(spacing: Dusk.Layout.spacing) {
+                Button("Back to result") { model.phase = .results }.buttonStyle(.duskTertiary)
+                Button("New player", systemImage: "person.badge.plus") { model.nextParticipant() }
+                    .buttonStyle(.duskSecondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .task { recent = model.recentPlayers() }
+    }
+
+    private func card(_ p: Participant, title: String, selected: Bool = false) -> some View {
+        Button { model.switchPlayer(to: p) } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                DuskLabel(title)
+                Text(p.code).font(.system(size: 30, weight: .light, design: .monospaced))
+                Text("Age \(Int(p.ageYears))").duskSecondary()
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+            .duskCard(selected: selected)
+            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: Dusk.Layout.cardRadius, style: .continuous))
+            .hoverEffect()
+        }
+        .buttonStyle(.plain)
+    }
+}

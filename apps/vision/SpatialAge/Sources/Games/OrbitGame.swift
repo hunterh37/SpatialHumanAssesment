@@ -19,15 +19,24 @@ final class OrbitGame: Minigame {
     /// Mean per-frame change of the tip-to-orb offset at which the trail is fully dimmed (meters).
     static let jitterFloorM: Float = 0.004
 
+    /// Path center below eye level and ahead, meters. The lowest point stays 0.16 m under the eyes.
+    static let centerDrop = 0.08
+    static let centerAhead = 0.45
+    static let amplitude = V3(0.2, 0.08, 0.08)
+
     let ctx: GameContext
-    init(_ ctx: GameContext) { self.ctx = ctx }
+    /// Participant frame for the current trial. Re-taken from the live head pose before every trial so the
+    /// orb starts in front of the participant even after they turn between trials.
+    private var frame: Rig
+    init(_ ctx: GameContext) { self.ctx = ctx; frame = ctx.rig }
 
     func play(familiarization: Bool, trials: Int, seed: Int) async -> Block {
         var rng = SeededRNG(seed: seed)
         var out: [Trial] = []
         for i in 0..<trials where !Task.isCancelled {
+            if let head = ctx.tracker.trackedHead() { frame = Rig(head: head) }
             let path = PursuitTrial.Path(
-                center: V3(0, Double(ctx.rig.eye) - 0.2, -0.45), amplitude: V3(0.2, 0.12, 0.08),
+                center: V3(0, Double(frame.eye) - Self.centerDrop, -Self.centerAhead), amplitude: Self.amplitude,
                 frequencyHz: V3(0.21, 0.29, 0.13),
                 phase: V3(.random(in: 0..<6.283, using: &rng), .random(in: 0..<6.283, using: &rng),
                           .random(in: 0..<6.283, using: &rng)))
@@ -40,10 +49,10 @@ final class OrbitGame: Minigame {
 
     func teardown() {}
 
-    private func world(_ v: V3) -> SIMD3<Float> { ctx.rig.world([Float(v.x), Float(v.y), Float(v.z)]) }
+    private func world(_ v: V3) -> SIMD3<Float> { frame.world([Float(v.x), Float(v.y), Float(v.z)]) }
 
     private func local(_ p: SIMD3<Float>) -> V3 {
-        let l = ctx.rig.rotation.inverse.act(p - ctx.rig.origin)
+        let l = frame.rotation.inverse.act(p - frame.origin)
         return V3(Double(l.x), Double(l.y), Double(l.z))
     }
 

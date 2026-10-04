@@ -174,7 +174,13 @@ struct Rig {
 
     init(head: simd_float4x4) {
         let p = head.columns.3
-        let f = -SIMD3<Float>(head.columns.2.x, 0, head.columns.2.z)
+        // Horizontal facing. Looking steeply down or up shrinks the forward vector's horizontal part, so
+        // blend in the head's up vector (it tips forward when looking down), weighted by pitch so head roll
+        // at level gaze adds nothing.
+        let fwd = -SIMD3<Float>(head.columns.2.x, head.columns.2.y, head.columns.2.z)
+        let up = SIMD3<Float>(head.columns.1.x, head.columns.1.y, head.columns.1.z)
+        let tilt = -fwd.y
+        let f = SIMD3<Float>(fwd.x + tilt * up.x, 0, fwd.z + tilt * up.z)
         origin = [p.x, 0, p.z]
         yaw = simd_length(f) > 1e-3 ? atan2(-f.x, -f.z) : 0
         eye = p.y

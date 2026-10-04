@@ -9,7 +9,7 @@ final class AppModel {
     static let immersiveID = "Tasks"
     static let windowID = "Main"
 
-    enum Phase { case onboarding, catalog, running, results }
+    enum Phase { case onboarding, catalog, running, results, switchPlayer }
     /// Leading tab ornament on the catalog phase (Dusk spec section 6).
     enum Tab: Hashable { case home, games, progress, duel }
 
@@ -172,8 +172,34 @@ final class AppModel {
         tab = .home
     }
 
-    /// Back to the catalog for the same participant.
+    /// Opens the player switch screen: same player, a recent player on this headset, or a new one.
     func playAgain() {
+        notice = nil
+        phase = .switchPlayer
+    }
+
+    /// Players with saved sessions on this headset other than the current one, most recent first.
+    func recentPlayers(limit: Int = 4) -> [Participant] {
+        var seen: Set<String> = [participant.code]
+        return SessionStore.all()
+            .sorted { $0.startedAt > $1.startedAt }
+            .map(\.participant)
+            .filter { seen.insert($0.code).inserted }
+            .prefix(limit)
+            .map { $0 }
+    }
+
+    /// Continues on the Games tab as `p`. The saved profile keeps height, weight and posture.
+    func switchPlayer(to p: Participant) {
+        participant = p
+        if var saved = profile {
+            saved.participant = p
+            saved.save()
+            profile = saved
+        }
+        report = nil
+        pace = nil
+        uploadStatus = nil
         notice = nil
         tab = .games
         phase = .catalog

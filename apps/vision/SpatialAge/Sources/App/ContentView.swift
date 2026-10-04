@@ -42,6 +42,7 @@ struct ContentView: View {
                         model.playAgain()
                     }
                 }
+            case .switchPlayer: screen { PlayerSwitchView() }
             }
         }
         .foregroundStyle(Color.duskInk)

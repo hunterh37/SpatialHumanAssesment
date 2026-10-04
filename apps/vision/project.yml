@@ -25,7 +25,7 @@ targets:
     info:
       path: SpatialAge/Info.plist
       properties:
-        CFBundleDisplayName: Spatial Age
+        CFBundleDisplayName: Better Years
         NSHandsTrackingUsageDescription: Hand tracking times how fast you reach targets and drives the anatomy overlay.
         NSWorldSensingUsageDescription: Room scanning places targets on real surfaces.
         NSLocalNetworkUsageDescription: Sends session results to the operator laptop.

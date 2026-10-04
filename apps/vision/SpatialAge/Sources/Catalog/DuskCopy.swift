@@ -47,7 +47,7 @@ extension Game {
 }
 
 enum DuskCopy {
-    static let brand = "SpatialAge"
+    static let brand = "Better Years"
     static let homeTitle = "How old do you move?"
     static let homeLine = "Eight short games read your reaction, reach, balance and memory. About six minutes, standing in place."
     static let gamesTitle = "Pick one, or play all eight"
