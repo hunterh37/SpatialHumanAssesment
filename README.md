@@ -26,7 +26,7 @@ Five Vision Pro minigames (Pendulum, Spark, Gate, Constellation, Orbit) that mea
 **Action.** A shared session schema, the visionOS minigame catalog, ScoreKit for scoring, and research-backed norms, built by PR on this repo.
 **Result (target).** Two Vision Pros duel side by side; each player sees a movement age and can level up toward a younger one.
 
-**Team:** Jason and Hunter (idea leads) build the reaction game, app shell and hand x-ray. Wilson, Alex and Franco build the memory and balance games. Jess owns the business use case, name and UI/UX. Ben owns the data set.
+**Team:** Jason and Hunter (idea leads) build the reaction game, app shell and hand x-ray. Wilson, Alex and Franco build the memory and balance games. Jess owns the business use case, name and UI/UX. Ben owns the data set. LinkedIn links are in the PRD under Team and ownership.
 
 The full plan, sources and guardrails are in [PRD.md](PRD.md); the picture explainer is `docs/eli5/index.html`.
 
