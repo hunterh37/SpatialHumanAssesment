@@ -1,0 +1,367 @@
+{
+  "name": "SpatialAge Dusk Meadow",
+  "version": 1,
+  "generatedBy": "reference/dusk-meadow.html#bake",
+  "generatedAt": "2026-10-04T21:27:21.853Z",
+  "frame": "Metres. +Y up, -Z forward, +X right; origin on the ground at the standing spot. Same as RealityKit immersive space.",
+  "standingSpot": {
+    "groundY": 0,
+    "eyeHeight": 1.6,
+    "levelRadius": 2.2
+  },
+  "panorama": {
+    "file": "dusk_far_8192x4096.jpg",
+    "ibl": "dusk_ibl_1024x512.jpg",
+    "projection": "equirectangular",
+    "encoding": "sRGB, already tone mapped (do not tone map again)",
+    "contains": "sky, clouds, sun, lake and everything farther than 60 m horizontally; nearer objects are left out; the ground is included everywhere",
+    "viewpoint": [
+      0,
+      1.6,
+      0
+    ],
+    "mapping": "u = 0.5 + atan2(d.x, -d.z) / (2*pi); v = 0.5 - asin(d.y) / pi  (v = 0 is the top row). Centre column = forward (-Z), right half = +X."
+  },
+  "nearTerrain": {
+    "heightmap": {
+      "file": "near_height_241.f32",
+      "format": "float32 little-endian, row-major",
+      "size": [
+        241,
+        241
+      ],
+      "xRange": [
+        -60,
+        60
+      ],
+      "zRange": [
+        -60,
+        60
+      ],
+      "step": 0.5,
+      "rowOrder": "row 0 is z = -60 (forward edge), column 0 is x = -60"
+    },
+    "albedo": {
+      "file": "near_albedo_1024.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "covers": "x and z from -60 to +60 m; image top row is z = -60",
+      "alpha": "1 inside 48 m, fades to 0 at 60 m so the mesh dissolves into the panorama"
+    }
+  },
+  "instances": {
+    "file": "near_instances.f32",
+    "format": "float32 little-endian",
+    "stride": 13,
+    "fields": [
+      "px",
+      "py",
+      "pz",
+      "qx",
+      "qy",
+      "qz",
+      "qw",
+      "sx",
+      "sy",
+      "sz",
+      "r",
+      "g",
+      "b"
+    ],
+    "color": "linear RGB tint; multiply with the prototype vertex colour",
+    "sets": [
+      {
+        "name": "spruce_0",
+        "prototype": "spruce_0",
+        "count": 45,
+        "offsetFloats": 0,
+        "material": {
+          "kind": "foliage",
+          "roughness": 0.9,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "spruce_1",
+        "prototype": "spruce_1",
+        "count": 42,
+        "offsetFloats": 585,
+        "material": {
+          "kind": "foliage",
+          "roughness": 0.9,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "trunk_spruce",
+        "prototype": "trunk_spruce",
+        "count": 87,
+        "offsetFloats": 1131,
+        "material": {
+          "kind": "trunk",
+          "roughness": 0.95,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "fir_0",
+        "prototype": "fir_0",
+        "count": 34,
+        "offsetFloats": 2262,
+        "material": {
+          "kind": "foliage",
+          "roughness": 0.9,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "trunk_fir",
+        "prototype": "trunk_fir",
+        "count": 34,
+        "offsetFloats": 2704,
+        "material": {
+          "kind": "trunk",
+          "roughness": 0.95,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "larch_0",
+        "prototype": "larch_0",
+        "count": 46,
+        "offsetFloats": 3146,
+        "material": {
+          "kind": "foliage",
+          "roughness": 0.9,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "trunk_larch",
+        "prototype": "trunk_larch",
+        "count": 46,
+        "offsetFloats": 3744,
+        "material": {
+          "kind": "trunk",
+          "roughness": 0.95,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "pine_0",
+        "prototype": "pine_0",
+        "count": 8,
+        "offsetFloats": 4342,
+        "material": {
+          "kind": "foliage",
+          "roughness": 0.9,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "trunk_pine",
+        "prototype": "trunk_pine",
+        "count": 8,
+        "offsetFloats": 4446,
+        "material": {
+          "kind": "trunk",
+          "roughness": 0.95,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "grass_card",
+        "prototype": "grass_card",
+        "count": 40865,
+        "offsetFloats": 4550,
+        "material": {
+          "kind": "card",
+          "roughness": 0.8,
+          "doubleSided": true,
+          "alphaTest": 0.42,
+          "map": "grass_card.png",
+          "castsShadow": false
+        }
+      },
+      {
+        "name": "shrub_0",
+        "prototype": "shrub_0",
+        "count": 5,
+        "offsetFloats": 535795,
+        "material": {
+          "kind": "shrub",
+          "roughness": 0.82,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "shrub_1",
+        "prototype": "shrub_1",
+        "count": 8,
+        "offsetFloats": 535860,
+        "material": {
+          "kind": "shrub",
+          "roughness": 0.82,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "shrub_2",
+        "prototype": "shrub_2",
+        "count": 4,
+        "offsetFloats": 535964,
+        "material": {
+          "kind": "shrub",
+          "roughness": 0.82,
+          "doubleSided": true,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "rock_0",
+        "prototype": "rock_0",
+        "count": 2,
+        "offsetFloats": 536016,
+        "material": {
+          "kind": "rock",
+          "roughness": 0.93,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "rock_1",
+        "prototype": "rock_1",
+        "count": 3,
+        "offsetFloats": 536042,
+        "material": {
+          "kind": "rock",
+          "roughness": 0.93,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "rock_2",
+        "prototype": "rock_2",
+        "count": 2,
+        "offsetFloats": 536081,
+        "material": {
+          "kind": "rock",
+          "roughness": 0.93,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      },
+      {
+        "name": "rock_3",
+        "prototype": "rock_3",
+        "count": 6,
+        "offsetFloats": 536107,
+        "material": {
+          "kind": "rock",
+          "roughness": 0.93,
+          "doubleSided": false,
+          "alphaTest": 0,
+          "map": null,
+          "castsShadow": true
+        }
+      }
+    ]
+  },
+  "prototypes": {
+    "file": "prototypes.json",
+    "note": "Per prototype: positions, normals, colors (linear RGB shade, multiply with instance tint), optional uvs, triangle indices. Local space, base at y = 0."
+  },
+  "grassCard": {
+    "file": "grass_card.png",
+    "note": "Alpha-tested blade texture for prototype grass_card; alpha test 0.42; tint per instance."
+  },
+  "lighting": {
+    "sun": {
+      "elevationDeg": 7,
+      "azimuthFromForwardTowardLeftDeg": 38,
+      "directionToSun": [
+        -0.6111,
+        0.1219,
+        -0.7821
+      ],
+      "colorLinear": [
+        1,
+        0.5972,
+        0.3401
+      ],
+      "colorHex": "#ffcb9e",
+      "intensityThreeJs": 2.4633
+    },
+    "environmentIntensityThreeJs": 1.45,
+    "toneMapping": "Khronos PBR Neutral",
+    "exposure": 1.2031,
+    "sky": {
+      "zenith": "#6b5d80",
+      "horizonAwayFromSun": "#dcc3c3",
+      "horizonTowardSun": "#FBD3A6",
+      "sunGlow": "#FFE6C4"
+    },
+    "haze": {
+      "colorLinear": [
+        0.6027,
+        0.4596,
+        0.4596
+      ],
+      "densityExp2": 0.00009,
+      "valleyLayerDensity": 0.00026,
+      "valleyFloorY": -333.7,
+      "falloffPerMetre": 0.0042
+    }
+  },
+  "signalColorsUnchanged": {
+    "go": "#2F6BFF",
+    "nogo": "#FF7A3D",
+    "gold": "#FFC83D",
+    "teal": "#14B8A6"
+  }
+}

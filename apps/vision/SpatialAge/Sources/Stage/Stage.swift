@@ -7,6 +7,7 @@ import UIKit
 /// lake, two-tone tree silhouettes, grass around the participant. World-locked meshes, so it moves in true
 /// parallax. Clouds drift slowly between blocks; `setAmbient(false)` freezes them while trials run, so every
 /// motion in view during play is a game signal. Nothing bright or moving sits inside arm's reach.
+/// When `DuskMeadow.isOn`, Alex's baked Dusk Meadow replaces the valley once it has loaded; the valley is the fallback.
 @MainActor
 enum Stage {
     static func make() -> Entity {
@@ -86,7 +87,22 @@ enum Stage {
             let r = Float.random(in: R * 0.47...R * 0.52, using: &trng)
             root.addChild(tree(height: Float.random(in: 3.5...6, using: &trng), dark: i % 3 != 0, at: [sin(a) * r, 0, -cos(a) * r]))
         }
+        if DuskMeadow.isOn { loadMeadow(into: root) }
         return root
+    }
+
+    /// Builds the Meadow in the background and swaps it in only when it is complete, so the sky is never empty.
+    /// On any failure the valley stays and one line is logged.
+    private static func loadMeadow(into root: Entity) {
+        Task {
+            do {
+                let meadow = try await DuskMeadow.load()
+                for child in root.children { child.isEnabled = false }
+                root.addChild(meadow)
+            } catch {
+                print("Stage: Dusk Meadow unavailable, keeping the procedural valley (\(error))")
+            }
+        }
     }
 
     /// Grass radius, meters. Trees stand outside the 0.9 m play volume and outside 5 m.
