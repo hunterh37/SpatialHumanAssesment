@@ -1,11 +1,10 @@
 import Foundation
 import ScoreKit
 
-/// Setup answers kept on this headset. `participant` goes into every session; height, weight and posture
-/// stay app-side until the session schema gains them (docs/README.md, "Data mapping"). The first name is
-/// never stored.
+/// Setup answers kept on this headset. `participant` goes into every session, with height, weight and posture
+/// copied in (schema 0.5). The first name is never stored.
 struct PlayerProfile: Codable, Equatable {
-    enum Posture: String, Codable, CaseIterable { case standing, seated }
+    typealias Posture = Participant.Posture
 
     var participant: Participant
     var heightCm: Double
@@ -24,6 +23,15 @@ struct PlayerProfile: Codable, Equatable {
     }
 
     static func clear(_ defaults: UserDefaults = .standard) { defaults.removeObject(forKey: key) }
+
+    /// The participant with body size and posture filled in. Profiles saved before schema 0.5 lack them.
+    var sessionParticipant: Participant {
+        var p = participant
+        p.heightCm = heightCm
+        p.weightKg = weightKg
+        p.posture = posture
+        return p
+    }
 }
 
 extension PlayerProfile.Posture {
@@ -44,11 +52,14 @@ struct OnboardingDraft {
     var hand: Participant.Handedness?
     var posture: PlayerProfile.Posture?
     var code = Participant.randomCode()
+    /// The age the player chose. Setup cannot continue on the default, so a skipped answer never labels a session.
+    var ageSet = false
 
     init() {}
 
     init(_ p: PlayerProfile) {
         age = p.participant.ageYears
+        ageSet = true
         sex = p.participant.sex
         heightCm = p.heightCm
         weightKg = p.weightKg ?? weightKg
@@ -60,7 +71,9 @@ struct OnboardingDraft {
 
     var profile: PlayerProfile {
         PlayerProfile(
-            participant: Participant(code: code, ageYears: age, sex: sex ?? .unspecified, handedness: hand ?? .right),
+            participant: Participant(code: code, ageYears: age, sex: sex ?? .unspecified, handedness: hand ?? .right,
+                                     heightCm: heightCm, weightKg: weightSkipped ? nil : weightKg,
+                                     posture: posture ?? .standing),
             heightCm: heightCm,
             weightKg: weightSkipped ? nil : weightKg,
             posture: posture ?? .standing)

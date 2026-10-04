@@ -3,6 +3,7 @@ import ScoreKit
 import ScoreKitSynth
 
 // scorekit score <session.json>...            print one ScoreReport per session (JSON array)
+// scorekit matrix <session.json>...           print the KDM metric matrix as CSV, one row per session
 // scorekit pace <session.json>...             score each session and print pace of aging
 // scorekit synth --out DIR [--n 40] [--seed 7]
 // scorekit history --out DIR [--age 52] [--pace 0.8] [--sessions 9] [--days 240] [--seed 11]
@@ -37,6 +38,9 @@ do {
     switch args.first {
     case "score":
         try emit(try paths.map { engine.score(try load($0)) })
+
+    case "matrix":
+        FileHandle.standardOutput.write(Data(MetricMatrix.csv(try paths.map(load), engine: engine).utf8))
 
     case "pace":
         let reports = try paths.map { engine.score(try load($0)) }.sorted { $0.startedAt < $1.startedAt }
@@ -82,7 +86,7 @@ do {
         try emit(NormTable.provisional)
 
     default:
-        FileHandle.standardError.write(Data("usage: scorekit score|pace|synth|history|norms\n".utf8))
+        FileHandle.standardError.write(Data("usage: scorekit score|matrix|pace|synth|history|norms\n".utf8))
         exit(2)
     }
 } catch {

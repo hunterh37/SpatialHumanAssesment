@@ -33,6 +33,18 @@ final class DeckGamesTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(m[.catchDropCm]).value, PendulumMetrics.rulerDropCm(latency: latency), accuracy: 0.5)
     }
 
+    func testStickDropLatencyUsesFastEndOfRampAndRanksDrops() throws {
+        // Slow leaves are caught late (tracked), fast ones at 0.25 s. Only scale >= 0.75 counts.
+        var trials = (0..<6).map { leaf($0, ecc: 0, latency: 0.6, scale: 0.25) }
+        trials += (6..<10).map { leaf($0, ecc: 0, latency: 0.25, scale: 1.0) }
+        let s = session([Block(task: .pendulum, familiarization: false, seed: 1, trials: trials.map(Trial.pendulum))])
+        XCTAssertEqual(try XCTUnwrap(PendulumMetrics.extract(s).metrics[.catchLatency]).value, 0.25, accuracy: 1e-9)
+
+        // Two fast drops rank slowest: median of [0.2, 0.3, 0.4, inf, inf] is 0.4.
+        XCTAssertEqual(try XCTUnwrap(PendulumMetrics.catchLatency([0.2, 0.3, 0.4], drops: 2)).value, 0.4, accuracy: 1e-9)
+        XCTAssertNil(PendulumMetrics.catchLatency([0.2, 0.3], drops: 2))
+    }
+
     // MARK: Scary Balance
 
     private func reach(_ i: Int, freeze: ReachGrabTrial.Freeze?) -> ReachGrabTrial {

@@ -25,12 +25,12 @@ One question per screen, one primary button per screen:
 | Age | `participant.age_years` | Existing, required |
 | Sex | `participant.sex` | Existing, optional |
 | Main hand | `participant.handedness` | Existing, optional |
-| Height | `participant.height_cm` | Proposed new field |
-| Weight | `participant.weight_kg` | Proposed new field, skippable |
-| Standing or seated | `participant.posture` | Proposed new field; seated skips Reach and Grab and Hole in the Wall |
+| Height | `participant.height_cm` | Schema 0.5, optional |
+| Weight | `participant.weight_kg` | Schema 0.5, optional, skippable |
+| Standing or seated | `participant.posture` | Schema 0.5, optional; seated skips Reach and Grab and Hole in the Wall |
 | (automatic) | `participant.code` | Existing, required |
 
-The three proposed fields are not added to `packages/schema/session.schema.json` in this PR. Adding them needs a schema version bump (repo rule) and sign-off from schema owners.
+Schema 0.5.0 adds the three fields, so they now reach every session (`specs/session-schema.md`).
 
 ## Dusk spec checklist
 

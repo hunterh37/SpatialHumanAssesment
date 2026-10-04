@@ -12,7 +12,7 @@ Gauss-Newton: each step is the linear KDM formula on the curves' tangents at the
 Parameters (f_j, s_j) normally come from a reference sample. `kdm_params.json` holds literature
 priors until sessions are collected; `fit` estimates linear parameters from data.
 
-Stdlib only. Run: python -m sha_biomarkers.kdm table.csv
+Stdlib only. Run: make kdm, or python -m sha_biomarkers.kdm matrix.csv
 """
 
 from __future__ import annotations
@@ -167,21 +167,42 @@ def fit(X, columns: list[str], ages) -> dict[str, dict]:
     return out
 
 
-def main(path: str, params: str | None = None):
-    """Print one estimate per CSV row. Header names biomarkers; an `age` column adds the prior."""
-    model = KDM.from_config(params) if params else KDM.from_config()
-    with open(path, newline="") as f:
-        reader = csv.reader(f)
-        header = next(reader)
-        rows = list(reader)
-    ca = [r[header.index("age")] for r in rows] if "age" in header else None
+PASS_THROUGH = ("session_id", "code", "age", "mode", "calibration", "usable")
+
+
+def main(argv: list[str]):
+    """Score a metric matrix (`scorekit matrix`, `make kdm-matrix`). Prints CSV to stdout.
+
+    `kdm_age` uses the biomarkers only (BA_E) and is the number to validate against chronological age.
+    `kdm_age_prior` adds the chronological-age prior (BA_EC) and is the one to show a player.
+    """
+    import argparse
+
+    ap = argparse.ArgumentParser(prog="python -m sha_biomarkers.kdm")
+    ap.add_argument("matrix", help="CSV with one column per biomarker and an optional `age` column")
+    ap.add_argument("--params", default=str(DEFAULT_PARAMS))
+    ap.add_argument("--calibration-only", action="store_true",
+                    help="keep rows with calibration=1: first usable Play-all session per participant")
+    args = ap.parse_args(argv)
+
+    model = KDM.from_config(args.params)
+    with open(args.matrix, newline="") as f:
+        rows = list(csv.DictReader(f))
+    if args.calibration_only:
+        rows = [r for r in rows if r.get("calibration") == "1"]
+    columns = [c for c in model.biomarkers]
+    X = [[r.get(c) for c in columns] for r in rows]
+    ages = [r.get("age") for r in rows]
+    evidence = model.predict(X, columns)
+    posterior = model.predict(X, columns, chronological_age=ages)
+
+    keep = [c for c in PASS_THROUGH if rows and c in rows[0]]
     w = csv.writer(sys.stdout)
-    w.writerow(["row", "kdm_age", "se", "n_biomarkers"])
-    for i, e in enumerate(model.predict(rows, header, ca)):
-        w.writerow([i, e.age, e.se, e.n] if e else [i, "", "", 0])
+    w.writerow(keep + ["kdm_age", "kdm_age_se", "kdm_age_prior", "kdm_age_prior_se", "n_biomarkers"])
+    for r, e, p in zip(rows, evidence, posterior):
+        tail = [e.age, e.se, p.age, p.se, e.n] if e else ["", "", "", "", 0]
+        w.writerow([r[c] for c in keep] + tail)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (2, 3):
-        sys.exit("usage: python -m sha_biomarkers.kdm table.csv [params.json]")
-    main(*sys.argv[1:])
+    main(sys.argv[1:])

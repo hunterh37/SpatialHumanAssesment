@@ -8,13 +8,31 @@ final class SessionRecorder {
     let start = CACurrentMediaTime()
     private(set) var session: Session
 
-    init(participant: Participant) {
+    init(participant: Participant, mode: PlayMode, priorSessions: Int) {
         let info = Bundle.main.infoDictionary
         session = Session(
             participant: participant,
-            device: Device(model: "RealityDevice", osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
-                           appVersion: info?["CFBundleShortVersionString"] as? String ?? "0")
+            device: Device(model: Self.hardwareModel, osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+                           appVersion: info?["CFBundleShortVersionString"] as? String ?? "0", deviceId: Self.deviceId),
+            mode: mode,
+            priorSessions: priorSessions
         )
+    }
+
+    /// Hardware identifier such as `RealityDevice14,1`.
+    static var hardwareModel: String {
+        var info = utsname()
+        uname(&info)
+        return withUnsafeBytes(of: &info.machine) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+    }
+
+    /// Random id made once per install. Tells headsets apart without identifying anyone.
+    static var deviceId: String {
+        let key = "sa.deviceId"
+        if let id = UserDefaults.standard.string(forKey: key) { return id }
+        let id = UUID().uuidString
+        UserDefaults.standard.set(id, forKey: key)
+        return id
     }
 
     var now: Double { CACurrentMediaTime() - start }
