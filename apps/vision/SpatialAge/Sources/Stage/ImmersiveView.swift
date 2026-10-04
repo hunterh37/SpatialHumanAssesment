@@ -174,7 +174,7 @@ struct HUDView: View {
                     Text(hud.line)
                         .font(.system(size: 24, weight: .regular))
                         .foregroundStyle(Color.duskInk)
-                        .lineLimit(2)
+                        .lineLimit(3)  // the longer deck instructions plus "Practice. " need a third line
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
@@ -196,7 +196,7 @@ struct HUDView: View {
                 }
             }
             .padding(.leading, 32).padding(.trailing, 14).padding(.vertical, 14)
-            .frame(width: 720)
+            .frame(width: 860)
             .background(Color.duskGlassStrong, in: Capsule())
             .glassBackgroundEffect(in: Capsule())
             .overlay { DuskEdge(shape: Capsule()) }
