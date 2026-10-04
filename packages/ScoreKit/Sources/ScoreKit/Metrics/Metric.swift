@@ -28,6 +28,19 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
     case pursuitLag = "pursuit_lag_ms"
     case pursuitOnTarget = "pursuit_on_target"
     case pursuitGain = "pursuit_gain"
+    // Reach and grab
+    case reachMaxCm = "reach_max_cm"
+    case reachLeanCm = "reach_lean_cm"
+    case reachGrabRate = "reach_grab_rate"
+    // Hole in the wall
+    case wallSwayCmS = "wall_sway_cms"
+    case wallHandDriftCm = "wall_hand_drift_cm"
+    case wallClearRate = "wall_clear_rate"
+    // Color dots
+    case dotsSpan = "dots_span"
+    case dotsAccuracy = "dots_accuracy"
+    case dotsFalseRate = "dots_false_rate"
+    case dotsDecisionTime = "dots_decision_time"
 
     public static func < (a: MetricID, b: MetricID) -> Bool {
         allCases.firstIndex(of: a)! < allCases.firstIndex(of: b)!
@@ -40,6 +53,9 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
         case .choiceRT, .decisionTime, .commissionRate, .omissionRate, .dPrime: .gate
         case .corsiSpan, .corsiTotal, .corsiTapInterval: .constellation
         case .pursuitRMS, .pursuitLag, .pursuitOnTarget, .pursuitGain: .orbit
+        case .reachMaxCm, .reachLeanCm, .reachGrabRate: .reach
+        case .wallSwayCmS, .wallHandDriftCm, .wallClearRate: .wall
+        case .dotsSpan, .dotsAccuracy, .dotsFalseRate, .dotsDecisionTime: .dots
         }
     }
 
@@ -68,18 +84,31 @@ public enum MetricID: String, CaseIterable, Codable, Sendable, Comparable {
         case .pursuitLag: "Tracking lag"
         case .pursuitOnTarget: "Time on target"
         case .pursuitGain: "Velocity gain"
+        case .reachMaxCm: "Furthest grab"
+        case .reachLeanCm: "Lean distance"
+        case .reachGrabRate: "Grab rate"
+        case .wallSwayCmS: "Head sway"
+        case .wallHandDriftCm: "Hand drift"
+        case .wallClearRate: "Walls cleared"
+        case .dotsSpan: "Dot span"
+        case .dotsAccuracy: "Recall accuracy"
+        case .dotsFalseRate: "False taps"
+        case .dotsDecisionTime: "Recall start time"
         }
     }
 
     public var unit: String {
         switch self {
-        case .catchLatency, .reachRT, .reachMT, .rtTau, .choiceRT, .decisionTime, .corsiTapInterval: "s"
-        case .catchDropCm, .pursuitRMS: "cm"
+        case .catchLatency, .reachRT, .reachMT, .rtTau, .choiceRT, .decisionTime, .corsiTapInterval,
+             .dotsDecisionTime: "s"
+        case .catchDropCm, .pursuitRMS, .reachMaxCm, .reachLeanCm, .wallHandDriftCm: "cm"
+        case .wallSwayCmS: "cm/s"
         case .pursuitLag: "ms"
         case .peakSpeed: "m/s"
         case .eccSlope: "s/90°"
-        case .catchRate, .commissionRate, .omissionRate, .pursuitOnTarget, .pathEfficiency: "ratio"
-        case .rtCV, .smoothness, .dPrime, .corsiSpan, .corsiTotal, .pursuitGain: ""
+        case .catchRate, .commissionRate, .omissionRate, .pursuitOnTarget, .pathEfficiency, .reachGrabRate,
+             .wallClearRate, .dotsAccuracy, .dotsFalseRate: "ratio"
+        case .rtCV, .smoothness, .dPrime, .corsiSpan, .corsiTotal, .pursuitGain, .dotsSpan: ""
         }
     }
 }

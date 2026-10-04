@@ -50,3 +50,4 @@ Semver in `schema_version`. Additive optional fields bump minor. Anything else b
 
 - 0.1.0 initial.
 - 0.2.0 tasks `pendulum` and `pursuit`; optional `trace`, `endpoint_error_m`, `tap_t`. 0.1 files still validate. Python `ml` ignores the new tasks; scoring for them lives in `packages/ScoreKit`.
+- 0.3.0 adds the `reach_grab`, `wall` and `color_dots` tasks and their trial types (Reach and Grab, Hole in the Wall, Color Dots). Additive, so existing sessions still validate.
