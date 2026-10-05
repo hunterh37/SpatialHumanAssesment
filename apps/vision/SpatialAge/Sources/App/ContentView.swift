@@ -18,6 +18,7 @@ struct ContentView: View {
             case .intro:
                 screen {
                     VStack(spacing: 20) {
+                        BrandMark(size: 96)
                         DuskLabel(DuskCopy.brand)
                         Text("Look around").font(DuskType.title)
                         Button("Skip intro") { model.finishIntro() }.buttonStyle(.duskTertiary)

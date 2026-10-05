@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/brand/betteryears-mark-512.png" width="140" alt="BetterYears Age bird logo"></p>
+
 # BetterYears Age PRD
 
 Product name: **BetterYears Age**, chosen on Oct 4. The repo (`SpatialHumanAssesment`) and code name (`SpatialAge`) stay as they are.
