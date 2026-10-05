@@ -1,45 +1,59 @@
 import AVFoundation
 import Foundation
 import Observation
+import ScoreKit
 
-/// Calm music bed for menus and results (Dusk spec section 8, working title "Golden Hour").
-/// Plays every bundled audio file named `music-*`, shuffled and endless, with a 4 s crossfade between tracks.
-/// `follow` says when to stay silent: while a game block runs, so sound never cues timing, and while Sky Plank
-/// plays its own wind. With no files it stays silent and `isAvailable` is false, which hides the mini-player.
-/// Tracks drop into `Audio/Music/` (see the README there).
+/// Music bed (Dusk spec section 8, working title "Golden Hour"). Plays every bundled audio file named `music-*`,
+/// shuffled and endless, quietly under everything, games included. Entering or leaving a game slides to another
+/// track over a slow equal-power crossfade, so the change is felt more than heard. Tracks also crossfade into
+/// each other when one ends. With no files it stays silent and `isAvailable` is false, which hides the
+/// mini-player. Tracks drop into `Audio/Music/` (see the README there).
 @MainActor
 @Observable
 final class MusicBed {
+    /// Where the listener is. Changing between `menu` and a game, or between games, changes the track.
+    enum Scene: Equatable {
+        case menu
+        case game(Game)
+        /// Sky Plank plays its own wind, so the bed fades out under it.
+        case silent
+    }
+
     /// A file is a track when it sits in the bundle root, its name starts with this and its extension is listed.
     static let namePrefix = "music-"
     static let extensions: Set<String> = ["m4a", "mp3", "wav", "aif", "aiff", "caf"]
     static let fallbackTitle = "Golden Hour"
     /// UserDefaults key for the listener's play/pause choice. Default on.
     static let defaultsKey = "music.enabled"
-    /// Player volume at full level. Sits under the effects.
-    static let volume: Float = 0.35
-    /// Seconds: crossfade between tracks, fade to silence for a game block, fade back in on menus and results.
-    static let crossfade = 4.0, fadeOut = 0.5, fadeIn = 1.5
+    /// Player volume on menus and results. Low, so it sits well under the effects.
+    static let volume: Float = 0.2
+    /// Share of `volume` during a game. Lower still, so spatial cues such as the Spatial Tracking rustle stay clear.
+    static let gameLevel: Float = 0.6
+    /// Seconds: crossfade when a track ends; crossfade when entering or leaving a game (slow, so it barely
+    /// registers); fade out for pause or Sky Plank; fade in from silence; level change between menu and game.
+    static let crossfade = 4.0, transition = 8.0, fadeOut = 0.5, fadeIn = 1.5, levelChange = 3.0
 
     /// False when the bundle holds no playable track. The mini-player hides itself.
     private(set) var isAvailable: Bool
-    /// The listener's choice, saved in UserDefaults `music.enabled` (default on). Context can still keep it quiet.
+    /// The listener's choice, saved in UserDefaults `music.enabled` (default on). Sky Plank can still keep it quiet.
     private(set) var enabled: Bool
     /// Title of the track now playing, from its file name.
     private(set) var title = MusicBed.fallbackTitle
 
     private let tracks: [URL]
     private let defaults: UserDefaults
-    @ObservationIgnored private var quiet: (@MainActor () -> Bool)?
+    @ObservationIgnored private var sceneSource: (@MainActor () -> Scene)?
     /// Silent until `follow` says otherwise.
-    @ObservationIgnored private var silent = true
+    @ObservationIgnored private var scene = Scene.silent
     @ObservationIgnored private var wanted = false
     @ObservationIgnored private var deck: [URL] = []
     @ObservationIgnored private var lastURL: URL?
     @ObservationIgnored private var current: Voice?
     /// The next track, alive only during a crossfade.
     @ObservationIgnored private var incoming: Voice?
-    /// 0 is silent, 1 is `volume`. Ramps toward the goal at the fade rates.
+    /// Crossfade progress in seconds and its length. Nil when no crossfade runs.
+    @ObservationIgnored private var fade: (elapsed: Double, length: Double)?
+    /// 0 is silent, 1 is `volume`. Ramps toward `target`.
     @ObservationIgnored private var level: Float = 0
     /// True while the players are paused (fully faded out) or not yet started.
     @ObservationIgnored private var paused = true
@@ -76,9 +90,9 @@ final class MusicBed {
 
     // MARK: - Control
 
-    /// Sets the condition for silence. `quiet` is read again whenever the observable state it reads changes.
-    func follow(_ quiet: @escaping @MainActor () -> Bool) {
-        self.quiet = quiet
+    /// Sets where the listener is. `scene` is read again whenever the observable state it reads changes.
+    func follow(_ scene: @escaping @MainActor () -> Scene) {
+        sceneSource = scene
         watch()
     }
 
@@ -90,18 +104,29 @@ final class MusicBed {
     }
 
     private func watch() {
-        guard let quiet else { return }
-        silent = withObservationTracking { quiet() } onChange: { [weak self] in
+        guard let sceneSource else { return }
+        let next = withObservationTracking { sceneSource() } onChange: { [weak self] in
             // Fires before the new value lands, so look again on the next main-actor turn.
             Task { @MainActor in self?.watch() }
         }
+        let previous = scene
+        scene = next
+        // Into a game, out of one, or from one game to the next: a new track. Silence in between is a plain fade.
+        if previous != next, previous != .silent, next != .silent { changeTrack() }
         update()
     }
 
     private func update() {
-        wanted = enabled && isAvailable && !silent
+        wanted = enabled && isAvailable && scene != .silent
         // When not wanted, the running ticker fades out and pauses; an idle bed has nothing to do.
         if wanted { resume() }
+    }
+
+    /// Level the ramp moves toward.
+    private var target: Float {
+        guard wanted else { return 0 }
+        if case .game = scene { return Self.gameLevel }
+        return 1
     }
 
     private func resume() {
@@ -120,6 +145,23 @@ final class MusicBed {
             incoming?.play()
         }
         startTicker()
+    }
+
+    /// Slides to the next track over `transition`. A crossfade already running is left to finish, so a quick
+    /// game change never stacks two. While paused, the next track is simply queued up silent.
+    private func changeTrack() {
+        guard incoming == nil else { return }
+        guard !paused, current != nil else {
+            current?.player.stop()
+            current = nextVoice()
+            if let now = current { show(now.title) }
+            return
+        }
+        guard let cur = current?.player, let next = nextVoice() else { return }
+        next.play()
+        incoming = next
+        // Never longer than the old track has left, or it would cut out mid-fade.
+        fade = (0, min(Self.transition, max(cur.duration - cur.currentTime - 0.1, 1)))
     }
 
     // MARK: - Tick
@@ -143,7 +185,7 @@ final class MusicBed {
     /// no track left, which ends the ticker.
     private func step(_ dt: Double) -> Bool {
         ramp(dt)
-        guard advance() else {
+        guard advance(dt) else {
             isAvailable = false
             paused = true
             return false
@@ -158,29 +200,37 @@ final class MusicBed {
         return true
     }
 
-    /// Moves the level toward its goal: down in `fadeOut`, back up over `fadeIn`.
+    /// Moves the level toward `target`: out in `fadeOut`, in from silence over `fadeIn`, and between menu and
+    /// game levels over `levelChange`.
     private func ramp(_ dt: Double) {
-        let seconds = wanted ? Self.fadeIn : Self.fadeOut
+        let goal = target
+        guard level != goal else { return }
+        let seconds = goal == 0 ? Self.fadeOut : (level == 0 ? Self.fadeIn : Self.levelChange)
         let delta = Float(dt / seconds)
-        level = wanted ? min(1, level + delta) : max(0, level - delta)
+        level = level < goal ? min(goal, level + delta) : max(goal, level - delta)
     }
 
-    /// Starts the next track under the tail of this one, and hands over once this one has played out.
-    /// False when no track can be decoded.
-    private func advance() -> Bool {
+    /// Starts the next track under the tail of this one, runs any crossfade, and hands over when it completes
+    /// or the old track runs out. False when no track can be decoded.
+    private func advance(_ dt: Double) -> Bool {
         guard let cur = current else { return false }
         let player = cur.player
         var remaining = player.duration - player.currentTime
-        let span = min(Self.crossfade, player.duration / 3)
-        if incoming == nil, remaining <= span, let next = nextVoice() {
+        if incoming == nil, remaining <= min(Self.crossfade, player.duration / 3), let next = nextVoice() {
             next.play()
             incoming = next
+            fade = (0, max(remaining, 0.1))
         }
         if !player.isPlaying {
             // Stopped without us: it ended, or an interruption cut it. A track that never started just retries.
             if cur.started, remaining < 1 || player.currentTime < 0.05 { remaining = 0 } else { cur.play() }
         }
-        guard remaining <= 0.05 else { return true }
+        if var f = fade {
+            f.elapsed += dt
+            fade = f
+        }
+        let crossfadeDone = fade.map { $0.elapsed >= $0.length } ?? false
+        guard remaining <= 0.05 || crossfadeDone else { return true }
         player.stop()
         if let next = incoming {
             current = next
@@ -189,6 +239,7 @@ final class MusicBed {
             current?.play()
         }
         incoming = nil
+        fade = nil
         guard let now = current else { return false }
         show(now.title)
         return true
@@ -196,13 +247,7 @@ final class MusicBed {
 
     /// Sets both volumes: level squared for a smooth fade, equal-power curves for the crossfade.
     private func mix() {
-        var blend: Float = 0
-        if let cur = current, incoming != nil {
-            let span = min(Self.crossfade, cur.player.duration / 3)
-            let left = cur.player.duration - cur.player.currentTime
-            let done: Double = 1 - left / span
-            blend = Float(min(max(done, 0), 1))
-        }
+        let blend = fade.map { Float(min(max($0.elapsed / $0.length, 0), 1)) } ?? 0
         let quarterTurn: Float = .pi / 2
         let gain = Self.volume * level * level
         current?.player.volume = gain * cos(blend * quarterTurn)

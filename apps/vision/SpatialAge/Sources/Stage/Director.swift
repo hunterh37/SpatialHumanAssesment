@@ -9,11 +9,15 @@ final class Director {
     let practice: Bool
     /// Caps every block at this many trials (intro demo). Nil runs the game's full counts.
     let trialCap: Int?
+    /// Called as each game starts, before its intro. The music bed changes track on it.
+    let onGame: @MainActor (Game) -> Void
 
-    init(ctx: GameContext, practice: Bool = true, trialCap: Int? = nil) {
+    init(ctx: GameContext, practice: Bool = true, trialCap: Int? = nil,
+         onGame: @escaping @MainActor (Game) -> Void = { _ in }) {
         self.ctx = ctx
         self.practice = practice
         self.trialCap = trialCap
+        self.onGame = onGame
     }
 
     static func make(_ game: Game, _ ctx: GameContext) -> any Minigame {
@@ -32,6 +36,7 @@ final class Director {
     func run(_ games: [Game]) async {
         var seeds = SeededRNG(seed: Int(ctx.recorder.start * 1000))
         for (index, game) in games.enumerated() where !Task.isCancelled {
+            onGame(game)
             await ctx.recenter()
             ctx.hud.step = games.count > 1 ? "\(index + 1) / \(games.count)" : ""
             let instance = Self.make(game, ctx)
