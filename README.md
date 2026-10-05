@@ -2,7 +2,10 @@
 
 # BetterYears Age (Spatial Human Assessment)
 
-Eight Vision Pro minigames that measure reaction, decisions, reach, balance and spatial memory, and turn them into one "movement age" - your *BetterYears Age*. Read `PRD.md`, then the spec for the area you work on in `specs/`. Games: `specs/games/`. Score: `specs/score.md`.
+Eight Vision Pro minigames that measure reaction, decisions, reach, balance and spatial memory, and turn them into one "movement age" - your *BetterYears Age*.
+
+Games: `specs/games/`.     
+Score: `specs/score.md`.
 
 ## How it works
 
@@ -44,7 +47,7 @@ Our *BetterYears Age* estimate is calculated using an algorithm inspired by the 
 2. **Compare with age curves.** For each number, published studies tell us what is typical at every age. Your result points to the age it best matches.
 3. **Weigh the evidence.** KDM combines all your games into one age. Games that change strongly with age and are not too noisy count more; noisy or weakly age-related ones count less.
 4. **Start from your real age.** Your chronological age acts as a starting guess. With little data, your BetterYears Age stays close to your chronological age; the more games you play, the more your own results influence your BetterYears Age. You see the result with a range, not just a single number.
-5. **Learn from new players.** As sessions are collected, the age curves are adjusted toward what real players show, while unusual runs count less. A new version is kept only if it predicts age at least as well as the old one.
+5. **Learn from new players.** As sessions are collected, the age curves are adjusted toward what real players show, while unusual runs count less. A new version is kept only if it predicts age at least as well as the old one. This refit runs on the operator laptop (`make kdm-fit`); the app's on-screen age still uses the built-in literature curves.
 
 In the app, ScoreKit also groups results into five areas (Speed, Decision, Control, Memory, Consistency) and tracks how your BetterYears Age changes over repeat sessions. Details: [`specs/score.md`](specs/score.md), [`specs/age-model.md`](specs/age-model.md).
 
@@ -62,13 +65,16 @@ More details are in [media/](media/). Music: "Better Years Calm" by Alex Fu.
 apps/vision        visionOS app (Swift, XcodeGen)
 apps/dashboard     live audience dashboard (web)
 services/ingest    receives sessions from the headset, pushes to dashboard
-ml                 feature extraction and age model (Python)
+ml                 feature extraction, KDM age model and refit (Python)
 packages/schema    session JSON schema and examples, shared by all
 packages/ScoreKit  Swift scoring: metrics, norms, Spatial Age, pace of aging, CLI
+packages/DuskEnvironment  forest clearing shown behind every game
 showcase           showcase PDF and its build script
 specs              specs per area
 concept            original concept deck and figures
-data               local session files, git ignored
+docs, media        explainer pages, brand assets, demo videos
+research, notes    background research and build notes
+data               local session files and KDM output, git ignored
 ```
 
 Quick start without a headset:
@@ -77,6 +83,11 @@ Quick start without a headset:
 make sample     # write synthetic sessions to data/synthetic
 make features   # print features for each synthetic session
 make test
+make scorekit-test               # ScoreKit tests
+make scorekit-synth              # synthetic eight-game sessions -> data/synthetic-minigames
+make kdm SESSIONS=data/synthetic-minigames   # KDM ages -> data/kdm/ages.csv
 ```
+
+With collected sessions in `data/sessions`, `make kdm` estimates ages and `make kdm-fit` refits the age curves.
 
 Rules: branch per change, PR into `main`, one area per PR where possible. Schema changes need a version bump.
