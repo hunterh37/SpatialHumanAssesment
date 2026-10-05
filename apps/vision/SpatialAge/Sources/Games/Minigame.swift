@@ -113,19 +113,13 @@ final class GameContext {
         hud.visible = true
     }
 
-    /// 3, 2, 1, Go on the HUD, 0.7 s per step, a tock on each digit.
+    /// Start of a block: a short "Go" cue and chime, no countdown. Play starts immediately.
     func countdown() async {
-        // Ambient motion stops at the countdown: the bird leaves the hand before the first trial.
+        // Ambient motion stops here: the bird leaves the hand before the first trial.
         hud.ambient = false
-        for n in ["3", "2", "1"] where !Task.isCancelled {
-            hud.cue = n
-            Tone.play(.tock, on: layer, gain: -16)
-            await clock.wait(0.7)
-        }
-        hud.cue = "Go"
+        guard !Task.isCancelled else { return }
+        cheer("Go", hold: 0.5)
         Tone.play(.caught, on: layer, gain: -16)
-        await clock.wait(0.5)
-        if hud.cue == "Go" { hud.cue = "" }
     }
 
     static let praise = ["Nice.", "Got it.", "Good.", "Well done."]
@@ -135,6 +129,31 @@ final class GameContext {
         micro.juice.finale(at: rig.world([0, rig.eye + 0.05, -1.1]), big: scored)
     }
     private var cueSerial = 0
+
+    /// End of a scored block: the game age reveal, then Buddy flies in and talks about it, then the number
+    /// bursts. Returns true when Buddy is still perched for `next` (the next game's explanation follows on).
+    func revealAge(_ game: Game, next: Game?) async -> Bool {
+        hud.visible = false
+        hud.cue = ""
+        let result = GameAge.estimate(game, session: recorder.session)
+        let reveal = GameAgeReveal(clock: clock, juice: micro.juice, parent: layer)
+        defer { if Task.isCancelled { reveal.remove() } }
+        await reveal.show(result, rig: rig)
+        guard !Task.isCancelled else { return false }
+        var stays = false
+        if let guide {
+            reveal.lift(rig)
+            let lines = result?.lines(next: next)
+                ?? ["Done! Not enough clean moves to score that one."] + (next.map { ["Next up: \($0.duskTitle). Ready?"] } ?? [])
+            await guide.say(lines, action: next == nil ? "See my results" : "Next game", rig: rig, stay: next != nil)
+            stays = next != nil
+        } else {
+            await clock.wait(2.6)
+        }
+        guard !Task.isCancelled else { return false }
+        await reveal.dissolve()
+        return stays && !Task.isCancelled
+    }
 
     /// Short praise on the HUD for `hold` seconds. A newer cue replaces it.
     func cheer(_ text: String? = nil, hold: Double = 0.8) {

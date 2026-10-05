@@ -54,45 +54,40 @@ struct IntroSequence {
         rig.eye = 1.5
         if await tracker.waitForHead() { rig = Rig(head: tracker.head()) }
 
-        // Title: 3.2 m out, a little above the eyes, facing the participant.
+        // Title: 3 m (10 ft) capitals, 18 m out, centered on the gaze line, facing the participant.
         let title = Self.title()
-        let home = rig.world([0, rig.eye + 0.35, -3.2])
-        title.position = home + [0, -0.6, 0]
+        let home = rig.world([0, rig.eye + Self.lift, -Self.distance])
+        title.position = home
         title.orientation = rig.rotation
-        title.scale = .init(repeating: 0.001)
         layer.addChild(title)
-        let glow = Self.halo()
-        glow.position = [0, 0, -0.08]
-        title.addChild(glow)
 
-        Tone.play(.fanfare, on: title, gain: -10)
-        clock.animate(1.6) { p in
-            let k = Float(Ease.back(p))
-            title.scale = .init(repeating: max(0.001, k))
-            title.position = home + [0, -0.6 * (1 - Float(Ease.out(p))), 0]
-        }
-        // Each letter drops into place with a short stagger.
-        for (i, letter) in title.children.filter({ $0.name.hasPrefix("letter") }).enumerated() {
+        // Each letter slides down from 16 m above into place, left to right, and lands with a small bounce.
+        let letters = title.children.filter { $0.name.hasPrefix("letter") }
+        let drop: Float = 16
+        for (i, letter) in letters.enumerated() {
             let rest = letter.position
-            letter.position = rest + [0, 0.5, 0]
-            let delay = 0.06 * Double(i)
-            clock.animate(0.7 + delay) { p in
-                let q = max(0, (p * (0.7 + delay) - delay) / 0.7)
-                letter.position = rest + [0, 0.5 * (1 - Float(Ease.back(q))), 0]
+            letter.position = rest + [0, drop, 0]
+            let delay = 0.09 * Double(i)
+            let slide = 1.3
+            clock.animate(slide + delay) { p in
+                let q = max(0, (p * (slide + delay) - delay) / slide)
+                letter.position = rest + [0, drop * (1 - Float(Ease.back(q))), 0]
             }
         }
+        Tone.play(.fanfare, on: title, gain: -8)
+
         // Slow float and sway for the rest of the sequence.
         let sway = Task { @MainActor in
             var t: Double = 0
             while !Task.isCancelled {
                 t += await clock.next()
                 let s = Float(t)
-                title.orientation = rig.rotation * simd_quatf(angle: 0.08 * sin(s * 0.5), axis: [0, 1, 0])
-                if t > 1.6 { title.position = home + [0, 0.025 * sin(s * 0.9), 0] }
+                title.orientation = rig.rotation * simd_quatf(angle: 0.04 * sin(s * 0.4), axis: [0, 1, 0])
+                title.position = home + [0, 0.12 * sin(s * 0.8), 0]
             }
         }
         defer { sway.cancel() }
-        await clock.wait(3.2)
+        await clock.wait(0.09 * Double(letters.count) + 1.3 + 2.5)
         guard !Task.isCancelled else { return }
 
         // Buddy flies in and lands to the right of the card, at eye level.
@@ -107,13 +102,15 @@ struct IntroSequence {
 
         bird.sing()
         Tone.play(.sparkle, on: title, gain: -12)
-        let from = title.position
-        clock.animate(1.0) { p in
-            let k = Float(Ease.inOut(p))
-            title.position = from + [0, 0.8 * k, -0.6 * k]
-            title.scale = .init(repeating: max(0.001, 1 - k))
+        for (i, letter) in letters.enumerated() {
+            let from = letter.position
+            let delay = 0.05 * Double(i)
+            clock.animate(1.0 + delay) { p in
+                let q = max(0, (p * (1.0 + delay) - delay) / 1.0)
+                letter.position = from + [0, -drop * Float(q * q), 0]
+            }
         }
-        await clock.wait(1.1)
+        await clock.wait(1.0 + 0.05 * Double(letters.count) + 0.1)
         bird.dismiss()
         title.removeFromParent()
         await clock.wait(0.6)
@@ -121,46 +118,46 @@ struct IntroSequence {
 
     // MARK: Build
 
-    /// BETTER YEARS as two lines of extruded rounded type, cream face with a peach rim, centered on the origin.
+    /// Distance to the title and its center height above the eyes, meters.
+    static let distance: Float = 18
+    static let lift: Float = 3.4
+    /// Capital height, meters (10 ft).
+    static let capHeight: Float = 3.0
+
+    /// BETTER YEARS as two lines of extruded rounded capitals, cream face, centered on the origin.
+    /// Glyphs are built at 1 m font size and scaled, so tessellation stays sane at this size.
     static func title() -> Entity {
         let root = Entity()
         root.name = "introTitle"
-        let face = material(Dusk.accent, emissive: 0.55)
-        let rim = material(Dusk.accentStrong, emissive: 0.35)
-        let lines: [(String, Float, Float)] = [("BETTER", 0.34, 0.2), ("YEARS", 0.34, -0.2)]
+        let face = material(Dusk.accent, emissive: 0.9)
+        let side = material(Dusk.accentStrong, emissive: 0.6)
+        let font = roundedFont(size: 1)
+        let scale = capHeight / Float(font.capHeight)
+        let gap: Float = 0.08 * scale
+        let lineGap: Float = 0.9
+        let rows = ["BETTER", "YEARS"]
         var index = 0
-        for (word, size, y) in lines {
-            let font = roundedFont(size: CGFloat(size))
-            // Measure the word so letters sit at their kerned offsets.
-            let widths = word.map { ch -> Float in
-                let w = (String(ch) as NSString).size(withAttributes: [.font: font]).width
-                return Float(w)
+        for (r, word) in rows.enumerated() {
+            let glyphs = word.map { ch -> (MeshResource, BoundingBox) in
+                let m = MeshResource.generateText(String(ch), extrusionDepth: 0.22, font: font)
+                return (m, m.bounds)
             }
-            let tracking: Float = 0.02
-            let total = widths.reduce(0, +) + tracking * Float(max(0, widths.count - 1))
+            let widths = glyphs.map { ($0.1.max.x - $0.1.min.x) * scale }
+            let total = widths.reduce(0, +) + gap * Float(max(0, widths.count - 1))
+            // Row centers: BETTER above center, YEARS below.
+            let y = (Float(rows.count - 1) / 2 - Float(r)) * (capHeight + lineGap)
             var x = -total / 2
-            for (k, ch) in word.enumerated() {
-                let mesh = MeshResource.generateText(String(ch), extrusionDepth: 0.09, font: font,
-                                                     containerFrame: .zero, alignment: .left, lineBreakMode: .byClipping)
-                let letter = ModelEntity(mesh: mesh, materials: [face, rim])
-                let b = mesh.bounds
+            for (k, (mesh, b)) in glyphs.enumerated() {
+                let letter = ModelEntity(mesh: mesh, materials: [face, side])
                 letter.name = "letter\(index)"
-                letter.position = [x - b.min.x + (widths[k] - (b.max.x - b.min.x)) / 2, y - (b.min.y + b.max.y) / 2, -0.045]
+                letter.scale = .init(repeating: scale)
+                letter.position = [x - b.min.x * scale, y - (b.min.y + b.max.y) / 2 * scale, -(b.min.z + b.max.z) / 2 * scale]
                 root.addChild(letter)
-                x += widths[k] + tracking
+                x += widths[k] + gap
                 index += 1
             }
         }
         return root
-    }
-
-    /// Soft warm disc behind the title.
-    static func halo() -> Entity {
-        var m = UnlitMaterial(color: Dusk.accent.withAlphaComponent(0.12))
-        m.blending = .transparent(opacity: .init(floatLiteral: 1))
-        let disc = ModelEntity(mesh: .generatePlane(width: 3.4, height: 1.5, cornerRadius: 0.75), materials: [m])
-        disc.name = "halo"
-        return disc
     }
 
     private static func material(_ c: UIColor, emissive: Float) -> PhysicallyBasedMaterial {

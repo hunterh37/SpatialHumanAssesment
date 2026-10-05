@@ -19,12 +19,12 @@ struct ResultsView: View {
             if let r = model.report {
                 switch stage {
                 case .reveal:
-                    AgeReveal(report: r, ns: hero) {
+                    ResultsAgeReveal(report: r, ns: hero) {
                         withAnimation(.spring(duration: 0.75, bounce: 0.15)) { stage = .board }
                     }
                 case .board:
                     Scoreboard(report: r, pace: model.pace, uploadStatus: model.uploadStatus, ns: hero,
-                               next: next, again: again)
+                               next: model.demo && !model.demoRemaining.isEmpty ? next : nil, again: again)
                 }
             } else {
                 ProgressView()
@@ -36,7 +36,7 @@ struct ResultsView: View {
 
 // MARK: - Beat 1: reveal
 
-struct AgeReveal: View {
+struct ResultsAgeReveal: View {
     let report: ScoreReport
     let ns: Namespace.ID
     let done: () -> Void
@@ -52,7 +52,7 @@ struct AgeReveal: View {
     /// Time from first number to landing, and how long the landed number holds before the scoreboard.
     static let tumble = 3.6
     /// Product name for the headline age (team decision, overrides "movement age" in Dusk spec v1.0).
-    static let ageLabel = "BetterYears Age"
+    static let ageLabel = "Better Years Age"
     static let hold = 2.6
 
     var body: some View {
@@ -183,13 +183,14 @@ struct Scoreboard: View {
     let pace: PaceOfAging.Pace?
     let uploadStatus: String?
     let ns: Namespace.ID
-    let next: () -> Void
+    /// Starts the next game of the intro demo sequence. Nil hides the button.
+    let next: (() -> Void)?
     let again: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 56) {
             VStack(alignment: .leading, spacing: 14) {
-                ResultsLabel(text: AgeReveal.ageLabel)
+                ResultsLabel(text: ResultsAgeReveal.ageLabel)
                     .matchedGeometryEffect(id: "label", in: ns)
                 Text(report.spatialAge.map { "\(Int($0.rounded()))" } ?? "–")
                     .font(.system(size: 104, weight: .ultraLight, design: .rounded))
@@ -215,10 +216,14 @@ struct Scoreboard: View {
                         .font(.footnote).foregroundStyle(Dusk.color(Dusk.warn))
                 }
                 Spacer(minLength: 28)
-                // Spec section 7: secondary "Play again", the one primary "Next player".
+                // Demo sequence: secondary "Play again", primary "Next game" until the last game.
                 HStack(spacing: Dusk.Layout.spacing) {
-                    Button("Play again", action: again).buttonStyle(.duskSecondary)
-                    Button("Next player", action: next).buttonStyle(.duskPrimary)
+                    if let next {
+                        Button("Play again", action: again).buttonStyle(.duskSecondary)
+                        Button("Next game", action: next).buttonStyle(.duskPrimary)
+                    } else {
+                        Button("Play again", action: again).buttonStyle(.duskPrimary)
+                    }
                 }
                 if let uploadStatus {
                     Text(uploadStatus).font(.footnote).foregroundStyle(Dusk.color(Dusk.mute))
@@ -339,8 +344,6 @@ struct PlayerSwitchView: View {
             .frame(maxWidth: 900)
             HStack(spacing: Dusk.Layout.spacing) {
                 Button("Back to result") { model.phase = .results }.buttonStyle(.duskTertiary)
-                Button("New player", systemImage: "person.badge.plus") { model.nextParticipant() }
-                    .buttonStyle(.duskSecondary)
             }
             Spacer(minLength: 0)
         }

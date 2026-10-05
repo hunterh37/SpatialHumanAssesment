@@ -12,7 +12,7 @@ final class AppModel {
     /// `.intro` is the first-launch title sequence in the immersive space (3D title, Buddy), before setup.
     enum Phase { case intro, onboarding, catalog, running, results, switchPlayer }
     /// Leading tab ornament on the catalog phase (Dusk spec section 6).
-    enum Tab: Hashable { case home, games, progress, duel }
+    enum Tab: Hashable { case games, progress, duel }
 
     /// Two players on one headset, four rounds, one game per round. A round goes to the higher game score.
     struct Duel {
@@ -31,7 +31,7 @@ final class AppModel {
     var phase: Phase
     /// Saved setup answers. Nil until first-run setup finishes on this headset.
     var profile: PlayerProfile?
-    /// Setup opens on its review screen when reached from Home's "Edit setup".
+    /// Setup opens on its review screen when reached from "Edit setup".
     var editingSetup = false
     /// True from the intro sequence until its first game starts: setup runs from Welcome and ends in Leaf Drop.
     var introFlow = false
@@ -41,8 +41,14 @@ final class AppModel {
     var introRunning = false
     /// First game after the intro sequence. Stick Drop: catch the falling leaf.
     static let firstGame: Game = .pendulum
+    /// Leaves in the intro demo of the first game: one short block, no practice round.
+    static let demoTrials = 6
+    /// Set while the intro demo runs. The Director caps the block at `demoTrials` and skips practice.
+    var demo = false
+    /// Games still to play in the intro demo sequence after the one running, in catalog order.
+    var demoRemaining: [Game] = []
     private static let introSeenKey = "introSeen"
-    var tab: Tab = .home
+    var tab: Tab = .games
     /// Game whose intro screen is open on the Games tab.
     var intro: Game?
     /// Dusk intro toggle "Practice round first". On by default.
@@ -94,13 +100,13 @@ final class AppModel {
         return Game.dusk.filter { !skips.contains($0) }
     }
 
-    /// Saves the setup answers and opens Home.
+    /// Saves the setup answers and opens Games.
     func completeOnboarding(_ p: PlayerProfile) {
         p.save()
         profile = p
         participant = p.participant
         editingSetup = false
-        tab = .home
+        tab = .games
         phase = .catalog
         if introFlow {
             introFlow = false
@@ -108,7 +114,7 @@ final class AppModel {
         }
     }
 
-    /// Home's replay control: runs the title sequence again, then setup from Welcome, then Leaf Drop.
+    /// Replay control: runs the title sequence again, then setup from Welcome, then Leaf Drop.
     func replayIntro() {
         guard phase == .catalog else { return }
         editingSetup = false
@@ -130,8 +136,10 @@ final class AppModel {
         phase = .onboarding
     }
 
-    func start(_ games: [Game]) {
+    func start(_ games: [Game], demo: Bool = false) {
         skyPlank = false
+        self.demo = demo
+        if !demo { demoRemaining = [] }
         queue = games
         playingGame = nil
         var player = participant
@@ -146,10 +154,23 @@ final class AppModel {
         phase = .running
     }
 
+    /// Starts the intro demo sequence: every game in catalog order, the first game first.
+    func beginDemo() -> Game {
+        demoRemaining = games.filter { $0 != Self.firstGame }
+        return Self.firstGame
+    }
+
+    /// Next game of the intro demo sequence, removed from the queue. Nil once the sequence is done.
+    func nextDemoGame() -> Game? {
+        guard demo, !demoRemaining.isEmpty else { return nil }
+        return demoRemaining.removeFirst()
+    }
+
     /// Ends the running session without scoring. Nothing is saved.
     func abortSession(_ reason: String = "Session ended early. Nothing was saved.") {
         guard phase == .running else { return }
         recorder = nil
+        demoRemaining = []
         notice = reason
         phase = .catalog
     }
@@ -241,7 +262,7 @@ final class AppModel {
     func endDuel() {
         if let first = duel?.players.first { participant = first }
         duel = nil
-        tab = .home
+        tab = .games
     }
 
     /// Opens the player switch screen: same player, a recent player on this headset, or a new one.
@@ -290,7 +311,7 @@ final class AppModel {
         notice = nil
         duel = nil
         intro = nil
-        tab = .home
+        tab = .games
         phase = .onboarding
     }
 }

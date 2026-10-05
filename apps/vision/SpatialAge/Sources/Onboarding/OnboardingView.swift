@@ -87,7 +87,7 @@ struct OnboardingView: View {
         switch step {
         case .welcome: "Begin"
         case .consent: "I agree"
-        case .review: model.introFlow ? "Play \(AppModel.firstGame.duskTitle)" : "Go to home"
+        case .review: model.introFlow ? "Play \(AppModel.firstGame.duskTitle)" : "Go to games"
         default: "Continue"
         }
     }
@@ -114,6 +114,7 @@ struct OnboardingView: View {
         VStack(spacing: 22) {
             switch step {
             case .welcome:
+                BrandMark(size: 104)
                 DuskLabel(DuskCopy.brand)
                 Text(DuskCopy.homeTitle).font(OnboardingType.hero).multilineTextAlignment(.center)
                 why("First, a few quick questions so we can compare your games fairly. It takes about a minute.")

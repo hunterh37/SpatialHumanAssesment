@@ -2,7 +2,7 @@ import RealKit
 import ScoreKit
 import SwiftUI
 
-/// Main window. First-run setup (consent and player stats), then Home / Games / Progress / Duel under the leading tab ornament,
+/// Main window. First-run setup (consent and player stats), then Games / Progress / Duel under the leading tab ornament,
 /// running, results. Opens the immersive space. `ImmersiveView` closes itself when the phase leaves `.running`.
 /// Dusk spec sections 4 to 7: charcoal glass, cream type, one primary action per screen.
 struct ContentView: View {
@@ -18,6 +18,7 @@ struct ContentView: View {
             case .intro:
                 screen {
                     VStack(spacing: 20) {
+                        BrandMark(size: 96)
                         DuskLabel(DuskCopy.brand)
                         Text("Look around").font(DuskType.title)
                         Button("Skip intro") { model.finishIntro() }.buttonStyle(.duskTertiary)
@@ -34,21 +35,20 @@ struct ContentView: View {
                 }
             case .catalog:
                 TabView(selection: $model.tab) {
-                    Tab("Home", systemImage: "house", value: AppModel.Tab.home) { screen { HomeView() } }
                     Tab("Games", systemImage: "square.grid.2x2", value: AppModel.Tab.games) {
-                        screen { GamesView(start: start) }
+                        screen { GamesView(start: { start($0) }) }
                     }
                     Tab("Progress", systemImage: "chart.line.uptrend.xyaxis", value: AppModel.Tab.progress) {
                         screen { ProgressTab() }
                     }
-                    Tab("Duel", systemImage: "person.2", value: AppModel.Tab.duel) { screen { DuelView(start: start) } }
+                    Tab("Duel", systemImage: "person.2", value: AppModel.Tab.duel) { screen { DuelView(start: { start($0) }) } }
                 }
                 .tint(Color.duskAccent)
             case .running: screen { RunningView { model.abortSession() } }
             case .results:
                 screen {
                     ResultsView {
-                        model.nextParticipant()
+                        if let g = model.nextDemoGame() { start([g], demo: true) }
                     } again: {
                         model.playAgain()
                     }
@@ -67,7 +67,7 @@ struct ContentView: View {
         .onChange(of: model.firstGamePending, initial: true) { _, pending in
             guard pending else { return }
             model.firstGamePending = false
-            start([AppModel.firstGame])
+            start([model.beginDemo()], demo: true)
         }
         #if DEBUG
         // Screenshot hook: SA_DEMO=<game> skips setup and runs that one game.
@@ -76,6 +76,8 @@ struct ContentView: View {
                   let game = Game(rawValue: raw) else { return }
             start([game])
         }
+        // Capture hook: launch argument `-intro YES` replays the title sequence.
+        .task { if UserDefaults.standard.bool(forKey: "intro") { model.replayIntro() } }
         #endif
         .onDisappear { model.windowOpen = false }
         .onChange(of: model.spaceOpen) { _, open in
@@ -109,10 +111,10 @@ struct ContentView: View {
         }
     }
 
-    private func start(_ games: [Game]) {
+    private func start(_ games: [Game], demo: Bool = false) {
         Task {
             if model.spaceOpen { await dismissImmersiveSpace() }
-            model.start(games)
+            model.start(games, demo: demo)
             model.passthrough = false
             switch await openImmersiveSpace(id: AppModel.immersiveID) {
             case .opened:
@@ -141,87 +143,6 @@ struct AgeStepper: View {
                 .buttonStyle(.duskIcon)
                 .disabled(age >= range.upperBound)
         }
-    }
-}
-
-// MARK: - Home
-
-struct HomeView: View {
-    @Environment(AppModel.self) private var model
-    @State private var confirmStartOver = false
-    @State private var history: [ScoreReport] = []
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 40) {
-            VStack(spacing: 20) {
-                DuskLabel(DuskCopy.brand)
-                Text(DuskCopy.homeTitle).font(DuskType.title).multilineTextAlignment(.center)
-                Text(DuskCopy.homeLine)
-                    .duskSecondary()
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 520)
-                VStack(spacing: Dusk.Layout.spacing) {
-                    Button("Start a duel") { model.tab = .duel }.buttonStyle(.duskPrimaryLarge)
-                    Button("Play one game") { model.tab = .games }.buttonStyle(.duskSecondaryLarge)
-                    Button("Replay intro", systemImage: "sparkles") { model.replayIntro() }
-                        .buttonStyle(.duskTertiary)
-                }
-                .padding(.top, 12)
-                if let notice = model.notice { DuskChip(text: notice) }
-            }
-            .frame(maxWidth: .infinity)
-
-            VStack(alignment: .leading, spacing: Dusk.Layout.spacing) {
-                lastAgeCard
-                MusicMiniPlayer()
-                viewersCard
-                HStack {
-                    Button("Edit setup") { model.editSetup() }.buttonStyle(.duskTertiary)
-                    Spacer()
-                    Button("Start over") { confirmStartOver = true }.buttonStyle(.duskTertiary)
-                }
-            }
-            .frame(width: 330)
-        }
-        .confirmationDialog("Start over with a new participant?", isPresented: $confirmStartOver) {
-            Button("Start over", role: .destructive) { model.nextParticipant() }
-        }
-        .task(id: model.participant.code) { history = model.history() }
-    }
-
-    private var lastAgeCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                DuskLabel("Last movement age")
-                Spacer()
-                Text(model.participant.code).font(DuskType.data.monospaced()).duskSecondary()
-            }
-            if let last = history.last?.spatialAge {
-                Text(String(format: "%.1f", last)).font(DuskType.hero(64))
-                if history.count > 1, let first = history.first?.spatialAge {
-                    let delta = last - first
-                    DuskChip(text: String(format: "%+.1f years since first visit", delta),
-                             kind: delta < 0 ? .improved : .neutral)
-                }
-            } else {
-                Text("–").font(DuskType.hero(64))
-                Text("Play a game to see it here.").font(.callout).duskSecondary()
-            }
-        }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .duskCard()
-    }
-
-    private var viewersCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            DuskLabel("Viewers")
-            AnatomyToggle()
-            SkyPlankToggle()
-        }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .duskCard()
     }
 }
 
