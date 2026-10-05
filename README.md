@@ -32,7 +32,7 @@ All eight games are on `main` and in the app's Games grid. Names and lines are t
 **Action.** A shared session schema, the visionOS minigame catalog, ScoreKit for scoring, and research-backed norms, built by PR on this repo.
 **Result.** Each player plays solo in a calm 3D forest clearing, sees a BetterYears Age with an 80% interval, levels up as it drops, and compares scores with friends on the leaderboard.
 
-**Team:** Jason and Hunter lead the idea and each brought a Vision Pro; they build the app, the reaction games and the hand x-ray. Alex designed the brand, the Games Ideas deck, the Dusk spec and the Dusk Meadow, and made the Better Years Calm track (#27). Franco built the Klemera-Doubal age model and pipeline. Jess owns the business use case, the name and UI/UX. Ben mapped the Vision Pro app landscape and the age-norm references. Wilson wrote the PRD and research and built the first memory and balance games and the branding PRs. LinkedIn links are in the PRD under Team and ownership.
+**Team:** Jason and Hunter led the idea and each brought a Vision Pro; they built the app, the reaction games and the hand x-ray. Alex designed the brand, the Games Ideas deck, the Dusk spec and the Dusk Meadow, and made the Better Years Calm track (#27). Franco designed the scoring system and built the Klemera-Doubal age model and pipeline. Jess owns the business use case, the name and UI/UX. Ben mapped the Vision Pro app landscape and the age-norm references. Wilson wrote the PRD and research and built the first memory and balance games and the branding PRs. LinkedIn links are in the PRD under Team and ownership.
 
 The full plan, sources and guardrails are in [PRD.md](PRD.md); the picture explainer is `docs/eli5/index.html`.
 
