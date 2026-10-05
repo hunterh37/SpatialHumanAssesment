@@ -30,6 +30,14 @@ Five Vision Pro minigames (Pendulum, Spark, Gate, Constellation, Orbit) that mea
 
 The full plan, sources and guardrails are in [PRD.md](PRD.md); the picture explainer is `docs/eli5/index.html`.
 
+## Media
+
+- **[Full day in 30 s](media/betteryears-day-recap.mp4):** talks, build, headset tests, the product and demo night
+- **[13 s presentation intro](media/betteryears-intro.mp4):** the read-aloud script is in [media/intro-script.txt](media/intro-script.txt)
+- **[App screen recording](media/betteryears-demo-screen-recording.mp4):** intro, Buddy, Stick Drop, Spatial Memory, Hole in the Wall
+
+More details are in [media/](media/). Music: "Better Years Calm" by Alex Fu.
+
 ## Repo layout
 
 ```
