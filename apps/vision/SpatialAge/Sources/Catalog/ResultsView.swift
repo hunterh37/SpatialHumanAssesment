@@ -19,7 +19,7 @@ struct ResultsView: View {
             if let r = model.report {
                 switch stage {
                 case .reveal:
-                    AgeReveal(report: r, ns: hero) {
+                    ResultsAgeReveal(report: r, ns: hero) {
                         withAnimation(.spring(duration: 0.75, bounce: 0.15)) { stage = .board }
                     }
                 case .board:
@@ -36,7 +36,7 @@ struct ResultsView: View {
 
 // MARK: - Beat 1: reveal
 
-struct AgeReveal: View {
+struct ResultsAgeReveal: View {
     let report: ScoreReport
     let ns: Namespace.ID
     let done: () -> Void
@@ -190,7 +190,7 @@ struct Scoreboard: View {
     var body: some View {
         HStack(alignment: .top, spacing: 56) {
             VStack(alignment: .leading, spacing: 14) {
-                ResultsLabel(text: AgeReveal.ageLabel)
+                ResultsLabel(text: ResultsAgeReveal.ageLabel)
                     .matchedGeometryEffect(id: "label", in: ns)
                 Text(report.spatialAge.map { "\(Int($0.rounded()))" } ?? "–")
                     .font(.system(size: 104, weight: .ultraLight, design: .rounded))

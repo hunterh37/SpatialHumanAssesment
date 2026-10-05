@@ -70,7 +70,7 @@ final class GameAgeReveal {
         self.juice = juice
         self.parent = parent
         var m = UnlitMaterial(color: Theme.ink)
-        m.blending = .transparent(opacity: .init(floatLiteral: 1))
+        m.blending = .transparent(opacity: 1.0)
         m.faceCulling = .front
         dim = ModelEntity(mesh: .generateSphere(radius: 2.6), materials: [m])
         dim.components.set(OpacityComponent(opacity: 0))
@@ -274,7 +274,7 @@ final class GameAgeReveal {
         }
         if let mesh = Meshes.ellipse(width: 1.1, height: 0.8) {
             var m = UnlitMaterial(color: Theme.gold)
-            m.blending = .transparent(opacity: .init(floatLiteral: 1))
+            m.blending = .transparent(opacity: 1.0)
             m.faceCulling = .none
             let d = ModelEntity(mesh: mesh, materials: [m])
             d.position = [0, 0, -0.15]
@@ -288,7 +288,7 @@ final class GameAgeReveal {
     private func shockwave() {
         guard let mesh = Meshes.ellipse(width: 1, height: 1) else { return }
         var m = UnlitMaterial(color: Theme.paper)
-        m.blending = .transparent(opacity: .init(floatLiteral: 1))
+        m.blending = .transparent(opacity: 1.0)
         m.faceCulling = .none
         let wave = ModelEntity(mesh: mesh, materials: [m])
         wave.position = [0, 0, -0.05]
