@@ -47,7 +47,7 @@ struct ContentView: View {
             case .results:
                 screen {
                     ResultsView {
-                        model.nextParticipant()
+                        if let g = model.nextDemoGame() { start([g], demo: true) }
                     } again: {
                         model.playAgain()
                     }
@@ -66,7 +66,7 @@ struct ContentView: View {
         .onChange(of: model.firstGamePending, initial: true) { _, pending in
             guard pending else { return }
             model.firstGamePending = false
-            start([AppModel.firstGame], demo: true)
+            start([model.beginDemo()], demo: true)
         }
         #if DEBUG
         // Screenshot hook: SA_DEMO=<game> skips setup and runs that one game.

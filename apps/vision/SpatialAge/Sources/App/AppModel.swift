@@ -45,6 +45,8 @@ final class AppModel {
     static let demoTrials = 6
     /// Set while the intro demo runs. The Director caps the block at `demoTrials` and skips practice.
     var demo = false
+    /// Games still to play in the intro demo sequence after the one running, in catalog order.
+    var demoRemaining: [Game] = []
     private static let introSeenKey = "introSeen"
     var tab: Tab = .games
     /// Game whose intro screen is open on the Games tab.
@@ -131,6 +133,7 @@ final class AppModel {
     func start(_ games: [Game], demo: Bool = false) {
         skyPlank = false
         self.demo = demo
+        if !demo { demoRemaining = [] }
         queue = games
         var player = participant
         if let profile, profile.participant.code == player.code { player = profile.sessionParticipant }
@@ -144,10 +147,23 @@ final class AppModel {
         phase = .running
     }
 
+    /// Starts the intro demo sequence: every game in catalog order, the first game first.
+    func beginDemo() -> Game {
+        demoRemaining = games.filter { $0 != Self.firstGame }
+        return Self.firstGame
+    }
+
+    /// Next game of the intro demo sequence, removed from the queue. Nil once the sequence is done.
+    func nextDemoGame() -> Game? {
+        guard demo, !demoRemaining.isEmpty else { return nil }
+        return demoRemaining.removeFirst()
+    }
+
     /// Ends the running session without scoring. Nothing is saved.
     func abortSession(_ reason: String = "Session ended early. Nothing was saved.") {
         guard phase == .running else { return }
         recorder = nil
+        demoRemaining = []
         notice = reason
         phase = .catalog
     }
