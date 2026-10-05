@@ -87,7 +87,8 @@ final class BirdGuide {
     }
 
     /// Shows `lines` one bubble at a time and returns after the last tap, with Buddy on his way out.
-    func say(_ lines: [String], action: String, rig: Rig) async {
+    /// `stay` keeps him perched after the last bubble, so the next game's explanation follows without a new flight.
+    func say(_ lines: [String], action: String, rig: Rig, stay: Bool = false) async {
         guard !lines.isEmpty else { return }
         arrive(rig)
         var waited = 0.0
@@ -111,7 +112,7 @@ final class BirdGuide {
             Tone.play(.bubble, on: bird.flight, gain: last ? -14 : -18)
         }
         bubble.visible = false
-        bird.dismiss()
+        if !stay || Task.isCancelled { bird.dismiss() }
     }
 
     /// Types the line out, one syllable from Buddy at the start of each word. Reduce Motion shows it whole.

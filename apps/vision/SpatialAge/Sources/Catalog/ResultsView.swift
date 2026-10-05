@@ -24,7 +24,7 @@ struct ResultsView: View {
                     }
                 case .board:
                     Scoreboard(report: r, pace: model.pace, uploadStatus: model.uploadStatus, ns: hero,
-                               next: next, again: again)
+                               next: model.demo && !model.demoRemaining.isEmpty ? next : nil, again: again)
                 }
             } else {
                 ProgressView()
@@ -183,7 +183,8 @@ struct Scoreboard: View {
     let pace: PaceOfAging.Pace?
     let uploadStatus: String?
     let ns: Namespace.ID
-    let next: () -> Void
+    /// Starts the next game of the intro demo sequence. Nil hides the button.
+    let next: (() -> Void)?
     let again: () -> Void
 
     var body: some View {
@@ -215,10 +216,14 @@ struct Scoreboard: View {
                         .font(.footnote).foregroundStyle(Dusk.color(Dusk.warn))
                 }
                 Spacer(minLength: 28)
-                // Spec section 7: secondary "Play again", the one primary "Next player".
+                // Demo sequence: secondary "Play again", primary "Next game" until the last game.
                 HStack(spacing: Dusk.Layout.spacing) {
-                    Button("Play again", action: again).buttonStyle(.duskSecondary)
-                    Button("Next player", action: next).buttonStyle(.duskPrimary)
+                    if let next {
+                        Button("Play again", action: again).buttonStyle(.duskSecondary)
+                        Button("Next game", action: next).buttonStyle(.duskPrimary)
+                    } else {
+                        Button("Play again", action: again).buttonStyle(.duskPrimary)
+                    }
                 }
                 if let uploadStatus {
                     Text(uploadStatus).font(.footnote).foregroundStyle(Dusk.color(Dusk.mute))
@@ -339,8 +344,6 @@ struct PlayerSwitchView: View {
             .frame(maxWidth: 900)
             HStack(spacing: Dusk.Layout.spacing) {
                 Button("Back to result") { model.phase = .results }.buttonStyle(.duskTertiary)
-                Button("New player", systemImage: "person.badge.plus") { model.nextParticipant() }
-                    .buttonStyle(.duskSecondary)
             }
             Spacer(minLength: 0)
         }

@@ -2,7 +2,7 @@ import RealityKit
 import ScoreKit
 import UIKit
 
-/// Estimated age from one game's scored block, shown by `AgeReveal` and read out by Buddy.
+/// Estimated age from one game's scored block, shown by `GameAgeReveal` and read out by Buddy.
 struct GameAge {
     let game: Game
     /// Whole years, clamped to the model range.
@@ -45,7 +45,7 @@ struct GameAge {
 /// sparks, a shockwave and the fanfare. Then the number lifts so Buddy can land and talk, and finally bursts
 /// into sparks. Everything sits 1.6 m ahead, past arm's reach. Reduce Motion: fades only, no spin or roll.
 @MainActor
-final class AgeReveal {
+final class GameAgeReveal {
     private let clock: FrameClock
     private let juice: Juice
     private let parent: Entity
@@ -260,7 +260,7 @@ final class AgeReveal {
         rays.components.set(OpacityComponent(opacity: 0))
         rays.scale = .init(repeating: 1e-3)
         var ray = UnlitMaterial(color: Theme.gold)
-        ray.blending = .transparent(opacity: 0.16)
+        ray.blending = .transparent(opacity: .init(floatLiteral: 0.16))
         ray.faceCulling = .none
         let count = 16
         for k in 0..<count {

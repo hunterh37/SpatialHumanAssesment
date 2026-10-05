@@ -151,7 +151,8 @@ struct ImmersiveView: View {
         let ctx = GameContext(clock: clock, tracker: t, recorder: recorder, layer: layer, hud: hud,
                               handedness: model.participant.handedness)
         if let bird, stage.isEnabled { ctx.guide = BirdGuide(bird: bird, bubble: bubble, clock: clock) }
-        await Director(ctx: ctx, practice: model.practiceFirst).run(model.queue)
+        await Director(ctx: ctx, practice: model.practiceFirst && !model.demo,
+                       trialCap: model.demo ? AppModel.demoTrials : nil).run(model.queue)
         // Ended early: the window already shows the catalog. Do not score a partial run.
         guard !Task.isCancelled, model.phase == .running else { return }
         await model.finishSession()

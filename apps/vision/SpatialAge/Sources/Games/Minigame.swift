@@ -130,6 +130,31 @@ final class GameContext {
     }
     private var cueSerial = 0
 
+    /// End of a scored block: the game age reveal, then Buddy flies in and talks about it, then the number
+    /// bursts. Returns true when Buddy is still perched for `next` (the next game's explanation follows on).
+    func revealAge(_ game: Game, next: Game?) async -> Bool {
+        hud.visible = false
+        hud.cue = ""
+        let result = GameAge.estimate(game, session: recorder.session)
+        let reveal = GameAgeReveal(clock: clock, juice: micro.juice, parent: layer)
+        defer { if Task.isCancelled { reveal.remove() } }
+        await reveal.show(result, rig: rig)
+        guard !Task.isCancelled else { return false }
+        var stays = false
+        if let guide {
+            reveal.lift(rig)
+            let lines = result?.lines(next: next)
+                ?? ["Done! Not enough clean moves to score that one."] + (next.map { ["Next up: \($0.duskTitle). Ready?"] } ?? [])
+            await guide.say(lines, action: next == nil ? "See my results" : "Next game", rig: rig, stay: next != nil)
+            stays = next != nil
+        } else {
+            await clock.wait(2.6)
+        }
+        guard !Task.isCancelled else { return false }
+        await reveal.dissolve()
+        return stays && !Task.isCancelled
+    }
+
     /// Short praise on the HUD for `hold` seconds. A newer cue replaces it.
     func cheer(_ text: String? = nil, hold: Double = 0.8) {
         cueSerial += 1

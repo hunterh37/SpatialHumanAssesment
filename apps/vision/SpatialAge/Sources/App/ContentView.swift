@@ -18,6 +18,7 @@ struct ContentView: View {
             case .intro:
                 screen {
                     VStack(spacing: 20) {
+                        BrandMark(size: 96)
                         DuskLabel(DuskCopy.brand)
                         Text("Look around").font(DuskType.title)
                         Button("Skip intro") { model.finishIntro() }.buttonStyle(.duskTertiary)
@@ -35,19 +36,19 @@ struct ContentView: View {
             case .catalog:
                 TabView(selection: $model.tab) {
                     Tab("Games", systemImage: "square.grid.2x2", value: AppModel.Tab.games) {
-                        screen { GamesView(start: start) }
+                        screen { GamesView(start: { start($0) }) }
                     }
                     Tab("Progress", systemImage: "chart.line.uptrend.xyaxis", value: AppModel.Tab.progress) {
                         screen { ProgressTab() }
                     }
-                    Tab("Duel", systemImage: "person.2", value: AppModel.Tab.duel) { screen { DuelView(start: start) } }
+                    Tab("Duel", systemImage: "person.2", value: AppModel.Tab.duel) { screen { DuelView(start: { start($0) }) } }
                 }
                 .tint(Color.duskAccent)
             case .running: screen { RunningView { model.abortSession() } }
             case .results:
                 screen {
                     ResultsView {
-                        model.nextParticipant()
+                        if let g = model.nextDemoGame() { start([g], demo: true) }
                     } again: {
                         model.playAgain()
                     }
@@ -66,7 +67,7 @@ struct ContentView: View {
         .onChange(of: model.firstGamePending, initial: true) { _, pending in
             guard pending else { return }
             model.firstGamePending = false
-            start([AppModel.firstGame])
+            start([model.beginDemo()], demo: true)
         }
         #if DEBUG
         // Screenshot hook: SA_DEMO=<game> skips setup and runs that one game.
@@ -110,10 +111,10 @@ struct ContentView: View {
         }
     }
 
-    private func start(_ games: [Game]) {
+    private func start(_ games: [Game], demo: Bool = false) {
         Task {
             if model.spaceOpen { await dismissImmersiveSpace() }
-            model.start(games)
+            model.start(games, demo: demo)
             model.passthrough = false
             switch await openImmersiveSpace(id: AppModel.immersiveID) {
             case .opened:
