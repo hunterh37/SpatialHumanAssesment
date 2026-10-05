@@ -2,11 +2,11 @@
 
 # BetterYears Age (Spatial Human Assessment)
 
-Eight Vision Pro minigames that measure reaction, decisions, reach, balance and spatial memory, and turn them into one "movement age" - your *BetterYear Age*. Read `PRD.md`, then the spec for the area you work on in `specs/`. Games: `specs/games/`. Score: `specs/score.md`.
+Eight Vision Pro minigames that measure reaction, decisions, reach, balance and spatial memory, and turn them into one "movement age" - your *BetterYears Age*. Read `PRD.md`, then the spec for the area you work on in `specs/`. Games: `specs/games/`. Score: `specs/score.md`.
 
 ## How it works
 
-**How old do you move?** Put on a Vision Pro and play eight quick games. The headset tracks head and hands, each score is compared with published results from people of every age, and the age you match is your BetterYear Age. Play again, level up, and watch it drop, then compare scores with friends on the leaderboard. Your BetterYear Age is a game score against published norms, not a medical test.
+**How old do you move?** Put on a Vision Pro and play eight quick games. The headset tracks head and hands, each score is compared with published results from people of every age, and the age you match is your BetterYears Age. Play again, level up, and watch it drop, then compare scores with friends on the leaderboard. Your BetterYears Age is a game score against published norms, not a medical test.
 
 ![Four quick games](docs/eli5/games.svg)
 
@@ -28,9 +28,9 @@ All eight games are on `main` and in the app's Games grid. Names and lines are t
 | Spatial Memory | Touch the balls you are asked for. Then find the ones you did, or did not, touch. | Decision time and spatial memory | Alex (design), Wilson, Hunter |
 
 **Situation.** Sundai Hack 143, Biomarkers of Aging, Harvard, Sunday 4 October 2026. Most aging clocks need blood or a lab.
-**Task.** Build, in one day, a Vision Pro game that estimates BetterYear Age from how people move.
+**Task.** Build, in one day, a Vision Pro game that estimates BetterYears Age from how people move.
 **Action.** A shared session schema, the visionOS minigame catalog, ScoreKit for scoring, and research-backed norms, built by PR on this repo.
-**Result.** Each player plays solo in a calm 3D forest clearing, sees a BetterYear Age with an 80% interval, levels up as it drops, and compares scores with friends on the leaderboard.
+**Result.** Each player plays solo in a calm 3D forest clearing, sees a BetterYears Age with an 80% interval, levels up as it drops, and compares scores with friends on the leaderboard.
 
 **Team:** Jason and Hunter lead the idea and each brought a Vision Pro; they build the app, the reaction games and the hand x-ray. Alex designed the brand, the Games Ideas deck, the Dusk spec and the Dusk Meadow, and made the Better Years Calm track (#27). Franco built the Klemera-Doubal age model and pipeline. Jess owns the business use case, the name and UI/UX. Ben mapped the Vision Pro app landscape and the age-norm references. Wilson wrote the PRD and research and built the first memory and balance games and the branding PRs. LinkedIn links are in the PRD under Team and ownership.
 
@@ -38,15 +38,15 @@ The full plan, sources and guardrails are in [PRD.md](PRD.md); the picture expla
 
 ## How scoring works
 
-Our *BetterYear Age* estimate is calculated using an algorithm inspired by the [Klemera-Doubal (KDM)](https://doi.org/10.1016/j.mad.2005.10.004) formula with Bayesian updating. Each game metric is treated as a biomarker with a known age curve. The player's age is the one that best explains all their metrics together. The norms start from priors derived from literature and are updated as real sessions occur.
+Our *BetterYears Age* estimate is calculated using an algorithm inspired by the [Klemera-Doubal (KDM)](https://doi.org/10.1016/j.mad.2005.10.004) formula with Bayesian updating. Each game metric is treated as a biomarker with a known age curve. The player's age is the one that best explains all their metrics together. The norms start from priors derived from literature and are updated as real sessions occur.
 
 1. **Measure.** Each game turns your movements into a few metrics, such as how fast you react, how well you decide, how closely you track a moving target and how much you remember.
 2. **Compare with age curves.** For each number, published studies tell us what is typical at every age. Your result points to the age it best matches.
 3. **Weigh the evidence.** KDM combines all your games into one age. Games that change strongly with age and are not too noisy count more; noisy or weakly age-related ones count less.
-4. **Start from your real age.** Your chronological age acts as a starting guess. With little data, your BetterYear Age stays close to your chronological age; the more games you play, the more your own results influence your BetterYear Age. You see the result with a range, not just a single number.
+4. **Start from your real age.** Your chronological age acts as a starting guess. With little data, your BetterYears Age stays close to your chronological age; the more games you play, the more your own results influence your BetterYears Age. You see the result with a range, not just a single number.
 5. **Learn from new players.** As sessions are collected, the age curves are adjusted toward what real players show, while unusual runs count less. A new version is kept only if it predicts age at least as well as the old one.
 
-In the app, ScoreKit also groups results into five areas (Speed, Decision, Control, Memory, Consistency) and tracks how your BetterYear Age changes over repeat sessions. Details: [`specs/score.md`](specs/score.md), [`specs/age-model.md`](specs/age-model.md).
+In the app, ScoreKit also groups results into five areas (Speed, Decision, Control, Memory, Consistency) and tracks how your BetterYears Age changes over repeat sessions. Details: [`specs/score.md`](specs/score.md), [`specs/age-model.md`](specs/age-model.md).
 
 ## Media
 
